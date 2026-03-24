@@ -11,7 +11,13 @@ interface StatCardProps {
   description?: string;
 }
 
-function StatCard({ value, label, suffix = "", prefix = "", description }: StatCardProps) {
+function StatCard({
+  value,
+  label,
+  suffix = "",
+  prefix = "",
+  description,
+}: StatCardProps) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
@@ -68,12 +74,35 @@ interface Props {
   totalAuthors: number;
 }
 
-export default function StatsSection({ totalBooks, totalCategories, totalAuthors }: Props) {
+export default function StatsSection({
+  totalBooks,
+  totalCategories,
+  totalAuthors,
+}: Props) {
   const stats = [
-    { value: totalBooks > 0 ? totalBooks : 0, label: "Books", suffix: "+", description: "Catalogued titles" },
-    { value: totalCategories > 0 ? totalCategories : 12, label: "Genres", suffix: "+", description: "Rich categories" },
-    { value: totalAuthors > 0 ? totalAuthors : 8, label: "Authors", description: "Curated voices" },
-    { value: 99, label: "Satisfaction", suffix: "%", description: "Reader approval" },
+    {
+      value: totalBooks > 0 ? totalBooks : 0,
+      label: "Books",
+      suffix: "+",
+      description: "Catalogued titles",
+    },
+    {
+      value: totalCategories > 0 ? totalCategories : 12,
+      label: "Genres",
+      suffix: "+",
+      description: "Rich categories",
+    },
+    {
+      value: totalAuthors > 0 ? totalAuthors : 8,
+      label: "Authors",
+      description: "Curated voices",
+    },
+    {
+      value: 99,
+      label: "Satisfaction",
+      suffix: "%",
+      description: "Reader approval",
+    },
   ];
 
   return (

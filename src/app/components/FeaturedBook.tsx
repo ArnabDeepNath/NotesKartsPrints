@@ -45,11 +45,13 @@ export default function FeaturedBook({ book }: Props) {
             start: "top 75%",
             once: true,
           },
-        }
+        },
       );
 
       // Text children stagger in from right
-      const children = textRef.current ? Array.from(textRef.current.children) : [];
+      const children = textRef.current
+        ? Array.from(textRef.current.children)
+        : [];
       gsap.fromTo(
         children,
         { x: 70, opacity: 0 },
@@ -64,7 +66,7 @@ export default function FeaturedBook({ book }: Props) {
             start: "top 70%",
             once: true,
           },
-        }
+        },
       );
     }, sectionRef);
 
@@ -91,7 +93,9 @@ export default function FeaturedBook({ book }: Props) {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </span>
-          <h2 className="text-4xl md:text-5xl font-black text-white mt-3">Featured Book</h2>
+          <h2 className="text-4xl md:text-5xl font-black text-white mt-3">
+            Featured Book
+          </h2>
         </motion.div>
 
         {/* Feature Card */}
@@ -99,12 +103,16 @@ export default function FeaturedBook({ book }: Props) {
           ref={sectionRef}
           className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center rounded-[2rem] overflow-hidden p-10 md:p-16 lg:p-20"
           style={{
-            background: "linear-gradient(140deg, #111 0%, #1c1c1e 60%, #0f0f0f 100%)",
+            background:
+              "linear-gradient(140deg, #111 0%, #1c1c1e 60%, #0f0f0f 100%)",
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
           {/* Ambient glows */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[2rem]" aria-hidden="true">
+          <div
+            className="absolute inset-0 overflow-hidden pointer-events-none rounded-[2rem]"
+            aria-hidden="true"
+          >
             <div
               className="absolute -top-32 -left-32 w-72 h-72 rounded-full blur-[80px]"
               style={{ background: "rgba(41,151,255,0.09)" }}
@@ -138,12 +146,17 @@ export default function FeaturedBook({ book }: Props) {
                   background: coverImg
                     ? undefined
                     : `linear-gradient(155deg, ${palette.a} 0%, ${palette.b} 55%, ${palette.c} 100%)`,
-                  boxShadow: "0 40px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)",
+                  boxShadow:
+                    "0 40px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)",
                   transformStyle: "preserve-3d",
                 }}
               >
                 {coverImg ? (
-                  <img src={coverImg} alt={book.title} className="w-full h-full object-cover" />
+                  <img
+                    src={coverImg}
+                    alt={book.title}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="absolute inset-0 flex flex-col justify-end p-7">
                     <div className="absolute inset-0 opacity-15">
@@ -151,7 +164,11 @@ export default function FeaturedBook({ book }: Props) {
                         <div
                           key={i}
                           className="absolute w-full"
-                          style={{ height: "1px", background: "white", top: `${12 + i * 12}%` }}
+                          style={{
+                            height: "1px",
+                            background: "white",
+                            top: `${12 + i * 12}%`,
+                          }}
                         />
                       ))}
                       <div className="absolute top-6 right-6 w-20 h-20 rounded-full border-2 border-white/20" />
@@ -160,7 +177,9 @@ export default function FeaturedBook({ book }: Props) {
                       <span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em] block mb-2">
                         {category}
                       </span>
-                      <h3 className="text-white font-black text-xl leading-tight">{book.title}</h3>
+                      <h3 className="text-white font-black text-xl leading-tight">
+                        {book.title}
+                      </h3>
                     </div>
                   </div>
                 )}
@@ -247,7 +266,10 @@ export default function FeaturedBook({ book }: Props) {
                 Read Now
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.09)" }}
+                whileHover={{
+                  scale: 1.04,
+                  backgroundColor: "rgba(255,255,255,0.09)",
+                }}
                 whileTap={{ scale: 0.97 }}
                 className="bg-white/[0.06] border border-white/[0.1] text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-colors"
               >

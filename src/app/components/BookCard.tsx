@@ -107,7 +107,9 @@ export default function BookCard({ book, index }: Props) {
               <span className="text-[9px] font-bold text-white/55 uppercase tracking-[0.22em] block mb-1.5">
                 {category}
               </span>
-              <p className="text-white font-bold text-sm leading-snug line-clamp-2">{book.title}</p>
+              <p className="text-white font-bold text-sm leading-snug line-clamp-2">
+                {book.title}
+              </p>
             </div>
           </div>
         )}
@@ -134,14 +136,20 @@ export default function BookCard({ book, index }: Props) {
           borderBottomRightRadius: "1rem",
         }}
       >
-        <h3 className="text-white font-bold text-sm mb-1.5 line-clamp-1">{book.title}</h3>
+        <h3 className="text-white font-bold text-sm mb-1.5 line-clamp-1">
+          {book.title}
+        </h3>
         <div
           className="text-[#6e6e73] text-xs line-clamp-2 mb-3 leading-relaxed excerpt-clean"
           dangerouslySetInnerHTML={{ __html: book.excerpt }}
         />
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-[#2997ff] font-medium truncate max-w-[65%]">{author}</span>
-          <span className="text-[11px] text-[#6e6e73]">{new Date(book.date).getFullYear()}</span>
+          <span className="text-[11px] text-[#2997ff] font-medium truncate max-w-[65%]">
+            {author}
+          </span>
+          <span className="text-[11px] text-[#6e6e73]">
+            {new Date(book.date).getFullYear()}
+          </span>
         </div>
       </div>
 

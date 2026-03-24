@@ -30,9 +30,15 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative py-20 px-6 overflow-hidden" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+    <footer
+      className="relative py-20 px-6 overflow-hidden"
+      style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+    >
       {/* Fade gradient bg */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#050505] pointer-events-none" aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-transparent to-[#050505] pointer-events-none"
+        aria-hidden="true"
+      />
 
       <div className="relative max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
@@ -46,17 +52,31 @@ export default function Footer() {
             <div className="flex items-center gap-2 mb-5">
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #2997ff, #0066cc)" }}
+                style={{
+                  background: "linear-gradient(135deg, #2997ff, #0066cc)",
+                }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
                 </svg>
               </div>
-              <span className="text-white font-bold text-[17px]">Basak Library</span>
+              <span className="text-white font-bold text-[17px]">
+                Basak Library
+              </span>
             </div>
             <p className="text-[#86868b] text-sm leading-relaxed max-w-[220px]">
-              A world-class book inventory experience. Designed for readers who care about every detail.
+              A world-class book inventory experience. Designed for readers who
+              care about every detail.
             </p>
 
             {/* Socials */}
@@ -66,7 +86,10 @@ export default function Footer() {
                   key={s.name}
                   href={s.href}
                   aria-label={s.name}
-                  whileHover={{ scale: 1.15, borderColor: "rgba(255,255,255,0.25)" }}
+                  whileHover={{
+                    scale: 1.15,
+                    borderColor: "rgba(255,255,255,0.25)",
+                  }}
                   whileTap={{ scale: 0.95 }}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-[#6e6e73] hover:text-white transition-colors"
                   style={{
@@ -74,7 +97,16 @@ export default function Footer() {
                     border: "1px solid rgba(255,255,255,0.09)",
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d={s.path} />
                   </svg>
                 </motion.a>
@@ -91,7 +123,9 @@ export default function Footer() {
               viewport={{ once: true }}
               transition={{ delay: 0.08 * (ci + 1) }}
             >
-              <h4 className="text-white font-semibold text-sm mb-5">{section}</h4>
+              <h4 className="text-white font-semibold text-sm mb-5">
+                {section}
+              </h4>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link}>
@@ -128,8 +162,7 @@ export default function Footer() {
             ))}
           </div>
           <p className="text-[#6e6e73] text-xs">
-            Built with{" "}
-            <span className="text-[#2997ff]">Next.js</span> &{" "}
+            Built with <span className="text-[#2997ff]">Next.js</span> &{" "}
             <span className="text-[#2997ff]">WordPress</span>
           </p>
         </div>

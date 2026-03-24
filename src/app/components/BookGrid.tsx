@@ -29,7 +29,7 @@ export default function BookGrid({ books }: Props) {
         b.title.toLowerCase().includes(q) ||
         b.excerpt.toLowerCase().includes(q) ||
         b.author?.node?.name?.toLowerCase().includes(q) ||
-        b.categories?.nodes?.some((c) => c.name.toLowerCase().includes(q))
+        b.categories?.nodes?.some((c) => c.name.toLowerCase().includes(q)),
     );
   }, [books, search]);
 
@@ -48,11 +48,14 @@ export default function BookGrid({ books }: Props) {
             <span className="text-xs text-[#2997ff] font-semibold uppercase tracking-[0.22em]">
               The Collection
             </span>
-            <h2 className="text-4xl md:text-5xl font-black text-white mt-2 mb-1">All Books</h2>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-2 mb-1">
+              All Books
+            </h2>
             <p className="text-[#86868b] text-base">
               Showing{" "}
-              <span className="text-white font-medium">{filtered.length}</span> of{" "}
-              <span className="text-white font-medium">{books.length}</span> titles
+              <span className="text-white font-medium">{filtered.length}</span>{" "}
+              of <span className="text-white font-medium">{books.length}</span>{" "}
+              titles
             </p>
           </div>
 
@@ -89,7 +92,15 @@ export default function BookGrid({ books }: Props) {
                 onClick={() => setSearch("")}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6e6e73] hover:text-white transition-colors"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
@@ -109,7 +120,12 @@ export default function BookGrid({ books }: Props) {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               {filtered.map((book, i) => (
-                <motion.div key={book.id} variants={item} layout transition={{ duration: 0.55 }}>
+                <motion.div
+                  key={book.id}
+                  variants={item}
+                  layout
+                  transition={{ duration: 0.55 }}
+                >
                   <BookCard book={book} index={i} />
                 </motion.div>
               ))}
@@ -126,7 +142,9 @@ export default function BookGrid({ books }: Props) {
               <p className="text-[#86868b] text-lg font-medium">
                 No results for &ldquo;{search}&rdquo;
               </p>
-              <p className="text-[#6e6e73] text-sm mt-2">Try a different search term</p>
+              <p className="text-[#6e6e73] text-sm mt-2">
+                Try a different search term
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

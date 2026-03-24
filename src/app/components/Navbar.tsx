@@ -32,7 +32,10 @@ export default function Navbar() {
     >
       <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-2.5">
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="flex items-center gap-2.5"
+        >
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{
@@ -40,7 +43,16 @@ export default function Navbar() {
               boxShadow: "0 0 20px rgba(41,151,255,0.35)",
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
             </svg>
@@ -67,12 +79,23 @@ export default function Navbar() {
         {/* Right CTA */}
         <div className="hidden md:flex items-center gap-3">
           <motion.button
-            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
+            whileHover={{
+              scale: 1.1,
+              backgroundColor: "rgba(255,255,255,0.1)",
+            }}
             whileTap={{ scale: 0.95 }}
             className="w-9 h-9 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center"
             aria-label="Search"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86868b" strokeWidth="2" strokeLinecap="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#86868b"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.35-4.35" />
             </svg>
@@ -94,7 +117,15 @@ export default function Navbar() {
           className="md:hidden w-9 h-9 flex items-center justify-center rounded-full bg-white/[0.05] border border-white/[0.1]"
           aria-label="Toggle menu"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             {mobileOpen ? (
               <>
                 <path d="M18 6L6 18" />
@@ -114,7 +145,10 @@ export default function Navbar() {
       {/* Mobile Dropdown */}
       <motion.div
         initial={false}
-        animate={{ height: mobileOpen ? "auto" : 0, opacity: mobileOpen ? 1 : 0 }}
+        animate={{
+          height: mobileOpen ? "auto" : 0,
+          opacity: mobileOpen ? 1 : 0,
+        }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="overflow-hidden md:hidden"
       >

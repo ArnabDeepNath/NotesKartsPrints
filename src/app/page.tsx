@@ -17,7 +17,8 @@ interface Book {
 }
 
 const WORDPRESS_API_URL =
-  process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://noteskartprints.in/graphql";
+  process.env.NEXT_PUBLIC_WORDPRESS_API_URL ||
+  "https://noteskartprints.in/graphql";
 
 async function getBooks(): Promise<Book[]> {
   try {
@@ -70,7 +71,9 @@ export default async function Home() {
 
   const featuredBook = books[0] ?? null;
 
-  const allCategories = books.flatMap((b) => b.categories?.nodes?.map((c) => c.name) ?? []);
+  const allCategories = books.flatMap(
+    (b) => b.categories?.nodes?.map((c) => c.name) ?? [],
+  );
   const uniqueCategories = [...new Set(allCategories)];
 
   const allAuthors = books.map((b) => b.author?.node?.name).filter(Boolean);

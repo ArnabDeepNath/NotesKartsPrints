@@ -1,4 +1,4 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => require("stripe")(process.env.STRIPE_SECRET_KEY);
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 
@@ -50,7 +50,7 @@ const createCheckoutSession = async (req, res, next) => {
       });
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       customer_email: order.user.email,
@@ -79,7 +79,7 @@ const stripeWebhook = async (req, res, next) => {
     let event;
 
     try {
-      event = stripe.webhooks.constructEvent(
+      event = getStripe().webhooks.constructEvent(
         req.body,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET,
@@ -125,7 +125,7 @@ const stripeWebhook = async (req, res, next) => {
 // GET /api/payment/verify/:sessionId
 const verifyPayment = async (req, res, next) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(
+    const session = await getStripe().checkout.sessions.retrieve(
       req.params.sessionId,
     );
     const order = await prisma.order.findFirst({

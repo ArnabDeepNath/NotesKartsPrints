@@ -1,4 +1,4 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => require("stripe")(process.env.STRIPE_SECRET_KEY);
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 

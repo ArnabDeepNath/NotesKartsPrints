@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { execSync } from "child_process";
 import path from "path";
 
 const prisma = new PrismaClient();
@@ -21,18 +20,21 @@ export async function GET(req: NextRequest) {
     const log: string[] = [];
 
     try {
-        // Step 1: Run Prisma migrations using local binary (no npx needed)
+        // Step 1: Run Prisma migrations using node + resolved prisma package path
         log.push("Running database migrations...");
         try {
-            const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
+            const { execFileSync } = require("child_process");
+            const prismaPkgDir = path.dirname(require.resolve("prisma/package.json"));
+            const prismaCli = path.join(prismaPkgDir, "build", "index.js");
             const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
-            execSync(`"${prismaBin}" migrate deploy --schema="${schemaPath}"`, {
+            execFileSync(process.execPath, [prismaCli, "migrate", "deploy", `--schema=${schemaPath}`], {
                 stdio: "pipe",
                 env: { ...process.env },
             });
             log.push("✅ Migrations applied successfully.");
         } catch (err: any) {
-            log.push(`⚠️ Migration note: ${err.stderr?.toString() || err.message}`);
+            const msg = err.stderr?.toString() || err.stdout?.toString() || err.message;
+            log.push(`⚠️ Migration note: ${msg?.trim()}`);
         }
 
         // Step 2: Seed genres

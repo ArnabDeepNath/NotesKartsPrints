@@ -1,0 +1,203 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum BookFormat {
+  PHYSICAL
+  EBOOK
+  AUDIOBOOK
+  BUNDLE
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  avatar        String?
+  role          Role      @default(USER)
+  isActive      Boolean   @default(true)
+  emailVerified Boolean   @default(false)
+  phone         String?
+  address       String?
+  city          String?
+  country       String?
+  bio           String?   @db.Text
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  orders        Order[]
+  wishlist      Wishlist[]
+  reviews       Review[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique @db.VarChar(512)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Genre {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  color     String   @default("#2997ff")
+  books     Book[]
+
+  @@map("genres")
+}
+
+model Book {
+  id           String     @id @default(uuid())
+  title        String
+  subtitle     String?
+  author       String
+  description  String     @db.LongText
+  shortDesc    String?    @db.Text
+  price        Decimal    @db.Decimal(10, 2)
+  comparePrice Decimal?   @db.Decimal(10, 2)
+  coverImage   String?
+  images       String?    @db.Text
+  isbn         String?    @unique
+  publisher    String?
+  publishedAt  DateTime?
+  pages        Int?
+  language     String     @default("English")
+  format       BookFormat @default(PHYSICAL)
+  stock        Int        @default(0)
+  sold         Int        @default(0)
+  rating       Float      @default(0)
+  reviewCount  Int        @default(0)
+  featured     Boolean    @default(false)
+  isActive     Boolean    @default(true)
+  genreId      String?
+  tags         String?    @db.Text
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  genre        Genre?     @relation(fields: [genreId], references: [id])
+  orderItems   OrderItem[]
+  wishlist     Wishlist[]
+  reviews      Review[]
+
+  @@fulltext([title, author, description])
+  @@map("books")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  discount        Decimal     @db.Decimal(10, 2) @default(0)
+  tax             Decimal     @db.Decimal(10, 2) @default(0)
+  total           Decimal     @db.Decimal(10, 2)
+  currency        String      @default("INR")
+  paymentMethod   String?
+  paymentId       String?
+  stripeSessionId String?
+  notes           String?     @db.Text
+
+  shippingName    String?
+  shippingEmail   String?
+  shippingPhone   String?
+  shippingAddress String?
+  shippingCity    String?
+  shippingCountry String?
+  shippingZip     String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id       String  @id @default(uuid())
+  orderId  String
+  bookId   String
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2)
+
+  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  book     Book    @relation(fields: [bookId], references: [id])
+
+  @@map("order_items")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  bookId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@map("wishlists")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  bookId    String
+  rating    Int
+  title     String?
+  comment   String?  @db.Text
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@map("reviews")
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String @db.Text
+
+  @@map("settings")
+}

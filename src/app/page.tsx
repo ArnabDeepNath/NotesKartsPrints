@@ -4,72 +4,58 @@ import StatsSection from "./components/StatsSection";
 import FeaturedBook from "./components/FeaturedBook";
 import BookGrid from "./components/BookGrid";
 import Footer from "./components/Footer";
+import { Book } from "./components/BookCard";
 
-interface Book {
-  id: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  slug: string;
-  featuredImage?: { node: { sourceUrl: string; altText: string } };
-  categories?: { nodes: { name: string }[] };
-  author?: { node: { name: string } };
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+function toComponentBook(b: any): Book {
+  return {
+    id: b.id,
+    title: b.title,
+    date: b.createdAt || new Date().toISOString(),
+    excerpt: b.description || b.shortDesc || "",
+    slug: b.id,
+    featuredImage: b.coverImage
+      ? { node: { sourceUrl: b.coverImage, altText: b.title } }
+      : undefined,
+    categories: b.genre ? { nodes: [{ name: b.genre.name }] } : undefined,
+    author: { node: { name: b.author } },
+  };
 }
-
-const WORDPRESS_API_URL =
-  process.env.NEXT_PUBLIC_WORDPRESS_API_URL ||
-  "https://noteskartprints.in/graphql";
 
 async function getBooks(): Promise<Book[]> {
   try {
-    const res = await fetch(WORDPRESS_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `
-          query GetBooks {
-            posts(first: 20, where: { status: PUBLISH }) {
-              nodes {
-                id
-                title
-                date
-                excerpt
-                slug
-                featuredImage {
-                  node {
-                    sourceUrl
-                    altText
-                  }
-                }
-                categories {
-                  nodes {
-                    name
-                  }
-                }
-                author {
-                  node {
-                    name
-                  }
-                }
-              }
-            }
-          }
-        `,
-      }),
-      next: { revalidate: 60 },
+    const res = await fetch(`${API_URL}/books?limit=24`, {
+      cache: "no-store",
     });
-
+    if (!res.ok) return [];
     const json = await res.json();
-    return json?.data?.posts?.nodes ?? [];
+    return (json?.books ?? []).map(toComponentBook);
+  } catch {
+    return [];
+  }
+}
+
+async function getFeaturedBooks(): Promise<Book[]> {
+  try {
+    const res = await fetch(`${API_URL}/books?featured=true&limit=6`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json?.books ?? []).map(toComponentBook);
   } catch {
     return [];
   }
 }
 
 export default async function Home() {
-  const books = await getBooks();
+  const [books, featuredBooks] = await Promise.all([
+    getBooks(),
+    getFeaturedBooks(),
+  ]);
 
-  const featuredBook = books[0] ?? null;
+  const featuredBook = featuredBooks[0] ?? books[0] ?? null;
 
   const allCategories = books.flatMap(
     (b) => b.categories?.nodes?.map((c) => c.name) ?? [],

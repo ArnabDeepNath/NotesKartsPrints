@@ -2,6 +2,7 @@
 
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export interface Book {
   id: string;
@@ -34,6 +35,7 @@ interface Props {
 
 export default function BookCard({ book, index }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -158,6 +160,7 @@ export default function BookCard({ book, index }: Props) {
         <motion.button
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => router.push(`/books/${book.id}`)}
           className="bg-[#2997ff] text-white font-semibold px-6 py-3 rounded-full text-sm shadow-2xl"
           style={{ boxShadow: "0 0 30px rgba(41,151,255,0.4)" }}
         >

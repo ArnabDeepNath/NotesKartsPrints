@@ -4,18 +4,39 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:unified": "node server.js",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "node server.js",
+    "lint": "eslint",
+    "postinstall": "prisma generate --schema=server/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate deploy --schema=server/prisma/schema.prisma",
+    "prisma:seed": "node server/prisma/seed.js"
+  },
+  "prisma": {
+    "schema": "server/prisma/schema.prisma"
   },
   "dependencies": {
-    "@apollo/client": "^4.1.6",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.1",
+    "express-validator": "^7.2.0",
     "framer-motion": "^12.38.0",
-    "graphql": "^16.13.1",
     "gsap": "^3.14.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "next": "16.1.6",
+    "nodemailer": "^6.9.15",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "stripe": "^17.3.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -24,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

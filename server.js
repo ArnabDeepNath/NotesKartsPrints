@@ -24,10 +24,14 @@ async function main() {
   // 1 ─ Prepare Next.js
   await nextApp.prepare();
 
-  // 2 ─ Connect Database
+  // 2 ─ Connect Database (non-fatal — server starts even if DB is temporarily unavailable)
   const prisma = require("./server/src/config/prisma");
-  await prisma.$connect();
-  console.log("✅ Database connected");
+  try {
+    await prisma.$connect();
+    console.log("✅ Database connected");
+  } catch (dbErr) {
+    console.error("⚠️  Database connection failed (server will still start):", dbErr.message);
+  }
 
   // 3 ─ Load Express API app (all /api/* middleware + routes)
   const apiApp = require("./server/src/app");

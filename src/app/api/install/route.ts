@@ -2,7 +2,154 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+// Raw SQL statements to create all tables (MySQL / MariaDB)
+const CREATE_TABLE_STATEMENTS = [
+    `CREATE TABLE IF NOT EXISTS \`genres\` (
+        \`id\`    VARCHAR(36)  NOT NULL,
+        \`name\`  VARCHAR(191) NOT NULL,
+        \`slug\`  VARCHAR(191) NOT NULL,
+        \`color\` VARCHAR(191) NOT NULL DEFAULT '#2997ff',
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`genres_name_key\` (\`name\`),
+        UNIQUE KEY \`genres_slug_key\` (\`slug\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`users\` (
+        \`id\`            VARCHAR(36)          NOT NULL,
+        \`email\`         VARCHAR(191)         NOT NULL,
+        \`password\`      VARCHAR(191)         NOT NULL,
+        \`name\`          VARCHAR(191)         NOT NULL,
+        \`avatar\`        VARCHAR(191)         DEFAULT NULL,
+        \`role\`          ENUM('USER','ADMIN') NOT NULL DEFAULT 'USER',
+        \`isActive\`      TINYINT(1)           NOT NULL DEFAULT 1,
+        \`emailVerified\` TINYINT(1)           NOT NULL DEFAULT 0,
+        \`phone\`         VARCHAR(191)         DEFAULT NULL,
+        \`address\`       VARCHAR(191)         DEFAULT NULL,
+        \`city\`          VARCHAR(191)         DEFAULT NULL,
+        \`country\`       VARCHAR(191)         DEFAULT NULL,
+        \`bio\`           TEXT                 DEFAULT NULL,
+        \`createdAt\`     DATETIME(3)          NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\`     DATETIME(3)          NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`users_email_key\` (\`email\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`refresh_tokens\` (
+        \`id\`        VARCHAR(36)  NOT NULL,
+        \`token\`     VARCHAR(512) NOT NULL,
+        \`userId\`    VARCHAR(36)  NOT NULL,
+        \`expiresAt\` DATETIME(3)  NOT NULL,
+        \`createdAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`refresh_tokens_token_key\` (\`token\`),
+        CONSTRAINT \`refresh_tokens_userId_fkey\` FOREIGN KEY (\`userId\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`books\` (
+        \`id\`           VARCHAR(36)                                NOT NULL,
+        \`title\`        VARCHAR(191)                               NOT NULL,
+        \`subtitle\`     VARCHAR(191)                               DEFAULT NULL,
+        \`author\`       VARCHAR(191)                               NOT NULL,
+        \`description\`  LONGTEXT                                   NOT NULL,
+        \`shortDesc\`    TEXT                                       DEFAULT NULL,
+        \`price\`        DECIMAL(10,2)                              NOT NULL,
+        \`comparePrice\` DECIMAL(10,2)                             DEFAULT NULL,
+        \`coverImage\`   VARCHAR(191)                               DEFAULT NULL,
+        \`images\`       TEXT                                       DEFAULT NULL,
+        \`isbn\`         VARCHAR(191)                               DEFAULT NULL,
+        \`publisher\`    VARCHAR(191)                               DEFAULT NULL,
+        \`publishedAt\`  DATETIME(3)                                DEFAULT NULL,
+        \`pages\`        INT                                        DEFAULT NULL,
+        \`language\`     VARCHAR(191)                               NOT NULL DEFAULT 'English',
+        \`format\`       ENUM('PHYSICAL','EBOOK','AUDIOBOOK','BUNDLE') NOT NULL DEFAULT 'PHYSICAL',
+        \`stock\`        INT                                        NOT NULL DEFAULT 0,
+        \`sold\`         INT                                        NOT NULL DEFAULT 0,
+        \`rating\`       FLOAT                                      NOT NULL DEFAULT 0,
+        \`reviewCount\`  INT                                        NOT NULL DEFAULT 0,
+        \`featured\`     TINYINT(1)                                 NOT NULL DEFAULT 0,
+        \`isActive\`     TINYINT(1)                                 NOT NULL DEFAULT 1,
+        \`genreId\`      VARCHAR(36)                                DEFAULT NULL,
+        \`tags\`         TEXT                                       DEFAULT NULL,
+        \`createdAt\`    DATETIME(3)                                NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\`    DATETIME(3)                                NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`books_isbn_key\` (\`isbn\`),
+        FULLTEXT KEY \`books_title_author_description_idx\` (\`title\`,\`author\`,\`description\`),
+        CONSTRAINT \`books_genreId_fkey\` FOREIGN KEY (\`genreId\`) REFERENCES \`genres\` (\`id\`) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`orders\` (
+        \`id\`              VARCHAR(36)                                                                   NOT NULL,
+        \`userId\`          VARCHAR(36)                                                                   NOT NULL,
+        \`status\`          ENUM('PENDING','PAID','PROCESSING','SHIPPED','DELIVERED','CANCELLED','REFUNDED') NOT NULL DEFAULT 'PENDING',
+        \`subtotal\`        DECIMAL(10,2)                                                                 NOT NULL,
+        \`discount\`        DECIMAL(10,2)                                                                 NOT NULL DEFAULT 0,
+        \`tax\`             DECIMAL(10,2)                                                                 NOT NULL DEFAULT 0,
+        \`total\`           DECIMAL(10,2)                                                                 NOT NULL,
+        \`currency\`        VARCHAR(191)                                                                  NOT NULL DEFAULT 'INR',
+        \`paymentMethod\`   VARCHAR(191)                                                                  DEFAULT NULL,
+        \`paymentId\`       VARCHAR(191)                                                                  DEFAULT NULL,
+        \`stripeSessionId\` VARCHAR(191)                                                                  DEFAULT NULL,
+        \`notes\`           TEXT                                                                          DEFAULT NULL,
+        \`shippingName\`    VARCHAR(191)                                                                  DEFAULT NULL,
+        \`shippingEmail\`   VARCHAR(191)                                                                  DEFAULT NULL,
+        \`shippingPhone\`   VARCHAR(191)                                                                  DEFAULT NULL,
+        \`shippingAddress\` VARCHAR(191)                                                                  DEFAULT NULL,
+        \`shippingCity\`    VARCHAR(191)                                                                  DEFAULT NULL,
+        \`shippingCountry\` VARCHAR(191)                                                                  DEFAULT NULL,
+        \`shippingZip\`     VARCHAR(191)                                                                  DEFAULT NULL,
+        \`createdAt\`       DATETIME(3)                                                                   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\`       DATETIME(3)                                                                   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        CONSTRAINT \`orders_userId_fkey\` FOREIGN KEY (\`userId\`) REFERENCES \`users\` (\`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`order_items\` (
+        \`id\`       VARCHAR(36)   NOT NULL,
+        \`orderId\`  VARCHAR(36)   NOT NULL,
+        \`bookId\`   VARCHAR(36)   NOT NULL,
+        \`quantity\` INT           NOT NULL DEFAULT 1,
+        \`price\`    DECIMAL(10,2) NOT NULL,
+        PRIMARY KEY (\`id\`),
+        CONSTRAINT \`order_items_orderId_fkey\` FOREIGN KEY (\`orderId\`) REFERENCES \`orders\` (\`id\`) ON DELETE CASCADE,
+        CONSTRAINT \`order_items_bookId_fkey\`  FOREIGN KEY (\`bookId\`)  REFERENCES \`books\`  (\`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`wishlists\` (
+        \`id\`        VARCHAR(36) NOT NULL,
+        \`userId\`    VARCHAR(36) NOT NULL,
+        \`bookId\`    VARCHAR(36) NOT NULL,
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`wishlists_userId_bookId_key\` (\`userId\`,\`bookId\`),
+        CONSTRAINT \`wishlists_userId_fkey\` FOREIGN KEY (\`userId\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE,
+        CONSTRAINT \`wishlists_bookId_fkey\` FOREIGN KEY (\`bookId\`) REFERENCES \`books\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`reviews\` (
+        \`id\`        VARCHAR(36)  NOT NULL,
+        \`userId\`    VARCHAR(36)  NOT NULL,
+        \`bookId\`    VARCHAR(36)  NOT NULL,
+        \`rating\`    INT          NOT NULL,
+        \`title\`     VARCHAR(191) DEFAULT NULL,
+        \`comment\`   TEXT         DEFAULT NULL,
+        \`verified\`  TINYINT(1)   NOT NULL DEFAULT 0,
+        \`createdAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`reviews_userId_bookId_key\` (\`userId\`,\`bookId\`),
+        CONSTRAINT \`reviews_userId_fkey\` FOREIGN KEY (\`userId\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE,
+        CONSTRAINT \`reviews_bookId_fkey\` FOREIGN KEY (\`bookId\`) REFERENCES \`books\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`settings\` (
+        \`id\`    VARCHAR(36)  NOT NULL,
+        \`key\`   VARCHAR(191) NOT NULL,
+        \`value\` TEXT         NOT NULL,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`settings_key_key\` (\`key\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+];
 
 export async function GET(req: NextRequest) {
     // Basic protection — require ?secret= matching INSTALL_SECRET env var
@@ -16,22 +163,28 @@ export async function GET(req: NextRequest) {
         );
     }
 
+    // Check DATABASE_URL is configured
+    if (!process.env.DATABASE_URL) {
+        return NextResponse.json(
+            { success: false, error: "DATABASE_URL environment variable is not set on the server." },
+            { status: 500 }
+        );
+    }
+
+    let prisma: PrismaClient | null = null;
     const log: string[] = [];
 
     try {
-        // Step 1: Verify database tables exist (schema must be pushed before running install)
-        // Run: npm run prisma:push  (once, via SSH on the server) before using this installer.
-        log.push("Checking database tables...");
-        try {
-            await prisma.$queryRaw`SELECT 1 FROM genres LIMIT 1`;
-            log.push("✅ Database tables verified.");
-        } catch {
-            throw new Error(
-                "Database tables not found. SSH into your server and run: npm run prisma:push — then try again."
-            );
+        prisma = new PrismaClient();
+        // Step 1: Create database tables (safe — uses CREATE TABLE IF NOT EXISTS)
+        log.push("Creating database tables...");
+        for (const sql of CREATE_TABLE_STATEMENTS) {
+            await prisma.$executeRawUnsafe(sql);
         }
+        log.push("✅ All database tables created (or already existed).");
 
         // Step 2: Seed genres
+
         log.push("Seeding genres...");
         const genres = await Promise.all([
             prisma.genre.upsert({ where: { slug: "fiction" }, update: {}, create: { name: "Fiction", slug: "fiction", color: "#2997ff" } }),
@@ -122,6 +275,6 @@ export async function GET(req: NextRequest) {
         log.push(`❌ Error: ${error.message}`);
         return NextResponse.json({ success: false, log, error: error.message }, { status: 500 });
     } finally {
-        await prisma.$disconnect();
+        if (prisma) await prisma.$disconnect();
     }
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import path from "path";
 
 const prisma = new PrismaClient();
 
@@ -20,24 +19,16 @@ export async function GET(req: NextRequest) {
     const log: string[] = [];
 
     try {
-        // Step 1: Push schema to database (creates tables from schema without requiring migration files)
-        log.push("Running database migrations...");
-        const { execSync } = require("child_process");
-        const cwd = process.cwd();
-        const schemaPath = path.join(cwd, "server", "prisma", "schema.prisma");
-        // Use the prisma binary via shell so it resolves @prisma/engines correctly
-        const prismaBin = path.join(cwd, "node_modules", ".bin", "prisma");
+        // Step 1: Verify database tables exist (schema must be pushed before running install)
+        // Run: npm run prisma:push  (once, via SSH on the server) before using this installer.
+        log.push("Checking database tables...");
         try {
-            execSync(`"${prismaBin}" db push --accept-data-loss --schema="${schemaPath}"`, {
-                stdio: "pipe",
-                env: { ...process.env },
-                cwd,
-                shell: true,
-            });
-            log.push("✅ Database schema applied successfully.");
-        } catch (err: any) {
-            const msg = err.stderr?.toString() || err.stdout?.toString() || err.message;
-            throw new Error(`Database schema push failed: ${msg?.trim()}`);
+            await prisma.$queryRaw`SELECT 1 FROM genres LIMIT 1`;
+            log.push("✅ Database tables verified.");
+        } catch {
+            throw new Error(
+                "Database tables not found. SSH into your server and run: npm run prisma:push — then try again."
+            );
         }
 
         // Step 2: Seed genres

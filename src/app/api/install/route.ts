@@ -23,8 +23,7 @@ export async function GET(req: NextRequest) {
         // Step 1: Push schema to database (creates tables from schema without requiring migration files)
         log.push("Running database migrations...");
         const { execFileSync } = require("child_process");
-        const prismaPkgDir = path.dirname(require.resolve("prisma/package.json"));
-        const prismaCli = path.join(prismaPkgDir, "build", "index.js");
+        const prismaCli = path.join(process.cwd(), "node_modules", "prisma", "build", "index.js");
         const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
         try {
             execFileSync(process.execPath, [prismaCli, "db", "push", "--accept-data-loss", `--schema=${schemaPath}`], {

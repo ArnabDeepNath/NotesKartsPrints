@@ -114,7 +114,7 @@ export const api = {
     },
 
     orders: {
-        create: (data: { items: CartItem[]; shippingAddress?: ShippingAddress }) =>
+        create: (data: { items: CartItem[]; printJobs?: string[]; shippingAddress?: ShippingAddress }) =>
             apiFetch<{ order: Order }>('/orders', { method: 'POST', body: JSON.stringify(data) }),
         get: (id: string) => apiFetch<{ order: Order }>(`/orders/${id}`),
     },
@@ -144,6 +144,26 @@ export const api = {
         updateOrder: (id: string, status: string) =>
             apiFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
     },
+
+    print: {
+        upload: (formData: FormData) => {
+            const token = getAccessToken();
+            return fetch(`${API_BASE}/print/upload`, {
+                method: 'POST',
+                body: formData,
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                credentials: 'include'
+            }).then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Upload failed');
+                return data;
+            });
+        },
+        calculatePrice: (data: { pages: number; copies: number; colorMode: string; binding: string; }) =>
+            apiFetch<{ price: number }>('/print/calculate-price', { method: 'POST', body: JSON.stringify(data), auth: false }),
+        createJob: (data: any) =>
+            apiFetch<{ job: PrintJob }>('/print/job', { method: 'POST', body: JSON.stringify(data) }),
+    }
 };
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -254,4 +274,19 @@ export interface Review {
     verified?: boolean;
     createdAt: string;
     user?: { id: string; name: string; avatar?: string };
+}
+
+export interface PrintJob {
+    id: string;
+    userId?: string;
+    fileUrl: string;
+    fileName: string;
+    colorMode: string;
+    binding: string;
+    paperSize: string;
+    pages: number;
+    copies: number;
+    price: number;
+    status: string;
+    createdAt?: string;
 }

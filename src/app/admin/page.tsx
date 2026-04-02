@@ -384,15 +384,11 @@ export default function AdminPanel() {
                   <h2 className="text-2xl font-bold text-white">
                     Manage Books
                   </h2>
-                  <button
-                    onClick={() => {
-                      setBookForm({});
-                      setBookModal({ open: true });
-                    }}
-                    className="bg-[#2997ff] hover:bg-[#1a83ff] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
-                  >
-                    + Add Book
-                  </button>
+                  <Link href="/admin/books/new">
+                    <button className="bg-[#2997ff] hover:bg-[#1a83ff] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
+                      + Add Book
+                    </button>
+                  </Link>
                 </div>
                 <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
                   <div className="overflow-x-auto">

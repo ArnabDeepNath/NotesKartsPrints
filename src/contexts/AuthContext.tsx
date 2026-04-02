@@ -8,7 +8,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { api, setAccessToken, User } from "@/lib/api";
+import { api, setAccessToken, User, PrintJob } from "@/lib/api";
 
 interface CartItem {
   bookId: string;
@@ -33,6 +33,10 @@ interface AuthContextType {
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
+  printCart: PrintJob[];
+  addToPrintCart: (job: PrintJob) => void;
+  removeFromPrintCart: (jobId: string) => void;
+  clearPrintCart: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -41,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [printCart, setPrintCart] = useState<PrintJob[]>([]);
   const initialized = useRef(false);
 
   // Restore cart from localStorage
@@ -48,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = localStorage.getItem("basak_cart");
       if (stored) setCart(JSON.parse(stored));
+      const storedPrint = localStorage.getItem("basak_print_cart");
+      if (storedPrint) setPrintCart(JSON.parse(storedPrint));
     } catch {}
   }, []);
 
@@ -55,6 +62,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem("basak_cart", JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem("basak_print_cart", JSON.stringify(printCart));
+  }, [printCart]);
 
   // Try to restore session on mount
   useEffect(() => {
@@ -106,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
     setUser(null);
     setCart([]);
+    setPrintCart([]);
   }, []);
 
   const updateUser = useCallback((data: Partial<User>) => {
@@ -143,8 +155,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => setCart([]), []);
 
-  const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+  const addToPrintCart = useCallback((job: PrintJob) => {
+    setPrintCart((prev) => [...prev, job]);
+  }, []);
+
+  const removeFromPrintCart = useCallback((jobId: string) => {
+    setPrintCart((prev) => prev.filter((i) => i.id !== jobId));
+  }, []);
+
+  const clearPrintCart = useCallback(() => setPrintCart([]), []);
+
+  const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0) + printCart.reduce((sum, i) => sum + Number(i.price), 0);
+  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0) + printCart.reduce((sum, i) => sum + i.copies, 0);
 
   return (
     <AuthContext.Provider
@@ -162,6 +184,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         cartTotal,
         cartCount,
+        printCart,
+        addToPrintCart,
+        removeFromPrintCart,
+        clearPrintCart,
       }}
     >
       {children}

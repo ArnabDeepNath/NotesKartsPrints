@@ -5,11 +5,15 @@ const { AppError } = require("../middleware/errorHandler");
 // POST /api/orders  — create a pending order from cart
 const createOrder = async (req, res, next) => {
   try {
-    const { items, shippingAddress } = req.body;
+    const { items, printJobs, shippingAddress } = req.body;
     // items: [{ bookId, quantity }]
+    // printJobs: [ "uuid-1", "uuid-2" ]
 
-    if (!items || items.length === 0) {
-      throw new AppError("Order must have at least one item", 400);
+    const hasItems = items && items.length > 0;
+    const hasPrintJobs = printJobs && printJobs.length > 0;
+
+    if (!hasItems && !hasPrintJobs) {
+      throw new AppError("Order must have at least one item or print job", 400);
     }
 
     // Fetch all books
@@ -23,16 +27,27 @@ const createOrder = async (req, res, next) => {
     }
 
     // Validate stock
-    for (const item of items) {
+    for (const item of (items || [])) {
       const book = books.find((b) => b.id === item.bookId);
       if (book.stock < item.quantity) {
         throw new AppError(`Insufficient stock for "${book.title}"`, 400);
       }
     }
 
+    // Process Print Jobs
+    let printJobRecords = [];
+    if (hasPrintJobs) {
+      printJobRecords = await prisma.printJob.findMany({
+        where: { id: { in: printJobs }, userId: req.user.id }
+      });
+      if (printJobRecords.length !== printJobs.length) {
+        throw new AppError("One or more print jobs not found or unauthorized", 404);
+      }
+    }
+
     // Calculate totals
     let subtotal = 0;
-    const orderItems = items.map((item) => {
+    const orderItems = (items || []).map((item) => {
       const book = books.find((b) => b.id === item.bookId);
       const lineTotal = Number(book.price) * item.quantity;
       subtotal += lineTotal;
@@ -42,6 +57,10 @@ const createOrder = async (req, res, next) => {
         price: Number(book.price),
       };
     });
+
+    for (const pj of printJobRecords) {
+      subtotal += Number(pj.price);
+    }
 
     const tax = +(subtotal * 0.18).toFixed(2); // 18% GST
     const total = +(subtotal + tax).toFixed(2);
@@ -59,12 +78,14 @@ const createOrder = async (req, res, next) => {
         shippingCity: shippingAddress?.city,
         shippingCountry: shippingAddress?.country,
         shippingZip: shippingAddress?.zip,
-        items: { create: orderItems },
+        items: items?.length > 0 ? { create: orderItems } : undefined,
+        printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
       },
       include: {
         items: {
           include: { book: { select: { title: true, coverImage: true } } },
         },
+        printJobs: true,
       },
     });
 
@@ -87,6 +108,7 @@ const getOrder = async (req, res, next) => {
             },
           },
         },
+        printJobs: true,
         user: { select: { id: true, name: true, email: true } },
       },
     });

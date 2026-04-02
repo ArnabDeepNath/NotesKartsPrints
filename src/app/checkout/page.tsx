@@ -21,9 +21,12 @@ export default function CheckoutPage() {
     user,
     loading: authLoading,
     cart,
+    printCart,
     removeFromCart,
     updateCartQty,
     clearCart,
+    removeFromPrintCart,
+    clearPrintCart,
     cartTotal,
   } = useAuth();
   const router = useRouter();
@@ -65,7 +68,7 @@ export default function CheckoutPage() {
   const total = subtotal + gst;
 
   const handlePlaceOrder = async () => {
-    if (cart.length === 0) {
+    if (cart.length === 0 && printCart.length === 0) {
       toast("Your cart is empty", "error");
       return;
     }
@@ -74,6 +77,7 @@ export default function CheckoutPage() {
       // 1. Create order
       const orderRes: any = await api.orders.create({
         items: cart,
+        printJobs: printCart.map(job => job.id),
         shippingAddress: {
           name: shipping.name,
           email: shipping.email,
@@ -91,6 +95,7 @@ export default function CheckoutPage() {
 
       // 3. Redirect to Stripe
       clearCart();
+      clearPrintCart();
       window.location.href = paymentRes.url;
     } catch (err: any) {
       toast(err.message || "Failed to create order", "error");
@@ -155,10 +160,10 @@ export default function CheckoutPage() {
                     <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
                       <div className="p-5 border-b border-white/[0.07]">
                         <h2 className="font-semibold text-white">
-                          Your Cart ({cart.length} items)
+                          Your Cart ({cart.length + printCart.length} items)
                         </h2>
                       </div>
-                      {cart.length === 0 ? (
+                      {cart.length === 0 && printCart.length === 0 ? (
                         <div className="p-10 text-center">
                           <p className="text-[#86868b]">Your cart is empty.</p>
                           <button
@@ -237,11 +242,38 @@ export default function CheckoutPage() {
                               </div>
                             </div>
                           ))}
+
+                          {printCart.map((job) => (
+                            <div key={job.id} className="flex items-center gap-4 p-5">
+                              <div className="w-12 h-16 bg-white/[0.06] rounded-xl shrink-0 flex items-center justify-center text-xl">
+                                📄
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">
+                                  {job.fileName}
+                                </p>
+                                <p className="text-xs text-[#86868b] mt-0.5">
+                                  {job.copies} Copies • {job.colorMode} • {job.binding} Binding
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-bold text-white">
+                                  ₹{Number(job.price).toLocaleString("en-IN")}
+                                </p>
+                                <button
+                                  onClick={() => removeFromPrintCart(job.id)}
+                                  className="text-[10px] text-[#ff453a] hover:underline mt-0.5"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
 
-                    {cart.length > 0 && (
+                    {(cart.length > 0 || printCart.length > 0) && (
                       <button
                         onClick={() => setStep("shipping")}
                         className="mt-5 w-full bg-[#2997ff] hover:bg-[#1a83ff] text-white font-semibold py-3.5 rounded-2xl transition-colors"
@@ -466,9 +498,27 @@ export default function CheckoutPage() {
                       </p>
                     </div>
                   ))}
-                  {cart.length > 3 && (
+                  {printCart.slice(0, Math.max(0, 3 - cart.length)).map((job) => (
+                    <div key={job.id} className="flex items-center gap-3">
+                      <div className="w-8 h-11 bg-white/[0.06] rounded-lg shrink-0 flex items-center justify-center">
+                        📄
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white truncate">
+                          {job.fileName}
+                        </p>
+                        <p className="text-[10px] text-[#86868b]">
+                          ×{job.copies}
+                        </p>
+                      </div>
+                      <p className="text-xs font-semibold text-white">
+                        ₹{Number(job.price).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                  ))}
+                  {(cart.length + printCart.length) > 3 && (
                     <p className="text-[10px] text-[#86868b] text-center">
-                      +{cart.length - 3} more items
+                      +{(cart.length + printCart.length) - 3} more items
                     </p>
                   )}
                 </div>

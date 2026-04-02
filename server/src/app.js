@@ -14,12 +14,16 @@ const orderRoutes = require("./routes/orders");
 const adminRoutes = require("./routes/admin");
 const paymentRoutes = require("./routes/payment");
 const wishlistRoutes = require("./routes/wishlist");
+const printRoutes = require("./routes/print");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
 // ─── Security ────────────────────────────────────────────────────────────────
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(helmet({ 
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" } 
+}));
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 const allowedOrigins = (
@@ -82,6 +86,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/print", printRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_, res) => {
@@ -119,15 +124,26 @@ app.get("/api/install", async (req, res) => {
     // Run migrations using the local prisma binary (no npx needed)
     log.push("Running database migrations...");
     try {
-      const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
-      const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
+      const prismaBin = path.join(
+        process.cwd(),
+        "node_modules",
+        ".bin",
+        "prisma",
+      );
+      const schemaPath = path.join(
+        process.cwd(),
+        "server",
+        "prisma",
+        "schema.prisma",
+      );
       execSync(`"${prismaBin}" migrate deploy --schema="${schemaPath}"`, {
         stdio: "pipe",
         env: { ...process.env },
       });
       log.push("✅ Migrations applied successfully.");
     } catch (err) {
-      const msg = err.stderr?.toString() || err.stdout?.toString() || err.message;
+      const msg =
+        err.stderr?.toString() || err.stdout?.toString() || err.message;
       log.push(`⚠️ Migration note: ${msg.trim()}`);
     }
 

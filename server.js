@@ -30,7 +30,10 @@ async function main() {
     await prisma.$connect();
     console.log("✅ Database connected");
   } catch (dbErr) {
-    console.error("⚠️  Database connection failed (server will still start):", dbErr.message);
+    console.error(
+      "⚠️  Database connection failed (server will still start):",
+      dbErr.message,
+    );
   }
 
   // 3 ─ Load Express API app (all /api/* middleware + routes)

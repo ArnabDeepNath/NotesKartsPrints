@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { label: "Explore", href: "/books" },
   { label: "Featured", href: "/books?featured=true" },
   { label: "Collections", href: "/books#collections" },
+  { label: "Print", href: "/print" },
   { label: "About", href: "#about" },
 ];
 

@@ -131,7 +131,9 @@ model Order {
   currency        String      @default("INR")
   paymentMethod   String?
   paymentId       String?
-  stripeSessionId String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
   notes           String?     @db.Text
 
   shippingName    String?

@@ -39,8 +39,8 @@ app.use(
   }),
 );
 
-// ─── Stripe webhook (raw body MUST come before express.json) ─────────────────
-app.use("/api/payment/webhook", express.raw({ type: "application/json" }));
+// ─── Razorpay Webhook (uses standard json body) ─────────────────
+// No raw parsing needed
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));

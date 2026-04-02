@@ -1,17 +1,17 @@
 const router = require("express").Router();
 const {
-  createCheckoutSession,
-  stripeWebhook,
+  createRazorpayOrder,
+  razorpayWebhook,
   verifyPayment,
 } = require("../controllers/paymentController");
 const { authenticate } = require("../middleware/auth");
 const { requireUser } = require("../middleware/rbac");
 
-// Webhook must be BEFORE authenticate (uses raw body, no auth)
-router.post("/webhook", stripeWebhook);
+// Webhook must be BEFORE authenticate
+router.post("/webhook", razorpayWebhook);
 
 router.use(authenticate, requireUser);
-router.post("/create-checkout-session", createCheckoutSession);
-router.get("/verify/:sessionId", verifyPayment);
+router.post("/create-razorpay-order", createRazorpayOrder);
+router.post("/verify", verifyPayment);
 
 module.exports = router;

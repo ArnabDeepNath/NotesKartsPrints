@@ -120,12 +120,16 @@ export const api = {
     },
 
     payment: {
-        createCheckout: (orderId: string) =>
-            apiFetch<{ url: string; sessionId: string }>('/payment/create-checkout-session', {
+        createRazorpayOrder: (orderId: string) =>
+            apiFetch<{ orderId: string; amount: number; currency: string; key: string; user_name: string; user_email: string }>('/payment/create-razorpay-order', {
                 method: 'POST',
                 body: JSON.stringify({ orderId }),
             }),
-        verify: (sessionId: string) => apiFetch<{ paid: boolean; orderId: string }>(`/payment/verify/${sessionId}`),
+        verify: (data: { razorpay_order_id: string, razorpay_payment_id: string, razorpay_signature: string }) => 
+            apiFetch<{ success: boolean; orderId: string; status: string }>('/payment/verify', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }),
     },
 
     admin: {

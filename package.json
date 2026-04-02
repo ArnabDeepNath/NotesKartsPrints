@@ -35,9 +35,9 @@
     "next": "16.1.6",
     "nodemailer": "^6.9.15",
     "pdf-parse": "^2.4.5",
+    "razorpay": "^2.9.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "stripe": "^17.3.1",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

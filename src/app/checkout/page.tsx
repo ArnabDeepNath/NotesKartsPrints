@@ -10,6 +10,16 @@ import Navbar from "@/app/components/Navbar";
 
 type Step = "cart" | "shipping" | "payment";
 
+const loadScript = (src: string) => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 const STEPS = [
   { id: "cart" as Step, label: "Review Cart" },
   { id: "shipping" as Step, label: "Shipping" },
@@ -74,7 +84,14 @@ export default function CheckoutPage() {
     }
     setIsLoading(true);
     try {
-      // 1. Create order
+      const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+      if (!res) {
+        toast("Razorpay SDK failed to load. Are you online?", "error");
+        setIsLoading(false);
+        return;
+      }
+
+      // 1. Create order in our DB
       const orderRes: any = await api.orders.create({
         items: cart,
         printJobs: printCart.map(job => job.id),
@@ -88,15 +105,55 @@ export default function CheckoutPage() {
         },
       });
 
-      // 2. Create Stripe checkout session
-      const paymentRes: any = await api.payment.createCheckout(
+      // 2. Create Razorpay order
+      const paymentRes = await api.payment.createRazorpayOrder(
         orderRes.order.id,
       );
 
-      // 3. Redirect to Stripe
-      clearCart();
-      clearPrintCart();
-      window.location.href = paymentRes.url;
+      // 3. Open Razorpay Checkout modal
+      const options = {
+        key: paymentRes.key, // Enter the Key ID generated from the Dashboard
+        amount: paymentRes.amount,
+        currency: paymentRes.currency,
+        name: "Basak Library",
+        description: "Test Transaction",
+        // image: "/logo.png",
+        order_id: paymentRes.orderId,
+        handler: async function (response: any) {
+          try {
+            // 4. Verify payment
+            const verifyRes = await api.payment.verify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            if (verifyRes.success) {
+              toast("Payment successful!", "success");
+              clearCart();
+              clearPrintCart();
+              router.push(`/user/orders/${verifyRes.orderId}?payment=success`);
+            }
+          } catch (err: any) {
+            toast(err.message || "Payment verification failed", "error");
+          }
+        },
+        prefill: {
+          name: paymentRes.user_name,
+          email: paymentRes.user_email,
+          contact: shipping.phone,
+        },
+        theme: {
+          color: "#2997ff",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        toast("Payment failed. Please try again.", "error");
+      });
+      rzp.open();
+      
+      setIsLoading(false);
     } catch (err: any) {
       toast(err.message || "Failed to create order", "error");
       setIsLoading(false);

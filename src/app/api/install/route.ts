@@ -20,21 +20,21 @@ export async function GET(req: NextRequest) {
     const log: string[] = [];
 
     try {
-        // Step 1: Run Prisma migrations using node + resolved prisma package path
+        // Step 1: Push schema to database (creates tables from schema without requiring migration files)
         log.push("Running database migrations...");
+        const { execFileSync } = require("child_process");
+        const prismaPkgDir = path.dirname(require.resolve("prisma/package.json"));
+        const prismaCli = path.join(prismaPkgDir, "build", "index.js");
+        const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
         try {
-            const { execFileSync } = require("child_process");
-            const prismaPkgDir = path.dirname(require.resolve("prisma/package.json"));
-            const prismaCli = path.join(prismaPkgDir, "build", "index.js");
-            const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
-            execFileSync(process.execPath, [prismaCli, "migrate", "deploy", `--schema=${schemaPath}`], {
+            execFileSync(process.execPath, [prismaCli, "db", "push", "--accept-data-loss", `--schema=${schemaPath}`], {
                 stdio: "pipe",
                 env: { ...process.env },
             });
-            log.push("✅ Migrations applied successfully.");
+            log.push("✅ Database schema applied successfully.");
         } catch (err: any) {
             const msg = err.stderr?.toString() || err.stdout?.toString() || err.message;
-            log.push(`⚠️ Migration note: ${msg?.trim()}`);
+            throw new Error(`Database schema push failed: ${msg?.trim()}`);
         }
 
         // Step 2: Seed genres

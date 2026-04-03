@@ -206,6 +206,11 @@ export default function Navbar() {
                             <p className="text-xs font-medium text-white truncate">
                               {item.title}
                             </p>
+                            {item.variationString && (
+                              <p className="text-[10px] text-[#2997ff]">
+                                {item.variationString}
+                              </p>
+                            )}
                             <p className="text-xs text-[#86868b]">
                               ×{item.quantity}
                             </p>
@@ -215,7 +220,7 @@ export default function Navbar() {
                               ₹{(item.price * item.quantity).toFixed(0)}
                             </p>
                             <button
-                              onClick={() => removeFromCart(item.bookId)}
+                              onClick={() => removeFromCart(item.bookId, item.variationId)}
                               className="text-[10px] text-[#ff453a] hover:underline mt-0.5"
                             >
                               Remove

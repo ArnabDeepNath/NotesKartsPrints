@@ -29,6 +29,8 @@ const getBooks = async (req, res, next) => {
         ],
       }),
       ...(genre && { genre: { slug: genre } }),
+      ...(req.query.category && { category: { slug: req.query.category } }),
+      ...(req.query.subcategory && { subcategory: { slug: req.query.subcategory } }),
       ...(featured === "true" && { featured: true }),
       ...(format && { format }),
       ...((minPrice || maxPrice) && {
@@ -51,6 +53,8 @@ const getBooks = async (req, res, next) => {
         orderBy: { [sortField]: sortOrder },
         include: {
           genre: { select: { id: true, name: true, slug: true, color: true } },
+          category: { select: { id: true, name: true, slug: true } },
+          variations: true,
           _count: { select: { reviews: true } },
         },
       }),
@@ -78,6 +82,9 @@ const getBook = async (req, res, next) => {
       where: { id: req.params.id, isActive: true },
       include: {
         genre: true,
+        category: true,
+        subcategory: true,
+        variations: true,
         reviews: {
           take: 10,
           orderBy: { createdAt: "desc" },
@@ -126,7 +133,10 @@ const createBook = async (req, res, next) => {
       stock,
       featured,
       genreId,
+      categoryId,
+      subcategoryId,
       tags,
+      variations,
     } = req.body;
 
     const book = await prisma.book.create({
@@ -149,9 +159,23 @@ const createBook = async (req, res, next) => {
         stock: Number(stock) || 0,
         featured: featured === true || featured === "true",
         genreId: genreId || null,
+        categoryId: categoryId || null,
+        subcategoryId: subcategoryId || null,
         tags,
+        ...(variations && Array.isArray(variations) && variations.length > 0 && {
+          variations: {
+            create: variations.map((v) => ({
+              attributes: v.attributes,
+              price: Number(v.price),
+              comparePrice: v.comparePrice ? Number(v.comparePrice) : null,
+              stock: Number(v.stock) || 0,
+              sku: v.sku || null,
+              image: v.image || null,
+            })),
+          },
+        }),
       },
-      include: { genre: true },
+      include: { genre: true, category: true, variations: true },
     });
 
     res.status(201).json({ message: "Book created", book });
@@ -164,6 +188,8 @@ const createBook = async (req, res, next) => {
 const updateBook = async (req, res, next) => {
   try {
     const data = { ...req.body };
+    const variations = data.variations;
+    delete data.variations; // Prevent direct update of this array
 
     if (data.price) data.price = Number(data.price);
     if (data.comparePrice) data.comparePrice = Number(data.comparePrice);
@@ -172,11 +198,29 @@ const updateBook = async (req, res, next) => {
     if (data.featured !== undefined)
       data.featured = data.featured === true || data.featured === "true";
     if (data.publishedAt) data.publishedAt = new Date(data.publishedAt);
+    if (data.categoryId === "") data.categoryId = null;
+    if (data.subcategoryId === "") data.subcategoryId = null;
+
+    let updateData = { ...data };
+
+    if (variations && Array.isArray(variations)) {
+      updateData.variations = {
+        deleteMany: {}, // The simplest way to update variations is to replace them
+        create: variations.map((v) => ({
+          attributes: v.attributes,
+          price: Number(v.price),
+          comparePrice: v.comparePrice ? Number(v.comparePrice) : null,
+          stock: Number(v.stock) || 0,
+          sku: v.sku || null,
+          image: v.image || null,
+        })),
+      };
+    }
 
     const book = await prisma.book.update({
       where: { id: req.params.id },
-      data,
-      include: { genre: true },
+      data: updateData,
+      include: { genre: true, category: true, variations: true },
     });
 
     res.json({ message: "Book updated", book });

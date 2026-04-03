@@ -252,6 +252,11 @@ export default function CheckoutPage() {
                                 <p className="text-sm font-medium text-white truncate">
                                   {item.title}
                                 </p>
+                                {item.variationString && (
+                                  <p className="text-[10px] text-[#2997ff] mt-0.5">
+                                    {item.variationString}
+                                  </p>
+                                )}
                                 <p className="text-xs text-[#86868b] mt-0.5">
                                   ₹{Number(item.price).toLocaleString("en-IN")}
                                 </p>
@@ -261,6 +266,7 @@ export default function CheckoutPage() {
                                   onClick={() =>
                                     updateCartQty(
                                       item.bookId,
+                                      item.variationId,
                                       Math.max(1, item.quantity - 1),
                                     )
                                   }
@@ -275,6 +281,7 @@ export default function CheckoutPage() {
                                   onClick={() =>
                                     updateCartQty(
                                       item.bookId,
+                                      item.variationId,
                                       item.quantity + 1,
                                     )
                                   }
@@ -291,7 +298,7 @@ export default function CheckoutPage() {
                                   ).toLocaleString("en-IN")}
                                 </p>
                                 <button
-                                  onClick={() => removeFromCart(item.bookId)}
+                                  onClick={() => removeFromCart(item.bookId, item.variationId)}
                                   className="text-[10px] text-[#ff453a] hover:underline mt-0.5"
                                 >
                                   Remove

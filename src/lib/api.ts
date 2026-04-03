@@ -87,9 +87,9 @@ export const api = {
         },
         get: (id: string) => apiFetch<{ book: Book }>(`/books/${id}`, { auth: false }),
         genres: () => apiFetch<{ genres: Genre[] }>('/books/genres', { auth: false }),
-        create: (data: Partial<Book>) =>
+        create: (data: any) =>
             apiFetch('/books', { method: 'POST', body: JSON.stringify(data) }),
-        update: (id: string, data: Partial<Book>) =>
+        update: (id: string, data: any) =>
             apiFetch(`/books/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         delete: (id: string) => apiFetch(`/books/${id}`, { method: 'DELETE' }),
         review: (id: string, data: { rating: number; title?: string; comment?: string }) =>
@@ -147,6 +147,30 @@ export const api = {
         },
         updateOrder: (id: string, status: string) =>
             apiFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    },
+
+    categories: {
+        getAll: () => apiFetch('/categories'),
+        getOne: (id: string) => apiFetch(`/categories/${id}`),
+        create: (data: any) => apiFetch('/categories', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: any) => apiFetch(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        delete: (id: string) => apiFetch(`/categories/${id}`, { method: 'DELETE' }),
+    },
+
+    upload: {
+        image: (formData: FormData) => {
+            const token = getAccessToken();
+            return fetch(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData,
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                credentials: 'include'
+            }).then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Upload failed');
+                return data;
+            });
+        }
     },
 
     print: {

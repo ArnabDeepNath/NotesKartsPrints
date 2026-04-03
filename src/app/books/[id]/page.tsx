@@ -45,6 +45,7 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [added, setAdded] = useState(false);
+  const [selectedVariation, setSelectedVariation] = useState<any>(null);
 
   // Review form
   const [reviewRating, setReviewRating] = useState(5);
@@ -58,6 +59,9 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
       .then((data: any) => {
         setBook(data.book);
         setInWishlist(data.book?.inWishlist ?? false);
+        if (data.book?.variations && data.book.variations.length > 0) {
+          setSelectedVariation(data.book.variations[0]);
+        }
       })
       .catch(() => setBook(null))
       .finally(() => setLoading(false));
@@ -67,10 +71,12 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
     if (!book) return;
     addToCart({
       bookId: book.id,
+      variationId: selectedVariation?.id,
+      variationString: selectedVariation ? `${selectedVariation.attributes?.type}: ${selectedVariation.attributes?.value}` : undefined,
       title: book.title,
       author: book.author ?? "",
-      price: book.price,
-      coverImage: book.coverImage,
+      price: selectedVariation ? Number(selectedVariation.price) : Number(book.price),
+      coverImage: selectedVariation?.image || book.coverImage,
       quantity: 1,
     });
     setAdded(true);
@@ -191,9 +197,9 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
         >
           {/* Cover */}
           <div className="relative">
-            {book.coverImage ? (
+            {selectedVariation?.image || book.coverImage ? (
               <img
-                src={book.coverImage}
+                src={selectedVariation?.image || book.coverImage}
                 alt={book.title}
                 className="w-full aspect-[3/4] object-cover rounded-3xl shadow-2xl shadow-black/60"
               />
@@ -238,11 +244,11 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
             {/* Price */}
             <div className="flex items-baseline gap-3 mt-6">
               <span className="text-3xl font-bold text-white">
-                ₹{Number(book.price).toLocaleString("en-IN")}
+                ₹{Number(selectedVariation ? selectedVariation.price : book.price).toLocaleString("en-IN")}
               </span>
-              {book.comparePrice && (
+              {(selectedVariation ? selectedVariation.comparePrice : book.comparePrice) && (
                 <span className="text-lg text-[#86868b] line-through">
-                  ₹{Number(book.comparePrice).toLocaleString("en-IN")}
+                  ₹{Number(selectedVariation ? selectedVariation.comparePrice : book.comparePrice).toLocaleString("en-IN")}
                 </span>
               )}
               {discount > 0 && (
@@ -252,14 +258,38 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
               )}
             </div>
 
+            {/* Variations Selector */}
+            {book.variations && book.variations.length > 0 && (
+              <div className="mt-6">
+                <p className="text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-3">Options</p>
+                <div className="flex flex-wrap gap-3">
+                  {book.variations.map((v: any) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariation(v)}
+                      className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
+                        selectedVariation?.id === v.id
+                          ? "border-[#2997ff] bg-[#2997ff]/10 text-white"
+                          : "border-white/[0.1] text-[#86868b] hover:border-white/[0.2] hover:text-white"
+                      }`}
+                    >
+                      {v.attributes?.value || 'Option'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Stock */}
             <p
-              className={`text-sm mt-2 ${book.stock === 0 ? "text-[#ff453a]" : book.stock < 10 ? "text-[#f5a623]" : "text-[#30d158]"}`}
+              className={`text-sm mt-4 ${
+                (selectedVariation ? selectedVariation.stock : book.stock) === 0 ? "text-[#ff453a]" : (selectedVariation ? selectedVariation.stock : book.stock) < 10 ? "text-[#f5a623]" : "text-[#30d158]"
+              }`}
             >
-              {book.stock === 0
+              {(selectedVariation ? selectedVariation.stock : book.stock) === 0
                 ? "Out of stock"
-                : book.stock < 10
-                  ? `Only ${book.stock} left`
+                : (selectedVariation ? selectedVariation.stock : book.stock) < 10
+                  ? `Only ${(selectedVariation ? selectedVariation.stock : book.stock)} left`
                   : "In stock"}
             </p>
 
@@ -268,9 +298,9 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={handleAddToCart}
-                disabled={book.stock === 0}
+                disabled={(selectedVariation ? selectedVariation.stock : book.stock) === 0}
                 className={`flex-1 py-3.5 rounded-2xl font-semibold text-sm transition-all ${
-                  book.stock === 0
+                  (selectedVariation ? selectedVariation.stock : book.stock) === 0
                     ? "bg-white/[0.04] text-[#86868b] cursor-not-allowed"
                     : added
                       ? "bg-[#30d158] text-white"
@@ -279,7 +309,7 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
               >
                 {added
                   ? "✓ Added to Cart"
-                  : book.stock === 0
+                  : (selectedVariation ? selectedVariation.stock : book.stock) === 0
                     ? "Out of Stock"
                     : "Add to Cart"}
               </motion.button>

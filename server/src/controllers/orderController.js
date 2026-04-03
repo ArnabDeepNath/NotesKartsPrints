@@ -16,20 +16,28 @@ const createOrder = async (req, res, next) => {
       throw new AppError("Order must have at least one item or print job", 400);
     }
 
-    // Fetch all books
-    const bookIds = items.map((i) => i.bookId);
+    // Fetch all books with their variations
+    const bookIds = items?.map((i) => i.bookId) || [];
     const books = await prisma.book.findMany({
       where: { id: { in: bookIds }, isActive: true },
+      include: { variations: true }
     });
 
     if (books.length !== bookIds.length) {
       throw new AppError("One or more books not found", 404);
     }
 
-    // Validate stock
+    // Validate stock and pricing
     for (const item of (items || [])) {
       const book = books.find((b) => b.id === item.bookId);
-      if (book.stock < item.quantity) {
+      let variant = null;
+      if (item.variationId) {
+         variant = book.variations.find(v => v.id === item.variationId);
+         if (!variant) throw new AppError(`Variation not found for "${book.title}"`, 404);
+      }
+
+      const availableStock = variant ? variant.stock : book.stock;
+      if (availableStock < item.quantity) {
         throw new AppError(`Insufficient stock for "${book.title}"`, 400);
       }
     }
@@ -49,12 +57,19 @@ const createOrder = async (req, res, next) => {
     let subtotal = 0;
     const orderItems = (items || []).map((item) => {
       const book = books.find((b) => b.id === item.bookId);
-      const lineTotal = Number(book.price) * item.quantity;
+      let variant = null;
+      if (item.variationId) {
+        variant = book.variations.find(v => v.id === item.variationId);
+      }
+      
+      const itemPrice = variant ? Number(variant.price) : Number(book.price);
+      const lineTotal = itemPrice * item.quantity;
       subtotal += lineTotal;
       return {
         bookId: item.bookId,
+        variationId: item.variationId || null,
         quantity: item.quantity,
-        price: Number(book.price),
+        price: itemPrice,
       };
     });
 
@@ -106,6 +121,7 @@ const getOrder = async (req, res, next) => {
             book: {
               select: { id: true, title: true, coverImage: true, author: true },
             },
+            variation: true,
           },
         },
         printJobs: true,

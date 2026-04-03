@@ -21,6 +21,7 @@ enum OrderStatus {
   PAID
   PROCESSING
   SHIPPED
+  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
   REFUNDED
@@ -82,6 +83,46 @@ model Genre {
   @@map("genres")
 }
 
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?    @db.Text
+  image       String?
+  
+  parentId    String?
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  
+  books       Book[]     @relation("BookCategory")
+  subBooks    Book[]     @relation("BookSubcategory")
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("categories")
+}
+
+model BookVariation {
+  id          String   @id @default(uuid())
+  bookId      String
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  
+  attributes  Json     
+  price       Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  sku         String?
+  image       String?
+
+  orderItems  OrderItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("book_variations")
+}
+
 model Book {
   id           String     @id @default(uuid())
   title        String
@@ -106,12 +147,18 @@ model Book {
   featured     Boolean    @default(false)
   isActive     Boolean    @default(true)
   genreId      String?
+  categoryId   String?
+  subcategoryId String?
   tags         String?    @db.Text
 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   genre        Genre?     @relation(fields: [genreId], references: [id])
+  category     Category?  @relation("BookCategory", fields: [categoryId], references: [id])
+  subcategory  Category?  @relation("BookSubcategory", fields: [subcategoryId], references: [id])
+  variations   BookVariation[]
+  
   orderItems   OrderItem[]
   wishlist     Wishlist[]
   reviews      Review[]
@@ -155,14 +202,16 @@ model Order {
 }
 
 model OrderItem {
-  id       String  @id @default(uuid())
-  orderId  String
-  bookId   String
-  quantity Int     @default(1)
-  price    Decimal @db.Decimal(10, 2)
+  id          String  @id @default(uuid())
+  orderId     String
+  bookId      String
+  variationId String?
+  quantity    Int     @default(1)
+  price       Decimal @db.Decimal(10, 2)
 
-  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  book     Book    @relation(fields: [bookId], references: [id])
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  book        Book    @relation(fields: [bookId], references: [id])
+  variation   BookVariation? @relation(fields: [variationId], references: [id])
 
   @@map("order_items")
 }

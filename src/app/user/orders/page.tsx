@@ -169,18 +169,25 @@ export default function OrdersPage() {
                                 key={item.id}
                                 className="flex items-center gap-3"
                               >
-                                {item.book?.coverImage && (
+                                {item.variation?.image || item.book?.coverImage ? (
                                   <img
-                                    src={item.book.coverImage}
+                                    src={item.variation?.image || item.book.coverImage}
                                     alt={item.book.title}
                                     className="w-10 h-14 object-cover rounded-lg"
                                   />
+                                ) : (
+                                  <div className="w-10 h-14 bg-white/[0.06] rounded-lg shrink-0" />
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium text-white truncate">
                                     {item.book?.title}
                                   </p>
-                                  <p className="text-xs text-[#86868b]">
+                                  {item.variation && (
+                                    <p className="text-[10px] text-[#2997ff]">
+                                      {item.variation.attributes?.type}: {item.variation.attributes?.value}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-[#86868b] mt-0.5">
                                     Qty {item.quantity}
                                   </p>
                                 </div>

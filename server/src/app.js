@@ -15,6 +15,8 @@ const adminRoutes = require("./routes/admin");
 const paymentRoutes = require("./routes/payment");
 const wishlistRoutes = require("./routes/wishlist");
 const printRoutes = require("./routes/print");
+const categoryRoutes = require("./routes/categories");
+const uploadRoutes = require("./routes/upload");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -87,6 +89,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/print", printRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_, res) => {

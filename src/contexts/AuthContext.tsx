@@ -12,6 +12,8 @@ import { api, setAccessToken, User, PrintJob } from "@/lib/api";
 
 interface CartItem {
   bookId: string;
+  variationId?: string;
+  variationString?: string;
   title: string;
   author: string;
   price: number;
@@ -28,8 +30,8 @@ interface AuthContextType {
   updateUser: (data: Partial<User>) => void;
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (bookId: string) => void;
-  updateCartQty: (bookId: string, qty: number) => void;
+  removeFromCart: (bookId: string, variationId?: string) => void;
+  updateCartQty: (bookId: string, variationId: string | undefined, qty: number) => void;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
@@ -127,10 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ─── Cart ─────────────────────────────────────────────────────────────────
   const addToCart = useCallback((item: CartItem) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.bookId === item.bookId);
-      if (existing) {
-        return prev.map((i) =>
-          i.bookId === item.bookId
+      const existingIndex = prev.findIndex((i) => i.bookId === item.bookId && i.variationId === item.variationId);
+      if (existingIndex >= 0) {
+        return prev.map((i, idx) =>
+          idx === existingIndex
             ? { ...i, quantity: i.quantity + (item.quantity || 1) }
             : i,
         );
@@ -139,16 +141,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const removeFromCart = useCallback((bookId: string) => {
-    setCart((prev) => prev.filter((i) => i.bookId !== bookId));
+  const removeFromCart = useCallback((bookId: string, variationId?: string) => {
+    setCart((prev) => prev.filter((i) => !(i.bookId === bookId && i.variationId === variationId)));
   }, []);
 
-  const updateCartQty = useCallback((bookId: string, qty: number) => {
+  const updateCartQty = useCallback((bookId: string, variationId: string | undefined, qty: number) => {
     if (qty <= 0) {
-      setCart((prev) => prev.filter((i) => i.bookId !== bookId));
+      setCart((prev) => prev.filter((i) => !(i.bookId === bookId && i.variationId === variationId)));
     } else {
       setCart((prev) =>
-        prev.map((i) => (i.bookId === bookId ? { ...i, quantity: qty } : i)),
+        prev.map((i) => (i.bookId === bookId && i.variationId === variationId ? { ...i, quantity: qty } : i)),
       );
     }
   }, []);

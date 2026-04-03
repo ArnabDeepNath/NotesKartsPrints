@@ -80,6 +80,7 @@ const getUserOrders = async (req, res, next) => {
                   author: true,
                 },
               },
+              variation: true,
             },
           },
         },

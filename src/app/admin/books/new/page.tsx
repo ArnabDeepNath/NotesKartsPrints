@@ -14,6 +14,8 @@ export default function NewBookPage() {
   const { toast } = useToast();
 
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [variations, setVariations] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -28,6 +30,8 @@ export default function NewBookPage() {
     pages: "",
     stock: "10",
     genreId: "",
+    categoryId: "",
+    subcategoryId: "",
     coverImage: "",
     featured: false,
   });
@@ -46,6 +50,10 @@ export default function NewBookPage() {
         setFormData(prev => ({ ...prev, genreId: res.genres[0].id }));
       }
     });
+    // Fetch Categories
+    api.categories.getAll().then((res: any) => {
+      setCategories(res || []);
+    });
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -54,6 +62,48 @@ export default function NewBookPage() {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleAddVariation = () => {
+    setVariations(prev => [
+      ...prev,
+      { id: Date.now(), attributes: { type: "Format", value: "Paperback" }, price: "", comparePrice: "", stock: "10", sku: "", image: null, _file: null }
+    ]);
+  };
+
+  const handleRemoveVariation = (idx: number) => {
+    setVariations(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleVariationChange = (idx: number, field: string, value: any) => {
+    setVariations(prev => {
+      const next = [...prev];
+      if (field === "attrType") {
+        next[idx].attributes.type = value;
+      } else if (field === "attrValue") {
+        next[idx].attributes.value = value;
+      } else {
+        next[idx][field] = value;
+      }
+      return next;
+    });
+  };
+
+  const handleVariationImage = async (idx: number, file: File) => {
+    try {
+      const uploadData = new FormData();
+      uploadData.append("image", file);
+      const uploadRes: any = await api.upload.image(uploadData);
+      
+      setVariations(prev => {
+        const next = [...prev];
+        next[idx].image = uploadRes.url;
+        return next;
+      });
+      toast("Variation image uploaded", "success");
+    } catch (err: any) {
+      toast("Image upload failed", "error");
     }
   };
 
@@ -72,6 +122,7 @@ export default function NewBookPage() {
         comparePrice: formData.comparePrice ? Number(formData.comparePrice) : undefined,
         pages: formData.pages ? Number(formData.pages) : undefined,
         stock: Number(formData.stock),
+        variations: variations.length > 0 ? variations : undefined,
       });
 
       toast("Book added successfully!", "success");
@@ -155,19 +206,54 @@ export default function NewBookPage() {
                 />
               </div>
 
-              {/* Genre */}
-              <div>
-                <label className="block text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-2">Genre</label>
-                <select
-                  name="genreId"
-                  value={formData.genreId}
-                  onChange={handleChange}
-                  className="w-full bg-[#1c1c1e] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff] appearance-none"
-                >
-                  {genres.map(g => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
+              {/* Genre, Category, Subcategory */}
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-2">Primary Genre (Legacy)</label>
+                  <select
+                    name="genreId"
+                    value={formData.genreId}
+                    onChange={handleChange}
+                    className="w-full bg-[#1c1c1e] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff] appearance-none"
+                  >
+                    <option value="">None</option>
+                    {genres.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-2">Category</label>
+                  <select
+                    name="categoryId"
+                    value={formData.categoryId}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, categoryId: e.target.value, subcategoryId: "" }));
+                    }}
+                    className="w-full bg-[#1c1c1e] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff] appearance-none"
+                  >
+                    <option value="">None</option>
+                    {categories.filter(c => !c.parentId).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                {formData.categoryId && (
+                  <div>
+                    <label className="block text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-2">Subcategory</label>
+                    <select
+                      name="subcategoryId"
+                      value={formData.subcategoryId}
+                      onChange={handleChange}
+                      className="w-full bg-[#1c1c1e] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff] appearance-none"
+                    >
+                      <option value="">None</option>
+                      {categories.find(c => c.id === formData.categoryId)?.children?.map((sub: any) => (
+                        <option key={sub.id} value={sub.id}>{sub.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* ISBN/Stock */}
@@ -246,6 +332,96 @@ export default function NewBookPage() {
               />
               <span className="text-white text-sm font-medium">Feature this book on the home page</span>
             </label>
+
+            {/* Variations Section */}
+            <div className="pt-6 border-t border-white/[0.1]">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">Product Variations</h3>
+                <button
+                  type="button"
+                  onClick={handleAddVariation}
+                  className="bg-white/[0.05] hover:bg-white/[0.1] text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                >
+                  + Add Variation
+                </button>
+              </div>
+              <p className="text-[#86868b] text-sm mb-4">Add variations like Hardcover, Signed Edition, etc. to override base pricing.</p>
+
+              {variations.length === 0 && (
+                <div className="text-center py-4 bg-white/[0.02] border border-white/[0.05] rounded-xl text-sm text-[#86868b]">
+                  No variations added. Will use base price and stock.
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {variations.map((v, idx) => (
+                  <div key={v.id} className="p-5 bg-[#1c1c1e] border border-white/[0.05] rounded-2xl relative group">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVariation(idx)}
+                      className="absolute top-4 right-4 text-[#ff453a] hover:underline text-xs"
+                    >
+                      Remove
+                    </button>
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1">Attr Name (e.g. Format)</label>
+                        <input
+                          type="text"
+                          value={v.attributes.type}
+                          onChange={(e) => handleVariationChange(idx, "attrType", e.target.value)}
+                          className="w-full bg-[#2c2c2e] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2997ff]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1">Attr Value (e.g. Hardcover)</label>
+                        <input
+                          type="text"
+                          value={v.attributes.value}
+                          onChange={(e) => handleVariationChange(idx, "attrValue", e.target.value)}
+                          className="w-full bg-[#2c2c2e] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2997ff]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1">Price</label>
+                        <input
+                          type="number"
+                          value={v.price}
+                          step="0.01"
+                          onChange={(e) => handleVariationChange(idx, "price", e.target.value)}
+                          className="w-full bg-[#2c2c2e] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2997ff]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1">Stock</label>
+                        <input
+                          type="number"
+                          value={v.stock}
+                          onChange={(e) => handleVariationChange(idx, "stock", e.target.value)}
+                          className="w-full bg-[#2c2c2e] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2997ff]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1">Specific Image</label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) handleVariationImage(idx, e.target.files[0]);
+                          }}
+                          className="flex-1 text-sm text-[#86868b] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white/[0.05] file:text-white hover:file:bg-white/[0.1] cursor-pointer"
+                        />
+                        {v.image && (
+                          <img src={v.image} alt="preview" className="w-10 h-10 object-cover rounded-lg border border-white/[0.1]" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <button
               type="submit"

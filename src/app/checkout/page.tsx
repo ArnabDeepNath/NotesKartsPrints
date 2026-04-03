@@ -446,21 +446,27 @@ export default function CheckoutPage() {
                     <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-6 mb-4">
                       <h2 className="font-semibold text-white mb-4">Payment</h2>
                       <div className="flex items-center gap-3 bg-white/[0.04] rounded-2xl p-4">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#635bff] to-[#4834d4] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2997ff] to-[#1a83ff] flex items-center justify-center">
                           <svg
                             className="w-5 h-5 text-white"
                             viewBox="0 0 24 24"
-                            fill="currentColor"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
                           >
-                            <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.165-2.609-5.886-6.591-7.305z" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
                           </svg>
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-white">
-                            Stripe Secure Checkout
+                            Razorpay Secure Checkout
                           </p>
                           <p className="text-xs text-[#86868b]">
-                            You'll be redirected to Stripe to complete payment
+                            Complete your payment securely via Razorpay
                           </p>
                         </div>
                       </div>
@@ -478,7 +484,7 @@ export default function CheckoutPage() {
                             d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                           />
                         </svg>
-                        256-bit SSL Encryption · Powered by Stripe
+                        256-bit SSL Encryption · Powered by Razorpay
                       </div>
                     </div>
 

@@ -9,6 +9,7 @@
 
 require("dotenv").config(); // loads .env from project root
 
+const { execSync } = require("child_process");
 const express = require("express");
 const next = require("next");
 const { parse } = require("url");
@@ -21,6 +22,18 @@ const nextApp = next({ dev, hostname, port });
 const handle = nextApp.getRequestHandler();
 
 async function main() {
+  // 0 ─ Push Prisma schema to the database (ensures tables are up-to-date)
+  try {
+    console.log("⏳ Running prisma db push...");
+    execSync(
+      "npx prisma db push --accept-data-loss --schema=server/prisma/schema.prisma",
+      { stdio: "inherit" },
+    );
+    console.log("✅ Prisma db push complete");
+  } catch (pushErr) {
+    console.error("⚠️  Prisma db push failed:", pushErr.message);
+  }
+
   // 1 ─ Prepare Next.js
   await nextApp.prepare();
 

@@ -3,6 +3,15 @@ const { AppError } = require("../middleware/errorHandler");
 
 // GET /api/admin/stats
 const getStats = async (req, res, next) => {
+  const safe = async (label, fn, fallback) => {
+    try {
+      return await fn();
+    } catch (err) {
+      console.error(`[Admin Stats] Query failed — ${label}:`, err.message);
+      return fallback;
+    }
+  };
+
   try {
     const [
       totalBooks,
@@ -14,51 +23,84 @@ const getStats = async (req, res, next) => {
       recentUsers,
       ordersByStatus,
     ] = await Promise.all([
-      prisma.book.count({ where: { isActive: true } }),
-      prisma.user.count({ where: { role: "USER" } }),
-      prisma.order.count(),
-      prisma.order.aggregate({
-        where: { status: { in: ["PAID", "DELIVERED", "SHIPPED"] } },
-        _sum: { total: true },
-      }),
-      prisma.order.findMany({
-        take: 10,
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: { select: { name: true, email: true, avatar: true } },
-          items: { select: { quantity: true } },
-        },
-      }),
-      prisma.book.findMany({
-        take: 5,
-        orderBy: { sold: "desc" },
-        where: { isActive: true },
-        select: {
-          id: true,
-          title: true,
-          author: true,
-          coverImage: true,
-          sold: true,
-          price: true,
-          rating: true,
-        },
-      }),
-      prisma.user.findMany({
-        take: 5,
-        where: { role: "USER" },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-          createdAt: true,
-        },
-      }),
-      prisma.order.groupBy({
-        by: ["status"],
-        _count: { id: true },
-      }),
+      safe(
+        "book.count",
+        () => prisma.book.count({ where: { isActive: true } }),
+        0,
+      ),
+      safe(
+        "user.count",
+        () => prisma.user.count({ where: { role: "USER" } }),
+        0,
+      ),
+      safe("order.count", () => prisma.order.count(), 0),
+      safe(
+        "order.aggregate revenue",
+        () =>
+          prisma.order.aggregate({
+            where: { status: { in: ["PAID", "DELIVERED", "SHIPPED"] } },
+            _sum: { total: true },
+          }),
+        { _sum: { total: null } },
+      ),
+      safe(
+        "order.findMany recentOrders",
+        () =>
+          prisma.order.findMany({
+            take: 10,
+            orderBy: { createdAt: "desc" },
+            include: {
+              user: { select: { name: true, email: true, avatar: true } },
+              items: { select: { quantity: true } },
+            },
+          }),
+        [],
+      ),
+      safe(
+        "book.findMany topBooks",
+        () =>
+          prisma.book.findMany({
+            take: 5,
+            orderBy: { sold: "desc" },
+            where: { isActive: true },
+            select: {
+              id: true,
+              title: true,
+              author: true,
+              coverImage: true,
+              sold: true,
+              price: true,
+              rating: true,
+            },
+          }),
+        [],
+      ),
+      safe(
+        "user.findMany recentUsers",
+        () =>
+          prisma.user.findMany({
+            take: 5,
+            where: { role: "USER" },
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+              createdAt: true,
+            },
+          }),
+        [],
+      ),
+      safe(
+        "order.groupBy status",
+        () =>
+          prisma.order.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+          }),
+        [],
+      ),
     ]);
 
     res.json({
@@ -66,7 +108,7 @@ const getStats = async (req, res, next) => {
         totalBooks,
         totalUsers,
         totalOrders,
-        revenue: revenue._sum.total || 0,
+        revenue: Number(revenue._sum.total) || 0,
       },
       recentOrders,
       topBooks,

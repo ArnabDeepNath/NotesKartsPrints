@@ -1,7 +1,6 @@
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 
-// GET /api/books
 const getBooks = async (req, res, next) => {
   try {
     const {
@@ -15,31 +14,36 @@ const getBooks = async (req, res, next) => {
       sort = "createdAt",
       order = "desc",
       format,
+      category,
+      subcategory,
     } = req.query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skipNum = Math.max(0, (Number(page) || 1) - 1) * (Number(limit) || 12);
+    const takeNum = Number(limit) || 12;
 
     const where = {
       isActive: true,
-      ...(search && {
-        OR: [
-          { title: { contains: search } },
-          { author: { contains: search } },
-          { tags: { contains: search } },
-        ],
-      }),
-      ...(genre && { genre: { slug: genre } }),
-      ...(req.query.category && { category: { slug: req.query.category } }),
-      ...(req.query.subcategory && { subcategory: { slug: req.query.subcategory } }),
-      ...(featured === "true" && { featured: true }),
-      ...(format && { format }),
-      ...((minPrice || maxPrice) && {
-        price: {
-          ...(minPrice && { gte: Number(minPrice) }),
-          ...(maxPrice && { lte: Number(maxPrice) }),
-        },
-      }),
     };
+
+    if (search) {
+      where.OR = [
+        { title: { contains: String(search) } },
+        { author: { contains: String(search) } },
+        { tags: { contains: String(search) } },
+      ];
+    }
+    
+    if (genre) where.genre = { slug: String(genre) };
+    if (category) where.category = { slug: String(category) };
+    if (subcategory) where.subcategory = { slug: String(subcategory) };
+    if (featured === "true") where.featured = true;
+    if (format) where.format = String(format);
+
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice && !isNaN(Number(minPrice))) where.price.gte = Number(minPrice);
+      if (maxPrice && !isNaN(Number(maxPrice))) where.price.lte = Number(maxPrice);
+    }
 
     const validSortFields = ["createdAt", "price", "rating", "sold", "title"];
     const sortField = validSortFields.includes(sort) ? sort : "createdAt";
@@ -48,14 +52,13 @@ const getBooks = async (req, res, next) => {
     const [books, total] = await Promise.all([
       prisma.book.findMany({
         where,
-        skip,
-        take: Number(limit),
+        skip: skipNum,
+        take: takeNum,
         orderBy: { [sortField]: sortOrder },
         include: {
-          genre: { select: { id: true, name: true, slug: true, color: true } },
-          category: { select: { id: true, name: true, slug: true } },
+          genre: true,
+          category: true,
           variations: true,
-          _count: { select: { reviews: true } },
         },
       }),
       prisma.book.count({ where }),
@@ -65,9 +68,9 @@ const getBooks = async (req, res, next) => {
       books,
       pagination: {
         total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
+        page: Number(page) || 1,
+        limit: takeNum,
+        totalPages: Math.ceil(total / takeNum),
       },
     });
   } catch (err) {

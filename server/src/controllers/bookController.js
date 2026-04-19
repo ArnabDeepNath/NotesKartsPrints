@@ -1,6 +1,22 @@
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 
+// Helper: convert Prisma Decimal fields to plain numbers for JSON serialization
+function serializeBook(book) {
+  if (!book) return book;
+  const b = { ...book };
+  if (b.price != null) b.price = Number(b.price);
+  if (b.comparePrice != null) b.comparePrice = Number(b.comparePrice);
+  if (b.variations && Array.isArray(b.variations)) {
+    b.variations = b.variations.map(v => ({
+      ...v,
+      price: v.price != null ? Number(v.price) : v.price,
+      comparePrice: v.comparePrice != null ? Number(v.comparePrice) : v.comparePrice,
+    }));
+  }
+  return b;
+}
+
 const getBooks = async (req, res, next) => {
   try {
     const {
@@ -33,9 +49,22 @@ const getBooks = async (req, res, next) => {
       ];
     }
     
-    if (genre) where.genre = { slug: String(genre) };
-    if (category) where.category = { slug: String(category) };
-    if (subcategory) where.subcategory = { slug: String(subcategory) };
+    // Use scalar ID filters instead of relational filters (more reliable on MySQL)
+    if (genre) {
+      const genreRecord = await prisma.genre.findUnique({ where: { slug: String(genre) } });
+      if (genreRecord) where.genreId = genreRecord.id;
+      else where.genreId = "___none___";
+    }
+    if (category) {
+      const catRecord = await prisma.category.findUnique({ where: { slug: String(category) } });
+      if (catRecord) where.categoryId = catRecord.id;
+      else where.categoryId = "___none___";
+    }
+    if (subcategory) {
+      const subRecord = await prisma.category.findUnique({ where: { slug: String(subcategory) } });
+      if (subRecord) where.subcategoryId = subRecord.id;
+      else where.subcategoryId = "___none___";
+    }
     if (featured === "true") where.featured = true;
     if (format) where.format = String(format);
 
@@ -49,7 +78,7 @@ const getBooks = async (req, res, next) => {
     const sortField = validSortFields.includes(sort) ? sort : "createdAt";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
-    const [books, total] = await Promise.all([
+    const [rawBooks, total] = await Promise.all([
       prisma.book.findMany({
         where,
         skip: skipNum,
@@ -64,6 +93,9 @@ const getBooks = async (req, res, next) => {
       prisma.book.count({ where }),
     ]);
 
+    // Serialize Decimal fields to plain numbers
+    const books = rawBooks.map(serializeBook);
+
     res.json({
       books,
       pagination: {
@@ -74,7 +106,15 @@ const getBooks = async (req, res, next) => {
       },
     });
   } catch (err) {
-    next(err);
+    console.error("[getBooks] ERROR:", err.message);
+    console.error("[getBooks] Code:", err.code);
+    console.error("[getBooks] Stack:", err.stack);
+    // Return real error for debugging
+    res.status(500).json({ 
+      message: "Failed to load books", 
+      debug: err.message,
+      code: err.code,
+    });
   }
 };
 
@@ -108,7 +148,7 @@ const getBook = async (req, res, next) => {
       inWishlist = !!wl;
     }
 
-    res.json({ book: { ...book, inWishlist } });
+    res.json({ book: serializeBook({ ...book, inWishlist }) });
   } catch (err) {
     next(err);
   }

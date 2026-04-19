@@ -101,6 +101,69 @@ app.get("/api/health", (_, res) => {
   });
 });
 
+// ─── Debug Books (temporary) ─────────────────────────────────────────────────
+app.get("/api/debug-books", async (_, res) => {
+  const prisma = require("./config/prisma");
+  const results = {};
+
+  // Step 1: Can we count books?
+  try {
+    results.bookCount = await prisma.book.count();
+  } catch (e) {
+    results.bookCountError = { message: e.message, code: e.code };
+  }
+
+  // Step 2: Can we fetch a single book with no includes?
+  try {
+    const raw = await prisma.book.findFirst({ where: { isActive: true } });
+    results.rawBook = raw ? { id: raw.id, title: raw.title, priceType: typeof raw.price, price: String(raw.price) } : null;
+  } catch (e) {
+    results.rawBookError = { message: e.message, code: e.code };
+  }
+
+  // Step 3: Can we fetch with includes?
+  try {
+    const withIncludes = await prisma.book.findFirst({
+      where: { isActive: true },
+      include: { genre: true, category: true, variations: true },
+    });
+    results.withIncludes = withIncludes ? "OK" : "null";
+  } catch (e) {
+    results.withIncludesError = { message: e.message, code: e.code };
+  }
+
+  // Step 4: Can we do the full findMany query?
+  try {
+    const books = await prisma.book.findMany({
+      where: { isActive: true },
+      skip: 0,
+      take: 12,
+      orderBy: { createdAt: "desc" },
+      include: { genre: true, category: true, variations: true },
+    });
+    results.findMany = `OK - ${books.length} books`;
+    // Test JSON serialization
+    try {
+      const json = JSON.stringify(books);
+      results.serialize = `OK - ${json.length} chars`;
+    } catch (e) {
+      results.serializeError = { message: e.message };
+    }
+  } catch (e) {
+    results.findManyError = { message: e.message, code: e.code };
+  }
+
+  // Step 5: Check database columns
+  try {
+    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books`;
+    results.columns = columns.map(c => c.Field || c.field);
+  } catch (e) {
+    results.columnsError = { message: e.message };
+  }
+
+  res.json(results);
+});
+
 // ─── Install / Seed Route ────────────────────────────────────────────────────
 app.get("/api/install", async (req, res) => {
   const secret = req.query.secret;

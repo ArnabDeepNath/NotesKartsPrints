@@ -339,12 +339,21 @@ const createBook = async (req, res, next) => {
       createData.subcategoryId = subcategoryId || null;
     }
 
-    const createInclude = { genre: true, variations: true };
-    if (catColumnsExist) createInclude.category = true;
+    let selectFields = undefined;
+    if (!catColumnsExist) {
+        selectFields = { ...SAFE_BOOK_SELECT };
+        const variationsExist = await hasVariationsTable();
+        if (variationsExist) selectFields.variations = true;
+    } else {
+        const variationsExist = await hasVariationsTable();
+        selectFields = { genre: true };
+        if (variationsExist) selectFields.variations = true;
+        if (catColumnsExist) selectFields.category = true;
+    }
 
     const book = await prisma.book.create({
       data: createData,
-      include: createInclude,
+      ...(catColumnsExist ? { include: selectFields } : { select: selectFields }),
     });
 
     res.status(201).json({ message: "Book created", book });
@@ -392,12 +401,23 @@ const updateBook = async (req, res, next) => {
       };
     }
 
+    let selectFields = undefined;
+    if (!catColumnsExist) {
+        selectFields = { ...SAFE_BOOK_SELECT };
+        const variationsExist = await hasVariationsTable();
+        if (variationsExist) selectFields.variations = true;
+    } else {
+        const variationsExist = await hasVariationsTable();
+        selectFields = { genre: true, category: true };
+        if (variationsExist) selectFields.variations = true;
+    }
+
     const book = await prisma.book.update({
       where: { id: req.params.id },
       data: updateData,
-      include: catColumnsExist
-        ? { genre: true, category: true, variations: true }
-        : { genre: true, variations: true },
+      ...(catColumnsExist 
+        ? { include: selectFields } 
+        : { select: selectFields }),
     });
 
     res.json({ message: "Book updated", book: serializeBook(book) });
@@ -412,6 +432,7 @@ const deleteBook = async (req, res, next) => {
     await prisma.book.update({
       where: { id: req.params.id },
       data: { isActive: false },
+      select: { id: true }, // Explicit select prevents P2022 implicit return scalar check
     });
     res.json({ message: "Book removed" });
   } catch (err) {

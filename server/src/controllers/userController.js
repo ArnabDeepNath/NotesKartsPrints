@@ -57,36 +57,71 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+const SAFE_ORDER_SELECT = {
+  id: true, userId: true, status: true, subtotal: true, discount: true,
+  tax: true, total: true, currency: true, paymentMethod: true, paymentId: true,
+  notes: true, shippingName: true, shippingEmail: true, shippingPhone: true,
+  shippingAddress: true, shippingCity: true, shippingCountry: true, shippingZip: true,
+  createdAt: true, updatedAt: true,
+};
+
 // GET /api/users/orders
 const getUserOrders = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where: { userId: req.user.id },
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: "desc" },
-        include: {
-          items: {
-            include: {
-              book: {
-                select: {
-                  id: true,
-                  title: true,
-                  coverImage: true,
-                  author: true,
+    let orders, total;
+    try {
+      [orders, total] = await Promise.all([
+        prisma.order.findMany({
+          where: { userId: req.user.id },
+          skip,
+          take: Number(limit),
+          orderBy: { createdAt: "desc" },
+          include: {
+            items: {
+              include: {
+                book: {
+                  select: {
+                    id: true,
+                    title: true,
+                    coverImage: true,
+                    author: true,
+                  },
                 },
+                variation: true,
               },
-              variation: true,
             },
           },
-        },
-      }),
-      prisma.order.count({ where: { userId: req.user.id } }),
-    ]);
+        }),
+        prisma.order.count({ where: { userId: req.user.id } }),
+      ]);
+    } catch (queryErr) {
+      if (queryErr.code === "P2022") {
+        console.warn("[getUserOrders] Schema missing (P2022), falling back to safe select...");
+        [orders, total] = await Promise.all([
+          prisma.order.findMany({
+            where: { userId: req.user.id },
+            skip,
+            take: Number(limit),
+            orderBy: { createdAt: "desc" },
+            select: {
+              ...SAFE_ORDER_SELECT,
+              items: {
+                select: {
+                  id: true, orderId: true, bookId: true, variationId: true, quantity: true, price: true,
+                  book: { select: { id: true, title: true, coverImage: true, author: true } }
+                }
+              }
+            },
+          }),
+          prisma.order.count({ where: { userId: req.user.id } }),
+        ]);
+      } else {
+        throw queryErr;
+      }
+    }
 
     res.json({
       orders,

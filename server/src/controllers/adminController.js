@@ -1,6 +1,14 @@
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 
+const SAFE_ORDER_SELECT = {
+  id: true, userId: true, status: true, subtotal: true, discount: true,
+  tax: true, total: true, currency: true, paymentMethod: true, paymentId: true,
+  notes: true, shippingName: true, shippingEmail: true, shippingPhone: true,
+  shippingAddress: true, shippingCity: true, shippingCountry: true, shippingZip: true,
+  createdAt: true, updatedAt: true,
+};
+
 // GET /api/admin/stats
 const getStats = async (req, res, next) => {
   const safe = async (label, fn, fallback) => {
@@ -45,15 +53,31 @@ const getStats = async (req, res, next) => {
       ),
       safe(
         "order.findMany recentOrders",
-        () =>
-          prisma.order.findMany({
-            take: 10,
-            orderBy: { createdAt: "desc" },
-            include: {
-              user: { select: { name: true, email: true, avatar: true } },
-              items: { select: { quantity: true } },
-            },
-          }),
+        async () => {
+          try {
+            return await prisma.order.findMany({
+              take: 10,
+              orderBy: { createdAt: "desc" },
+              include: {
+                user: { select: { name: true, email: true, avatar: true } },
+                items: { select: { quantity: true } },
+              },
+            });
+          } catch (e) {
+            if (e.code === "P2022") {
+              return await prisma.order.findMany({
+                take: 10,
+                orderBy: { createdAt: "desc" },
+                select: {
+                  ...SAFE_ORDER_SELECT,
+                  user: { select: { name: true, email: true, avatar: true } },
+                  items: { select: { quantity: true } },
+                },
+              });
+            }
+            throw e;
+          }
+        },
         [],
       ),
       safe(
@@ -220,21 +244,49 @@ const getOrders = async (req, res, next) => {
       }),
     };
 
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: { select: { id: true, name: true, email: true, avatar: true } },
-          items: {
-            include: { book: { select: { title: true, coverImage: true } } },
+    let orders, total;
+    try {
+      [orders, total] = await Promise.all([
+        prisma.order.findMany({
+          where,
+          skip,
+          take: Number(limit),
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: { select: { id: true, name: true, email: true, avatar: true } },
+            items: {
+              include: { book: { select: { title: true, coverImage: true } } },
+            },
           },
-        },
-      }),
-      prisma.order.count({ where }),
-    ]);
+        }),
+        prisma.order.count({ where }),
+      ]);
+    } catch (queryErr) {
+      if (queryErr.code === "P2022") {
+        console.warn("[getOrdersAdmin] Schema missing, falling back to safe select...");
+        [orders, total] = await Promise.all([
+          prisma.order.findMany({
+            where,
+            skip,
+            take: Number(limit),
+            orderBy: { createdAt: "desc" },
+            select: {
+              ...SAFE_ORDER_SELECT,
+              user: { select: { id: true, name: true, email: true, avatar: true } },
+              items: {
+                select: {
+                  id: true, orderId: true, bookId: true, variationId: true, quantity: true, price: true,
+                  book: { select: { title: true, coverImage: true } }
+                }
+              }
+            },
+          }),
+          prisma.order.count({ where }),
+        ]);
+      } else {
+        throw queryErr;
+      }
+    }
 
     res.json({
       orders,
@@ -268,6 +320,7 @@ const updateOrderStatus = async (req, res, next) => {
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status },
+      select: { id: true, status: true, userId: true },
     });
 
     // Update book sold count on delivery

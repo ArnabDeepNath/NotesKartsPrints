@@ -17,6 +17,19 @@ function serializeBook(book) {
   return b;
 }
 
+// Check if category columns exist in the books table
+let _hasCategoryColumns = null;
+async function hasCategoryColumns() {
+  if (_hasCategoryColumns !== null) return _hasCategoryColumns;
+  try {
+    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books LIKE 'categoryId'`;
+    _hasCategoryColumns = columns.length > 0;
+  } catch {
+    _hasCategoryColumns = false;
+  }
+  return _hasCategoryColumns;
+}
+
 const getBooks = async (req, res, next) => {
   try {
     const {
@@ -55,12 +68,14 @@ const getBooks = async (req, res, next) => {
       if (genreRecord) where.genreId = genreRecord.id;
       else where.genreId = "___none___";
     }
-    if (category) {
+
+    const catColumnsExist = await hasCategoryColumns();
+    if (category && catColumnsExist) {
       const catRecord = await prisma.category.findUnique({ where: { slug: String(category) } });
       if (catRecord) where.categoryId = catRecord.id;
       else where.categoryId = "___none___";
     }
-    if (subcategory) {
+    if (subcategory && catColumnsExist) {
       const subRecord = await prisma.category.findUnique({ where: { slug: String(subcategory) } });
       if (subRecord) where.subcategoryId = subRecord.id;
       else where.subcategoryId = "___none___";
@@ -78,17 +93,19 @@ const getBooks = async (req, res, next) => {
     const sortField = validSortFields.includes(sort) ? sort : "createdAt";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
+    // Build include - only include category if columns exist
+    const include = { genre: true, variations: true };
+    if (catColumnsExist) {
+      include.category = true;
+    }
+
     const [rawBooks, total] = await Promise.all([
       prisma.book.findMany({
         where,
         skip: skipNum,
         take: takeNum,
         orderBy: { [sortField]: sortOrder },
-        include: {
-          genre: true,
-          category: true,
-          variations: true,
-        },
+        include,
       }),
       prisma.book.count({ where }),
     ]);
@@ -121,20 +138,25 @@ const getBooks = async (req, res, next) => {
 // GET /api/books/:id
 const getBook = async (req, res, next) => {
   try {
+    const catColumnsExist = await hasCategoryColumns();
+    const include = {
+      genre: true,
+      variations: true,
+      reviews: {
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, name: true, avatar: true } } },
+      },
+      _count: { select: { reviews: true, wishlist: true } },
+    };
+    if (catColumnsExist) {
+      include.category = true;
+      include.subcategory = true;
+    }
+
     const book = await prisma.book.findUnique({
       where: { id: req.params.id, isActive: true },
-      include: {
-        genre: true,
-        category: true,
-        subcategory: true,
-        variations: true,
-        reviews: {
-          take: 10,
-          orderBy: { createdAt: "desc" },
-          include: { user: { select: { id: true, name: true, avatar: true } } },
-        },
-        _count: { select: { reviews: true, wishlist: true } },
-      },
+      include,
     });
 
     if (!book) throw new AppError("Book not found", 404);
@@ -182,8 +204,8 @@ const createBook = async (req, res, next) => {
       variations,
     } = req.body;
 
-    const book = await prisma.book.create({
-      data: {
+    const catColumnsExist = await hasCategoryColumns();
+    const createData = {
         title,
         subtitle,
         author,
@@ -202,8 +224,6 @@ const createBook = async (req, res, next) => {
         stock: Number(stock) || 0,
         featured: featured === true || featured === "true",
         genreId: genreId || null,
-        categoryId: categoryId || null,
-        subcategoryId: subcategoryId || null,
         tags,
         ...(variations && Array.isArray(variations) && variations.length > 0 && {
           variations: {
@@ -217,8 +237,18 @@ const createBook = async (req, res, next) => {
             })),
           },
         }),
-      },
-      include: { genre: true, category: true, variations: true },
+    };
+    if (catColumnsExist) {
+      createData.categoryId = categoryId || null;
+      createData.subcategoryId = subcategoryId || null;
+    }
+
+    const createInclude = { genre: true, variations: true };
+    if (catColumnsExist) createInclude.category = true;
+
+    const book = await prisma.book.create({
+      data: createData,
+      include: createInclude,
     });
 
     res.status(201).json({ message: "Book created", book });
@@ -241,8 +271,14 @@ const updateBook = async (req, res, next) => {
     if (data.featured !== undefined)
       data.featured = data.featured === true || data.featured === "true";
     if (data.publishedAt) data.publishedAt = new Date(data.publishedAt);
-    if (data.categoryId === "") data.categoryId = null;
-    if (data.subcategoryId === "") data.subcategoryId = null;
+    const catColumnsExist = await hasCategoryColumns();
+    if (catColumnsExist) {
+      if (data.categoryId === "") data.categoryId = null;
+      if (data.subcategoryId === "") data.subcategoryId = null;
+    } else {
+      delete data.categoryId;
+      delete data.subcategoryId;
+    }
 
     let updateData = { ...data };
 
@@ -263,10 +299,12 @@ const updateBook = async (req, res, next) => {
     const book = await prisma.book.update({
       where: { id: req.params.id },
       data: updateData,
-      include: { genre: true, category: true, variations: true },
+      include: catColumnsExist
+        ? { genre: true, category: true, variations: true }
+        : { genre: true, variations: true },
     });
 
-    res.json({ message: "Book updated", book });
+    res.json({ message: "Book updated", book: serializeBook(book) });
   } catch (err) {
     next(err);
   }

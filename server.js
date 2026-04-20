@@ -27,10 +27,9 @@ async function main() {
     const childProcess = require("child_process");
     console.log("⏳ Running prisma db push...");
     const path = require("path");
-    const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
     const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
     const out = childProcess.execSync(
-      `"${prismaBin}" db push --accept-data-loss --schema="${schemaPath}"`,
+      `npx prisma db push --accept-data-loss --schema="${schemaPath}"`,
       { env: { ...process.env }, encoding: "utf8" }
     );
     console.log("✅ Prisma db push complete:\n", out);

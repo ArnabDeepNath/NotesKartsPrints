@@ -173,6 +173,7 @@ const createOrder = async (req, res, next) => {
             shippingZip: shippingAddress?.zip,
             items: items?.length > 0 ? { create: safeOrderItems } : undefined,
             printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
+          },
           select: safeOrderSelect,
         });
       } else {

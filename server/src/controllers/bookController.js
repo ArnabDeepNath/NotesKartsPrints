@@ -223,14 +223,21 @@ const getBook = async (req, res, next) => {
     }
 
     let book;
+    const whereClause = { id: req.params.id };
+    if (!req.user || req.user.role !== "ADMIN") {
+      whereClause.isActive = true;
+    }
+    console.warn(`[getBook DEBUG] fetching for:`, whereClause);
+
     try {
       book = await prisma.book.findUnique({
-        where: { id: req.params.id, isActive: true },
+        where: whereClause,
         include,
       });
+      console.warn(`[getBook DEBUG] first query result:`, !!book);
     } catch (queryErr) {
       if (queryErr.code === "P2022" || queryErr.code === "P2021") {
-        console.warn(`[getBook] Schema missing (${queryErr.code}), falling back to safe select...`);
+        console.warn(`[getBook DEBUG] Schema missing ${queryErr.code}`);
         resetCategoryColumnsCache();
         
         const fallbackSelect = { ...SAFE_BOOK_SELECT };
@@ -239,7 +246,7 @@ const getBook = async (req, res, next) => {
         }
 
         book = await prisma.book.findUnique({
-          where: { id: req.params.id, isActive: true },
+          where: whereClause,
           select: {
             ...fallbackSelect,
             reviews: {
@@ -250,12 +257,17 @@ const getBook = async (req, res, next) => {
             _count: { select: { reviews: true, wishlist: true } },
           },
         });
+        console.warn(`[getBook DEBUG] fallback query result:`, !!book);
       } else {
+        console.warn(`[getBook DEBUG] caught non-schema err:`, queryErr);
         throw queryErr;
       }
     }
 
-    if (!book) throw new AppError("Book not found", 404);
+    if (!book) {
+      console.warn(`[getBook DEBUG] Return 404 because book is null`);
+      throw new AppError("Book not found", 404);
+    }
 
     // If user is authenticated, check wishlist
     let inWishlist = false;

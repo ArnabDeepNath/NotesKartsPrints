@@ -308,7 +308,7 @@ export default function NewBookPage() {
               <div className="flex gap-4 items-end">
                 <div className="flex-1">
                   <input
-                    type="url"
+                    type="text"
                     name="coverImage"
                     value={formData.coverImage}
                     onChange={handleChange}

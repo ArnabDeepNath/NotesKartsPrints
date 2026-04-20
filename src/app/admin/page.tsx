@@ -779,7 +779,7 @@ export default function AdminPanel() {
                   <div className="flex gap-4 items-end">
                     <div className="flex-1">
                       <input
-                        type="url"
+                        type="text"
                         value={bookForm.coverImage || ""}
                         onChange={(e) => setBookForm((prev: any) => ({ ...prev, coverImage: e.target.value }))}
                         placeholder="Image URL or upload..."

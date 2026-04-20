@@ -112,29 +112,62 @@ const createOrder = async (req, res, next) => {
     const tax = +(subtotal * 0.18).toFixed(2); // 18% GST
     const total = +(subtotal + tax).toFixed(2);
 
-    const order = await prisma.order.create({
-      data: {
-        userId: req.user.id,
-        subtotal,
-        tax,
-        total,
-        shippingName: shippingAddress?.name,
-        shippingEmail: shippingAddress?.email || req.user.email,
-        shippingPhone: shippingAddress?.phone,
-        shippingAddress: shippingAddress?.address,
-        shippingCity: shippingAddress?.city,
-        shippingCountry: shippingAddress?.country,
-        shippingZip: shippingAddress?.zip,
-        items: items?.length > 0 ? { create: orderItems } : undefined,
-        printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
-      },
-      include: {
-        items: {
-          include: { book: { select: { title: true, coverImage: true } } },
+    let order;
+    try {
+      order = await prisma.order.create({
+        data: {
+          userId: req.user.id,
+          subtotal,
+          tax,
+          total,
+          shippingName: shippingAddress?.name,
+          shippingEmail: shippingAddress?.email || req.user.email,
+          shippingPhone: shippingAddress?.phone,
+          shippingAddress: shippingAddress?.address,
+          shippingCity: shippingAddress?.city,
+          shippingCountry: shippingAddress?.country,
+          shippingZip: shippingAddress?.zip,
+          items: items?.length > 0 ? { create: orderItems } : undefined,
+          printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
         },
-        printJobs: true,
-      },
-    });
+        include: {
+          items: {
+            include: { book: { select: { title: true, coverImage: true } } },
+          },
+          printJobs: true,
+        },
+      });
+    } catch (createErr) {
+      if (createErr.code === "P2022" || createErr.code === "P2021") {
+        console.warn("[createOrder] Schema missing inside order create, falling back...");
+        const safeOrderItems = orderItems.map(({ variationId, ...rest }) => rest);
+        order = await prisma.order.create({
+          data: {
+            userId: req.user.id,
+            subtotal,
+            tax,
+            total,
+            shippingName: shippingAddress?.name,
+            shippingEmail: shippingAddress?.email || req.user.email,
+            shippingPhone: shippingAddress?.phone,
+            shippingAddress: shippingAddress?.address,
+            shippingCity: shippingAddress?.city,
+            shippingCountry: shippingAddress?.country,
+            shippingZip: shippingAddress?.zip,
+            items: items?.length > 0 ? { create: safeOrderItems } : undefined,
+            printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
+          },
+          include: {
+            items: {
+              include: { book: { select: { title: true, coverImage: true } } },
+            },
+            printJobs: true,
+          },
+        });
+      } else {
+        throw createErr;
+      }
+    }
 
     res.status(201).json({ message: "Order created", order });
   } catch (err) {

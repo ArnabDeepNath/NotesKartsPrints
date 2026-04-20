@@ -24,17 +24,20 @@ const handle = nextApp.getRequestHandler();
 async function main() {
   // 0 ─ Push Prisma schema to the database (ensures tables are up-to-date)
   try {
+    const childProcess = require("child_process");
     console.log("⏳ Running prisma db push...");
     const path = require("path");
     const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
     const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
-    execSync(
+    const out = childProcess.execSync(
       `"${prismaBin}" db push --accept-data-loss --schema="${schemaPath}"`,
-      { stdio: "inherit", env: { ...process.env } },
+      { env: { ...process.env }, encoding: "utf8" }
     );
-    console.log("✅ Prisma db push complete");
+    console.log("✅ Prisma db push complete:\n", out);
   } catch (pushErr) {
     console.error("⚠️  Prisma db push failed:", pushErr.message);
+    if (pushErr.stdout) console.error("--- STDOUT ---\n", pushErr.stdout);
+    if (pushErr.stderr) console.error("--- STDERR ---\n", pushErr.stderr);
   }
 
   // 1 ─ Prepare Next.js

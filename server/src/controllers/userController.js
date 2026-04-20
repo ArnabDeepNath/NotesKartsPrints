@@ -110,7 +110,7 @@ const getUserOrders = async (req, res, next) => {
               ...SAFE_ORDER_SELECT,
               items: {
                 select: {
-                  id: true, orderId: true, bookId: true, variationId: true, quantity: true, price: true,
+                  id: true, orderId: true, bookId: true, quantity: true, price: true,
                   book: { select: { id: true, title: true, coverImage: true, author: true } }
                 }
               }

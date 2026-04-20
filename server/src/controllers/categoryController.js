@@ -12,6 +12,10 @@ const getCategories = async (req, res, next) => {
     });
     res.json(categories);
   } catch (err) {
+    if (err.code === "P2021") {
+      console.warn("[getCategories] Schema missing (P2021), categories table does not exist.");
+      return res.json([]);
+    }
     next(err);
   }
 };
@@ -31,6 +35,9 @@ const getCategory = async (req, res, next) => {
     }
     res.json(category);
   } catch (err) {
+    if (err.code === "P2021") {
+      return next(new AppError("Category not found", 404));
+    }
     next(err);
   }
 };
@@ -52,6 +59,9 @@ const createCategory = async (req, res, next) => {
 
     res.status(201).json(newCategory);
   } catch (err) {
+    if (err.code === "P2021") {
+      return next(new AppError("Categories table does not exist. Please push schema changes.", 400));
+    }
     next(err);
   }
 };
@@ -74,6 +84,9 @@ const updateCategory = async (req, res, next) => {
 
     res.json(category);
   } catch (err) {
+    if (err.code === "P2021") {
+      return next(new AppError("Categories table does not exist. Please push schema changes.", 400));
+    }
     next(err);
   }
 };
@@ -86,6 +99,9 @@ const deleteCategory = async (req, res, next) => {
     });
     res.status(204).send();
   } catch (err) {
+    if (err.code === "P2021") {
+      return next(new AppError("Categories table does not exist.", 400));
+    }
     next(err);
   }
 };

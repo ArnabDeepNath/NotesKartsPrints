@@ -301,6 +301,7 @@ const createBook = async (req, res, next) => {
     } = req.body;
 
     const catColumnsExist = await hasCategoryColumns();
+    const variationsExist = await hasVariationsTable();
     const createData = {
         title,
         subtitle,
@@ -321,7 +322,7 @@ const createBook = async (req, res, next) => {
         featured: featured === true || featured === "true",
         genreId: genreId || null,
         tags,
-        ...(variations && Array.isArray(variations) && variations.length > 0 && {
+        ...(variationsExist && variations && Array.isArray(variations) && variations.length > 0 && {
           variations: {
             create: variations.map((v) => ({
               attributes: v.attributes,
@@ -387,7 +388,8 @@ const updateBook = async (req, res, next) => {
 
     let updateData = { ...data };
 
-    if (variations && Array.isArray(variations)) {
+    const variationsExist = await hasVariationsTable();
+    if (variationsExist && variations && Array.isArray(variations)) {
       updateData.variations = {
         deleteMany: {}, // The simplest way to update variations is to replace them
         create: variations.map((v) => ({

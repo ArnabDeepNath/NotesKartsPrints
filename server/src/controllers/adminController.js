@@ -275,7 +275,7 @@ const getOrders = async (req, res, next) => {
               user: { select: { id: true, name: true, email: true, avatar: true } },
               items: {
                 select: {
-                  id: true, orderId: true, bookId: true, variationId: true, quantity: true, price: true,
+                  id: true, orderId: true, bookId: true, quantity: true, price: true,
                   book: { select: { title: true, coverImage: true } }
                 }
               }

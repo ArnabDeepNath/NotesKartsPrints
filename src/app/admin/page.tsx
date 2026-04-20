@@ -61,6 +61,7 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [bookModal, setBookModal] = useState<{ open: boolean; book?: any }>({
     open: false,
@@ -145,6 +146,24 @@ export default function AdminPanel() {
       fetchBooks();
     } catch (err: any) {
       toast(err.message, "error");
+    }
+  };
+
+  const handleModalCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    try {
+      setIsUploadingCover(true);
+      const uploadData = new FormData();
+      uploadData.append("image", file);
+      const uploadRes: any = await api.upload.image(uploadData);
+      
+      setBookForm((prev: any) => ({ ...prev, coverImage: uploadRes.url }));
+      toast("Cover image uploaded", "success");
+    } catch (err: any) {
+      toast("Image upload failed", "error");
+    } finally {
+      setIsUploadingCover(false);
     }
   };
 
@@ -732,7 +751,6 @@ export default function AdminPanel() {
                   { key: "stock", label: "Stock", type: "number" },
                   { key: "pages", label: "Pages", type: "number" },
                   { key: "isbn", label: "ISBN", span: 2 },
-                  { key: "coverImage", label: "Cover Image URL", span: 2 },
                 ].map((f) => (
                   <div key={f.key} className={f.span === 2 ? "col-span-2" : ""}>
                     <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
@@ -752,6 +770,41 @@ export default function AdminPanel() {
                     />
                   </div>
                 ))}
+                
+                {/* Custom render for Cover Image Upload */}
+                <div className="col-span-2">
+                  <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
+                    Cover Image
+                  </label>
+                  <div className="flex gap-4 items-end">
+                    <div className="flex-1">
+                      <input
+                        type="url"
+                        value={bookForm.coverImage || ""}
+                        onChange={(e) => setBookForm((prev: any) => ({ ...prev, coverImage: e.target.value }))}
+                        placeholder="Image URL or upload..."
+                        className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60"
+                      />
+                    </div>
+                    <div className="flex-shrink-0">
+                       <div className="relative overflow-hidden inline-block border border-white/[0.1] bg-[#2c2c2e] hover:bg-[#3a3a3c] rounded-xl px-4 py-2.5 text-sm text-white font-medium cursor-pointer transition-colors">
+                         {isUploadingCover ? "Uploading..." : "Upload File"}
+                         <input
+                           type="file"
+                           accept="image/*"
+                           disabled={isUploadingCover}
+                           onChange={handleModalCoverImageUpload}
+                           className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                         />
+                       </div>
+                    </div>
+                  </div>
+                  {bookForm.coverImage && (
+                    <div className="mt-4 p-2 border border-white/[0.1] bg-white/[0.02] rounded-xl inline-block">
+                      <img src={bookForm.coverImage} className="h-32 object-contain rounded-lg" alt="Cover Preview" />
+                    </div>
+                  )}
+                </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
                     Description

@@ -17,6 +17,7 @@ export default function NewBookPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [variations, setVariations] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -104,6 +105,24 @@ export default function NewBookPage() {
       toast("Variation image uploaded", "success");
     } catch (err: any) {
       toast("Image upload failed", "error");
+    }
+  };
+
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    try {
+      setIsUploadingCover(true);
+      const uploadData = new FormData();
+      uploadData.append("image", file);
+      const uploadRes: any = await api.upload.image(uploadData);
+      
+      setFormData(prev => ({ ...prev, coverImage: uploadRes.url }));
+      toast("Cover image uploaded", "success");
+    } catch (err: any) {
+      toast("Image upload failed", "error");
+    } finally {
+      setIsUploadingCover(false);
     }
   };
 
@@ -283,17 +302,39 @@ export default function NewBookPage() {
               </div>
             </div>
 
-            {/* Cover Image URL */}
+            {/* Cover Image Upload */}
             <div>
-              <label className="block text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-2">Cover Image URL</label>
-              <input
-                type="url"
-                name="coverImage"
-                value={formData.coverImage}
-                onChange={handleChange}
-                placeholder="https://example.com/cover.jpg"
-                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
-              />
+              <label className="block text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-2">Cover Image *</label>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <input
+                    type="url"
+                    name="coverImage"
+                    value={formData.coverImage}
+                    onChange={handleChange}
+                    placeholder="Image URL or upload..."
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#2997ff]"
+                    required
+                  />
+                </div>
+                <div className="flex-shrink-0">
+                   <div className="relative overflow-hidden inline-block border border-white/[0.1] bg-[#2c2c2e] hover:bg-[#3a3a3c] rounded-xl px-4 py-3 text-sm text-white font-medium cursor-pointer transition-colors">
+                     {isUploadingCover ? "Uploading..." : "Upload File"}
+                     <input
+                       type="file"
+                       accept="image/*"
+                       disabled={isUploadingCover}
+                       onChange={handleCoverImageUpload}
+                       className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                     />
+                   </div>
+                </div>
+              </div>
+              {formData.coverImage && (
+                <div className="mt-4 p-2 border border-white/[0.1] bg-white/[0.02] rounded-xl inline-block">
+                  <img src={formData.coverImage} className="h-32 object-contain rounded-lg" alt="Cover Preview" />
+                </div>
+              )}
             </div>
 
             {/* Short Desc */}

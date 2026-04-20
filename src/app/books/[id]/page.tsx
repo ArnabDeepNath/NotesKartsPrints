@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -36,7 +36,8 @@ function StarRating({
   );
 }
 
-export default function BookDetailPage({ params }: { params: { id: string } }) {
+export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = React.use(params);
   const { user } = useAuth();
   const { addToCart } = useAuth();
   const { toast } = useToast();
@@ -55,7 +56,7 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     api.books
-      .get(params.id)
+      .get(unwrappedParams.id)
       .then((data: any) => {
         setBook(data.book);
         setInWishlist(data.book?.inWishlist ?? false);
@@ -65,7 +66,7 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
       })
       .catch(() => setBook(null))
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [unwrappedParams.id]);
 
   const handleAddToCart = () => {
     if (!book) return;
@@ -119,7 +120,7 @@ export default function BookDetailPage({ params }: { params: { id: string } }) {
       setReviewComment("");
       setReviewRating(5);
       // Refresh book to update reviews
-      const data: any = await api.books.get(params.id);
+      const data: any = await api.books.get(unwrappedParams.id);
       setBook(data.book);
     } catch (err: any) {
       toast(err.message, "error");

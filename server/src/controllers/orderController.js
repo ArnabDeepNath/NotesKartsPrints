@@ -141,6 +141,23 @@ const createOrder = async (req, res, next) => {
       if (createErr.code === "P2022" || createErr.code === "P2021") {
         console.warn("[createOrder] Schema missing inside order create, falling back...");
         const safeOrderItems = orderItems.map(({ variationId, ...rest }) => rest);
+        
+        const safeOrderSelect = {
+          id: true, userId: true, status: true, subtotal: true,
+          discount: true, tax: true, total: true, currency: true,
+          paymentMethod: true, paymentId: true, notes: true,
+          shippingName: true, shippingEmail: true, shippingPhone: true,
+          shippingAddress: true, shippingCity: true, shippingCountry: true,
+          shippingZip: true, createdAt: true, updatedAt: true,
+          items: {
+            select: {
+              id: true, orderId: true, bookId: true, quantity: true, price: true,
+              book: { select: { title: true, coverImage: true } }
+            }
+          },
+          printJobs: true
+        };
+
         order = await prisma.order.create({
           data: {
             userId: req.user.id,
@@ -156,13 +173,7 @@ const createOrder = async (req, res, next) => {
             shippingZip: shippingAddress?.zip,
             items: items?.length > 0 ? { create: safeOrderItems } : undefined,
             printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
-          },
-          include: {
-            items: {
-              include: { book: { select: { title: true, coverImage: true } } },
-            },
-            printJobs: true,
-          },
+          select: safeOrderSelect,
         });
       } else {
         throw createErr;
@@ -178,21 +189,42 @@ const createOrder = async (req, res, next) => {
 // GET /api/orders/:id
 const getOrder = async (req, res, next) => {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: req.params.id },
-      include: {
-        items: {
-          include: {
-            book: {
-              select: { id: true, title: true, coverImage: true, author: true },
+    let order;
+    try {
+      order = await prisma.order.findUnique({
+        where: { id: req.params.id },
+        include: {
+          items: {
+            include: {
+              book: { select: { id: true, title: true, coverImage: true, author: true } },
+              variation: true,
             },
-            variation: true,
           },
+          printJobs: true,
+          user: { select: { id: true, name: true, email: true } },
         },
-        printJobs: true,
-        user: { select: { id: true, name: true, email: true } },
-      },
-    });
+      });
+    } catch (err) {
+      if (err.code === "P2022" || err.code === "P2021") {
+        order = await prisma.order.findUnique({
+          where: { id: req.params.id },
+          select: {
+            id: true, userId: true, status: true, subtotal: true, discount: true,
+            tax: true, total: true, currency: true, paymentMethod: true, paymentId: true,
+            shippingName: true, shippingEmail: true, shippingPhone: true, shippingAddress: true,
+            shippingCity: true, shippingCountry: true, shippingZip: true, createdAt: true,
+            items: {
+              select: {
+                id: true, orderId: true, bookId: true, quantity: true, price: true,
+                book: { select: { id: true, title: true, coverImage: true, author: true } }
+              }
+            },
+            printJobs: true,
+            user: { select: { id: true, name: true, email: true } },
+          }
+        });
+      } else throw err;
+    }
 
     if (!order) throw new AppError("Order not found", 404);
     if (order.userId !== req.user.id && req.user.role !== "ADMIN") {

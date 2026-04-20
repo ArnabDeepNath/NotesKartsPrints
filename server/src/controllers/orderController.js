@@ -16,12 +16,44 @@ const createOrder = async (req, res, next) => {
       throw new AppError("Order must have at least one item or print job", 400);
     }
 
-    // Fetch all books with their variations
     const bookIds = items?.map((i) => i.bookId) || [];
-    const books = await prisma.book.findMany({
-      where: { id: { in: bookIds }, isActive: true },
-      include: { variations: true }
-    });
+    let books = [];
+    try {
+      books = await prisma.book.findMany({
+        where: { id: { in: bookIds }, isActive: true },
+        include: { variations: true }
+      });
+    } catch (err) {
+      if (err.code === "P2022" || err.code === "P2021") {
+        console.warn("[createOrder] Schema missing, falling back to safe select...");
+        let hasVariations = false;
+        try {
+          const res = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+          if (res && res.length > 0) hasVariations = true;
+        } catch {
+          hasVariations = false;
+        }
+        
+        const safeSelect = {
+          id: true,
+          title: true,
+          stock: true,
+          price: true,
+          coverImage: true,
+        };
+        
+        if (hasVariations) {
+           safeSelect.variations = true;
+        }
+
+        books = await prisma.book.findMany({
+          where: { id: { in: bookIds }, isActive: true },
+          select: safeSelect,
+        });
+      } else {
+        throw err;
+      }
+    }
 
     if (books.length !== bookIds.length) {
       throw new AppError("One or more books not found", 404);

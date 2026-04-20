@@ -25,19 +25,52 @@ async function seed() {
   await cleanBooks();
 
   // ── Step 2: Create genres ──────────────────────────────────────────────────
-  const [fiction, nonFiction, mystery, science, history, selfHelp, academic, technology] =
-    await Promise.all([
-      prisma.genre.create({ data: { name: "Fiction", slug: "fiction", color: "#2997ff" } }),
-      prisma.genre.create({ data: { name: "Non-Fiction", slug: "non-fiction", color: "#f5a623" } }),
-      prisma.genre.create({ data: { name: "Mystery", slug: "mystery", color: "#bf5af2" } }),
-      prisma.genre.create({ data: { name: "Science", slug: "science", color: "#30d158" } }),
-      prisma.genre.create({ data: { name: "History", slug: "history", color: "#ff6961" } }),
-      prisma.genre.create({ data: { name: "Self Help", slug: "self-help", color: "#ffd60a" } }),
-      prisma.genre.create({ data: { name: "Academic", slug: "academic", color: "#34aadc" } }),
-      prisma.genre.create({ data: { name: "Technology", slug: "technology", color: "#5ac8fa" } }),
-    ]);
+  const [
+    fiction,
+    nonFiction,
+    mystery,
+    science,
+    history,
+    selfHelp,
+    academic,
+    technology,
+  ] = await Promise.all([
+    prisma.genre.create({
+      data: { name: "Fiction", slug: "fiction", color: "#2997ff" },
+    }),
+    prisma.genre.create({
+      data: { name: "Non-Fiction", slug: "non-fiction", color: "#f5a623" },
+    }),
+    prisma.genre.create({
+      data: { name: "Mystery", slug: "mystery", color: "#bf5af2" },
+    }),
+    prisma.genre.create({
+      data: { name: "Science", slug: "science", color: "#30d158" },
+    }),
+    prisma.genre.create({
+      data: { name: "History", slug: "history", color: "#ff6961" },
+    }),
+    prisma.genre.create({
+      data: { name: "Self Help", slug: "self-help", color: "#ffd60a" },
+    }),
+    prisma.genre.create({
+      data: { name: "Academic", slug: "academic", color: "#34aadc" },
+    }),
+    prisma.genre.create({
+      data: { name: "Technology", slug: "technology", color: "#5ac8fa" },
+    }),
+  ]);
 
-  const genres = [fiction, nonFiction, mystery, science, history, selfHelp, academic, technology];
+  const genres = [
+    fiction,
+    nonFiction,
+    mystery,
+    science,
+    history,
+    selfHelp,
+    academic,
+    technology,
+  ];
 
   // ── Step 3: Upsert admin user (preserved across re-seeds) ────────────────
   const adminPassword = await bcrypt.hash("Admin@123456", 12);
@@ -66,7 +99,8 @@ async function seed() {
         "Between life and death there is a library with infinite possibilities.",
       price: 499,
       comparePrice: 699,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/81tCtHFtOgL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/81tCtHFtOgL.jpg",
       isbn: "9781786892737",
       publisher: "Canongate Books",
       publishedAt: new Date("2020-08-13"),
@@ -91,7 +125,8 @@ async function seed() {
         "A magical story about following your dreams and listening to your heart.",
       price: 299,
       comparePrice: 399,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/71aFt4+OTOL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/71aFt4+OTOL.jpg",
       isbn: "9780062315007",
       publisher: "HarperOne",
       publishedAt: new Date("1988-01-01"),
@@ -116,7 +151,8 @@ async function seed() {
         "A chilling psychological thriller about marriage, deception, and identity.",
       price: 350,
       comparePrice: 499,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/41LqZEIJ+HL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/41LqZEIJ+HL.jpg",
       isbn: "9780307588371",
       publisher: "Crown Publishing Group",
       publishedAt: new Date("2012-06-05"),
@@ -144,7 +180,8 @@ async function seed() {
         "A proven framework for improving every day through tiny behavior changes.",
       price: 399,
       comparePrice: 599,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/81wgcld4wxL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/81wgcld4wxL.jpg",
       isbn: "9780735211292",
       publisher: "Penguin Random House",
       publishedAt: new Date("2018-10-16"),
@@ -169,7 +206,8 @@ async function seed() {
         "The timeless classic on achieving success through the power of thought.",
       price: 249,
       comparePrice: 349,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/71UypkUjStL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/71UypkUjStL.jpg",
       isbn: "9781585424337",
       publisher: "Tarcher Perigee",
       publishedAt: new Date("1937-01-01"),
@@ -196,7 +234,8 @@ async function seed() {
         "A groundbreaking narrative of humanity's creation and evolution.",
       price: 549,
       comparePrice: 799,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/713jIoMO3UL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/713jIoMO3UL.jpg",
       isbn: "9780062316097",
       publisher: "Harper Perennial",
       publishedAt: new Date("2015-02-10"),
@@ -221,7 +260,8 @@ async function seed() {
         "Exploring the mysteries of the universe from black holes to the big bang.",
       price: 449,
       comparePrice: 599,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/A1xkFZX5k-L.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/A1xkFZX5k-L.jpg",
       isbn: "9780553380163",
       publisher: "Bantam Books",
       publishedAt: new Date("1988-04-01"),
@@ -249,7 +289,8 @@ async function seed() {
         "The definitive textbook on algorithms for students and professionals.",
       price: 1299,
       comparePrice: 1999,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/61Pgdn8Ys-L.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/61Pgdn8Ys-L.jpg",
       isbn: "9780262046305",
       publisher: "MIT Press",
       publishedAt: new Date("2022-04-05"),
@@ -271,11 +312,11 @@ async function seed() {
       author: "Robert C. Martin",
       description:
         "Even bad code can function. But if code isn't clean, it can bring a development organization to its knees. Every year, countless hours and significant resources are lost because of poorly written code. But it doesn't have to be that way. Noted software expert Robert C. Martin presents a revolutionary paradigm with Clean Code.",
-      shortDesc:
-        "A handbook for writing readable, maintainable software code.",
+      shortDesc: "A handbook for writing readable, maintainable software code.",
       price: 799,
       comparePrice: 999,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/41xShlnTZTL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/41xShlnTZTL.jpg",
       isbn: "9780132350884",
       publisher: "Prentice Hall",
       publishedAt: new Date("2008-08-01"),
@@ -301,7 +342,8 @@ async function seed() {
         "A timeless guide to becoming a more effective software developer.",
       price: 749,
       comparePrice: 999,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/71f743sOPoL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/71f743sOPoL.jpg",
       isbn: "9780135957059",
       publisher: "Addison-Wesley Professional",
       publishedAt: new Date("2019-09-13"),
@@ -327,7 +369,8 @@ async function seed() {
         "The inspiring autobiography of India's beloved scientist-president.",
       price: 199,
       comparePrice: 299,
-      coverImage: "https://images-na.ssl-images-amazon.com/images/I/81HGJiib5BL.jpg",
+      coverImage:
+        "https://images-na.ssl-images-amazon.com/images/I/81HGJiib5BL.jpg",
       isbn: "9788173711466",
       publisher: "Universities Press",
       publishedAt: new Date("1999-01-01"),

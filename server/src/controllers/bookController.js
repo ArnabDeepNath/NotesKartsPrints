@@ -30,6 +30,23 @@ async function hasCategoryColumns() {
   return _hasCategoryColumns;
 }
 
+// Reset the category columns cache (called when a P2022 error is caught)
+function resetCategoryColumnsCache() {
+  _hasCategoryColumns = null;
+}
+
+// Explicit select that excludes categoryId / subcategoryId (fallback for P2022)
+const SAFE_BOOK_SELECT = {
+  id: true, title: true, subtitle: true, author: true,
+  description: true, shortDesc: true, price: true, comparePrice: true,
+  coverImage: true, images: true, isbn: true, publisher: true,
+  publishedAt: true, pages: true, language: true, format: true,
+  stock: true, sold: true, rating: true, reviewCount: true,
+  featured: true, isActive: true, genreId: true, tags: true,
+  createdAt: true, updatedAt: true,
+  genre: true, variations: true,
+};
+
 const getBooks = async (req, res, next) => {
   try {
     const {
@@ -99,16 +116,40 @@ const getBooks = async (req, res, next) => {
       include.category = true;
     }
 
-    const [rawBooks, total] = await Promise.all([
-      prisma.book.findMany({
-        where,
-        skip: skipNum,
-        take: takeNum,
-        orderBy: { [sortField]: sortOrder },
-        include,
-      }),
-      prisma.book.count({ where }),
-    ]);
+    let rawBooks, total;
+    try {
+      [rawBooks, total] = await Promise.all([
+        prisma.book.findMany({
+          where,
+          skip: skipNum,
+          take: takeNum,
+          orderBy: { [sortField]: sortOrder },
+          include,
+        }),
+        prisma.book.count({ where }),
+      ]);
+    } catch (queryErr) {
+      // P2022 = column does not exist — fallback with explicit select (no categoryId)
+      if (queryErr.code === "P2022") {
+        console.warn("[getBooks] Column missing, falling back to safe select...");
+        resetCategoryColumnsCache();
+        // Remove any category filters from where clause
+        delete where.categoryId;
+        delete where.subcategoryId;
+        [rawBooks, total] = await Promise.all([
+          prisma.book.findMany({
+            where,
+            skip: skipNum,
+            take: takeNum,
+            orderBy: { [sortField]: sortOrder },
+            select: SAFE_BOOK_SELECT,
+          }),
+          prisma.book.count({ where }),
+        ]);
+      } else {
+        throw queryErr;
+      }
+    }
 
     // Serialize Decimal fields to plain numbers
     const books = rawBooks.map(serializeBook);
@@ -154,10 +195,32 @@ const getBook = async (req, res, next) => {
       include.subcategory = true;
     }
 
-    const book = await prisma.book.findUnique({
-      where: { id: req.params.id, isActive: true },
-      include,
-    });
+    let book;
+    try {
+      book = await prisma.book.findUnique({
+        where: { id: req.params.id, isActive: true },
+        include,
+      });
+    } catch (queryErr) {
+      if (queryErr.code === "P2022") {
+        console.warn("[getBook] Column missing, falling back to safe select...");
+        resetCategoryColumnsCache();
+        book = await prisma.book.findUnique({
+          where: { id: req.params.id, isActive: true },
+          select: {
+            ...SAFE_BOOK_SELECT,
+            reviews: {
+              take: 10,
+              orderBy: { createdAt: "desc" },
+              include: { user: { select: { id: true, name: true, avatar: true } } },
+            },
+            _count: { select: { reviews: true, wishlist: true } },
+          },
+        });
+      } else {
+        throw queryErr;
+      }
+    }
 
     if (!book) throw new AppError("Book not found", 404);
 

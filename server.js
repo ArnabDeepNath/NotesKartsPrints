@@ -25,9 +25,12 @@ async function main() {
   // 0 ─ Push Prisma schema to the database (ensures tables are up-to-date)
   try {
     console.log("⏳ Running prisma db push...");
+    const path = require("path");
+    const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
+    const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
     execSync(
-      "npx prisma db push --accept-data-loss --schema=server/prisma/schema.prisma",
-      { stdio: "inherit" },
+      `"${prismaBin}" db push --accept-data-loss --schema="${schemaPath}"`,
+      { stdio: "inherit", env: { ...process.env } },
     );
     console.log("✅ Prisma db push complete");
   } catch (pushErr) {

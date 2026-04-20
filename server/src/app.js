@@ -21,6 +21,9 @@ const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
+// ─── Trust Proxy (required behind Hostinger / reverse proxy) ─────────────────
+app.set("trust proxy", 1);
+
 // ─── Security ────────────────────────────────────────────────────────────────
 app.use(helmet({ 
   contentSecurityPolicy: false,
@@ -30,11 +33,16 @@ app.use(helmet({
 // ─── CORS ────────────────────────────────────────────────────────────────────
 const allowedOrigins = (
   process.env.ALLOWED_ORIGINS || "http://localhost:3000"
-).split(",");
+).split(",").map(o => o.trim());
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      // Allow requests with no origin (mobile apps, server-to-server, curl, etc.)
+      if (!origin) return cb(null, true);
+      // Allow listed origins
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      // In production behind a proxy, the origin may be the same domain — allow it
+      console.warn(`[CORS] Blocked origin: ${origin}  (allowed: ${allowedOrigins.join(", ")})`);
       cb(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -67,6 +75,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many requests, please try again later." },
+  validate: { xForwardedForHeader: false }, // trust proxy handles this
 });
 
 const authLimiter = rateLimit({
@@ -75,6 +84,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many auth attempts, please try again later." },
+  validate: { xForwardedForHeader: false },
 });
 
 app.use("/api", apiLimiter);

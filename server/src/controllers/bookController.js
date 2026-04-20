@@ -30,9 +30,23 @@ async function hasCategoryColumns() {
   return _hasCategoryColumns;
 }
 
-// Reset the category columns cache (called when a P2022 error is caught)
+// Check if book_variations table exists
+let _hasVariationsTable = null;
+async function hasVariationsTable() {
+  if (_hasVariationsTable !== null) return _hasVariationsTable;
+  try {
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+    _hasVariationsTable = tables.length > 0;
+  } catch {
+    _hasVariationsTable = false;
+  }
+  return _hasVariationsTable;
+}
+
+// Reset the schema caches (called when a P2022 or P2021 error is caught)
 function resetCategoryColumnsCache() {
   _hasCategoryColumns = null;
+  _hasVariationsTable = null;
 }
 
 // Explicit select that excludes categoryId / subcategoryId (fallback for P2022)
@@ -44,7 +58,7 @@ const SAFE_BOOK_SELECT = {
   stock: true, sold: true, rating: true, reviewCount: true,
   featured: true, isActive: true, genreId: true, tags: true,
   createdAt: true, updatedAt: true,
-  genre: true, variations: true,
+  genre: true,
 };
 
 const getBooks = async (req, res, next) => {
@@ -110,8 +124,12 @@ const getBooks = async (req, res, next) => {
     const sortField = validSortFields.includes(sort) ? sort : "createdAt";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
-    // Build include - only include category if columns exist
-    const include = { genre: true, variations: true };
+    // Build include - only include category and variations if they exist
+    const include = { genre: true };
+    const variationsExist = await hasVariationsTable();
+    if (variationsExist) {
+      include.variations = true;
+    }
     if (catColumnsExist) {
       include.category = true;
     }
@@ -129,20 +147,26 @@ const getBooks = async (req, res, next) => {
         prisma.book.count({ where }),
       ]);
     } catch (queryErr) {
-      // P2022 = column does not exist — fallback with explicit select (no categoryId)
-      if (queryErr.code === "P2022") {
-        console.warn("[getBooks] Column missing, falling back to safe select...");
+      // P2022 = column does not exist, P2021 = table does not exist
+      if (queryErr.code === "P2022" || queryErr.code === "P2021") {
+        console.warn(`[getBooks] Schema missing (${queryErr.code}), falling back to safe select...`);
         resetCategoryColumnsCache();
         // Remove any category filters from where clause
         delete where.categoryId;
         delete where.subcategoryId;
+        
+        const fallbackSelect = { ...SAFE_BOOK_SELECT };
+        if (await hasVariationsTable()) {
+          fallbackSelect.variations = true;
+        }
+
         [rawBooks, total] = await Promise.all([
           prisma.book.findMany({
             where,
             skip: skipNum,
             take: takeNum,
             orderBy: { [sortField]: sortOrder },
-            select: SAFE_BOOK_SELECT,
+            select: fallbackSelect,
           }),
           prisma.book.count({ where }),
         ]);
@@ -180,9 +204,9 @@ const getBooks = async (req, res, next) => {
 const getBook = async (req, res, next) => {
   try {
     const catColumnsExist = await hasCategoryColumns();
+    const variationsExist = await hasVariationsTable();
     const include = {
       genre: true,
-      variations: true,
       reviews: {
         take: 10,
         orderBy: { createdAt: "desc" },
@@ -190,6 +214,9 @@ const getBook = async (req, res, next) => {
       },
       _count: { select: { reviews: true, wishlist: true } },
     };
+    if (variationsExist) {
+      include.variations = true;
+    }
     if (catColumnsExist) {
       include.category = true;
       include.subcategory = true;
@@ -202,13 +229,19 @@ const getBook = async (req, res, next) => {
         include,
       });
     } catch (queryErr) {
-      if (queryErr.code === "P2022") {
-        console.warn("[getBook] Column missing, falling back to safe select...");
+      if (queryErr.code === "P2022" || queryErr.code === "P2021") {
+        console.warn(`[getBook] Schema missing (${queryErr.code}), falling back to safe select...`);
         resetCategoryColumnsCache();
+        
+        const fallbackSelect = { ...SAFE_BOOK_SELECT };
+        if (await hasVariationsTable()) {
+          fallbackSelect.variations = true;
+        }
+
         book = await prisma.book.findUnique({
           where: { id: req.params.id, isActive: true },
           select: {
-            ...SAFE_BOOK_SELECT,
+            ...fallbackSelect,
             reviews: {
               take: 10,
               orderBy: { createdAt: "desc" },

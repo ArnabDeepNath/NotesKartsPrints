@@ -6,6 +6,8 @@ const {
   deleteUser,
   getOrders,
   updateOrderStatus,
+  getPrintJobs,
+  updatePrintJob,
 } = require("../controllers/adminController");
 const { authenticate } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/rbac");
@@ -22,5 +24,9 @@ router.delete("/users/:id", deleteUser);
 // Order management
 router.get("/orders", getOrders);
 router.put("/orders/:id", updateOrderStatus);
+
+// Print Job management
+router.get("/print-jobs", getPrintJobs);
+router.put("/print-jobs/:id", updatePrintJob);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
+const { sendPrintJobUpdate, sendOrderUpdate } = require("../utils/emailService");
 
 const SAFE_ORDER_SELECT = {
   id: true, userId: true, status: true, subtotal: true, discount: true,
@@ -320,8 +321,13 @@ const updateOrderStatus = async (req, res, next) => {
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status },
-      select: { id: true, status: true, userId: true },
+      select: { id: true, status: true, userId: true, user: { select: { email: true } } },
     });
+
+    if (order.user?.email) {
+      // Send email out async without awaiting so we don't hold the request
+      sendOrderUpdate(order.user.email, order, status).catch(console.error);
+    }
 
     // Update book sold count on delivery
     if (status === "DELIVERED") {
@@ -345,6 +351,82 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+// GET /api/admin/print-jobs
+const getPrintJobs = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where = {
+      ...(status && { status }),
+    };
+
+    const [printJobs, total] = await Promise.all([
+      prisma.printJob.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          order: { select: { id: true, shippingAddress: true, shippingName: true, status: true } }
+        },
+      }),
+      prisma.printJob.count({ where }),
+    ]);
+
+    res.json({
+      printJobs,
+      pagination: {
+        total,
+        page: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /api/admin/print-jobs/:id
+const updatePrintJob = async (req, res, next) => {
+  try {
+    const { status, trackingUrl } = req.body;
+    
+    const validStatuses = [
+      "PENDING",
+      "PRINTING",
+      "QUALITY_CHECK",
+      "SHIPPED",
+      "DELIVERED",
+      "CANCELLED"
+    ];
+
+    if (status && !validStatuses.includes(status)) {
+      throw new AppError("Invalid print job status", 400);
+    }
+
+    const printJob = await prisma.printJob.update({
+      where: { id: req.params.id },
+      data: { 
+        ...(status && { status }),
+      },
+      include: {
+        user: { select: { email: true } }
+      }
+    });
+
+    if (status && printJob.user?.email) {
+      // Trigger email update
+      await sendPrintJobUpdate(printJob.user.email, printJob, status, trackingUrl);
+    }
+
+    res.json({ message: "Print job updated", printJob });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getStats,
   getUsers,
@@ -352,4 +434,6 @@ module.exports = {
   deleteUser,
   getOrders,
   updateOrderStatus,
+  getPrintJobs,
+  updatePrintJob,
 };

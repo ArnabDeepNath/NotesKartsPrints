@@ -1,6 +1,7 @@
 const getStripe = () => require("stripe")(process.env.STRIPE_SECRET_KEY);
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
+const { sendOrderConfirmation } = require("../utils/emailService");
 
 // POST /api/orders  — create a pending order from cart
 const createOrder = async (req, res, next) => {
@@ -189,6 +190,17 @@ const createOrder = async (req, res, next) => {
       } else {
         throw createErr;
       }
+    }
+
+    // Attempt to send email but don't fail order if it fails
+    try {
+      await sendOrderConfirmation(
+        shippingAddress?.email || req.user.email, 
+        order, 
+        order.printJobs
+      );
+    } catch (emailErr) {
+      console.error("Failed to send order confirmation email:", emailErr);
     }
 
     res.status(201).json({ message: "Order created", order });

@@ -187,7 +187,7 @@ export const api = {
                 return data;
             });
         },
-        calculatePrice: (data: { pages: number; copies: number; colorMode: string; binding: string; }) =>
+        calculatePrice: (data: { pages: number; copies: number; colorMode: string; binding: string; printType: string; paperType: string; }) =>
             apiFetch<{ price: number }>('/print/calculate-price', { method: 'POST', body: JSON.stringify(data), auth: false }),
         createJob: (data: any) =>
             apiFetch<{ job: PrintJob }>('/print/job', { method: 'POST', body: JSON.stringify(data) }),
@@ -312,6 +312,8 @@ export interface PrintJob {
     colorMode: string;
     binding: string;
     paperSize: string;
+    printType: string;
+    paperType: string;
     pages: number;
     copies: number;
     price: number;

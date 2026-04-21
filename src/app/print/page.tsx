@@ -21,6 +21,8 @@ export default function PrintSaaSPage() {
     colorMode: "BW",
     binding: "NONE",
     paperSize: "A4",
+    printType: "LAZER",
+    paperType: "70_GSM",
     copies: 1,
   });
   
@@ -37,6 +39,8 @@ export default function PrintSaaSPage() {
         copies: currOptions.copies,
         colorMode: currOptions.colorMode,
         binding: currOptions.binding,
+        printType: currOptions.printType,
+        paperType: currOptions.paperType,
       });
       setPrice(res.price);
     } catch (err: any) {
@@ -103,13 +107,15 @@ export default function PrintSaaSPage() {
         colorMode: options.colorMode,
         binding: options.binding,
         paperSize: options.paperSize,
+        printType: options.printType,
+        paperType: options.paperType,
       });
       
       addToPrintCart(res.job);
       toast("Added to Cart!", "success");
       setFile(null);
       setFileData(null);
-      setOptions({ colorMode: "BW", binding: "NONE", paperSize: "A4", copies: 1 });
+      setOptions({ colorMode: "BW", binding: "NONE", paperSize: "A4", printType: "LAZER", paperType: "70_GSM", copies: 1 });
       setPrice(0);
     } catch (err: any) {
       toast(err.message || "Failed to add to cart", "error");
@@ -227,6 +233,37 @@ export default function PrintSaaSPage() {
                       >
                         Full Color
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Print Type */}
+                    <div>
+                      <label className="text-sm font-medium text-[#86868b] block mb-3">Print Type</label>
+                      <select 
+                        value={options.printType}
+                        onChange={(e) => handleOptionChange("printType", e.target.value)}
+                        className="w-full bg-[#2c2c2e] border border-white/[0.1] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#2997ff]/60 appearance-none"
+                      >
+                        <option value="LAZER">Lazer Print</option>
+                        <option value="INKTANK">Inktank Print</option>
+                      </select>
+                    </div>
+
+                    {/* Paper Type */}
+                    <div>
+                      <label className="text-sm font-medium text-[#86868b] block mb-3">Paper Type</label>
+                      <select 
+                        value={options.paperType}
+                        onChange={(e) => handleOptionChange("paperType", e.target.value)}
+                        className="w-full bg-[#2c2c2e] border border-white/[0.1] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#2997ff]/60 appearance-none"
+                      >
+                        <option value="70_GSM">70 gsm</option>
+                        <option value="75_GSM">75 gsm</option>
+                        <option value="80_GSM">80 gsm</option>
+                        <option value="100_GSM">100 gsm</option>
+                        <option value="120_GSM">120 gsm</option>
+                      </select>
                     </div>
                   </div>
 

@@ -263,6 +263,8 @@ model PrintJob {
   colorMode String   @default("BW")
   binding   String   @default("NONE")
   paperSize String   @default("A4")
+  printType String   @default("LAZER")
+  paperType String   @default("70_GSM")
   pages     Int      @default(1)
   copies    Int      @default(1)
   price     Decimal  @db.Decimal(10, 2)

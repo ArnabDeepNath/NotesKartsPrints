@@ -20,13 +20,29 @@ const createRazorpayOrder = async (req, res, next) => {
       throw new AppError("Razorpay keys not configured", 500);
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        items: true,
-        user: true,
-      },
-    });
+    let order;
+    try {
+      order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: true,
+          user: true,
+        },
+      });
+    } catch (err) {
+      if (err.code === "P2022" || err.code === "P2021") {
+        order = await prisma.order.findUnique({
+          where: { id: orderId },
+          select: {
+            id: true, userId: true, status: true, total: true,
+            items: {
+              select: { id: true, orderId: true, bookId: true, quantity: true, price: true }
+            },
+            user: { select: { id: true, name: true, email: true } },
+          }
+        });
+      } else throw err;
+    }
 
     if (!order) throw new AppError("Order not found", 404);
     if (order.userId !== req.user.id) throw new AppError("Access denied", 403);

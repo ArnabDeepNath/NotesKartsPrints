@@ -10,7 +10,7 @@ const FOOTER_LINKS = {
     "Campus Delivery",
   ],
   Resources: ["Help Center", "Contact Us", "Privacy Policy", "Terms of Use"],
-  Company: ["About Basakzi", "Why On-Demand", "Blog", "Careers"],
+  Company: ["About NoteKart Prints", "Why On-Demand", "Blog", "Careers"],
 };
 
 const SOCIALS = [
@@ -76,7 +76,7 @@ export default function Footer() {
                 </svg>
               </div>
               <span className="text-white font-bold text-[17px]">
-                Basakzi Prints
+                NoteKart Prints
               </span>
             </div>
             <p className="text-[#86868b] text-sm leading-relaxed max-w-[220px]">
@@ -153,7 +153,7 @@ export default function Footer() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
         >
           <p className="text-[#6e6e73] text-xs">
-            © {year} Basakzi. All rights reserved.
+            © {year} NoteKart Prints. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             {["Privacy", "Terms", "Cookies"].map((item) => (

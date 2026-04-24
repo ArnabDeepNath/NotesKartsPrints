@@ -121,7 +121,7 @@ const PLANS = [
     ],
   },
   {
-    name: "Basakzi Pro",
+    name: "NoteKart Pro",
     price: "Custom setup",
     description:
       "For high-volume operations that need branded ordering flows and managed fulfillment.",
@@ -135,7 +135,7 @@ const PLANS = [
 
 const FAQS = [
   {
-    question: "What can users print on Basakzi?",
+    question: "What can users print on NoteKart Prints?",
     answer:
       "Users can upload class notes, lab manuals, assignments, exam prep compilations, and book-ready PDF bundles with configurable print settings.",
   },
@@ -329,9 +329,9 @@ export default function LandingSections({
               A complete print workflow, not just a storefront.
             </h2>
             <p className="text-[#86868b] text-lg leading-relaxed">
-              Basakzi combines a storefront, quoting layer, and print workflow.
-              This flow turns raw files into a dependable ordering experience
-              with less manual coordination and clearer expectations.
+              NoteKart Prints combines a storefront, quoting layer, and print
+              workflow. This flow turns raw files into a dependable ordering
+              experience with less manual coordination and clearer expectations.
             </p>
           </motion.div>
 
@@ -376,7 +376,7 @@ export default function LandingSections({
               className="mb-12"
             >
               <p className="text-xs uppercase tracking-[0.24em] text-[#2997ff] font-semibold mb-3">
-                Why Basakzi wins
+                Why NoteKart wins
               </p>
               <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.05] mb-4">
                 Position the product like a serious service platform.
@@ -429,9 +429,9 @@ export default function LandingSections({
               Make the value proposition obvious in under 10 seconds.
             </h3>
             <p className="text-[#c1c3cb] text-sm leading-relaxed mb-6">
-              Visitors should understand what Basakzi offers, why the workflow
-              is easier than offline printing, and what proof supports the
-              offer.
+              Visitors should understand what NoteKart Prints offers, why the
+              workflow is easier than offline printing, and what proof supports
+              the offer.
             </p>
             <div className="space-y-3">
               {[

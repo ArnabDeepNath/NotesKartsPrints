@@ -93,7 +93,8 @@ export default function Navbar() {
               </svg>
             </div>
             <span className="text-white font-bold text-[17px] tracking-tight">
-              Basak <span className="text-[#86868b] font-normal">Prints</span>
+              NoteKart{" "}
+              <span className="text-[#86868b] font-normal">Prints</span>
             </span>
           </motion.div>
         </Link>

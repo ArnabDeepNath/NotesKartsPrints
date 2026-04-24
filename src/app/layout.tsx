@@ -12,9 +12,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Basak Library — World-Class Book Inventory",
+  title: "NoteKart Prints — On-Demand Note Printing",
   description:
-    "Discover, organize, and curate your entire book collection in one breathtakingly beautiful place. Powered by precision. Designed for readers.",
+    "Upload notes, configure print specs, and manage on-demand printing with NoteKart Prints.",
   icons: { icon: "/favicon.ico" },
 };
 

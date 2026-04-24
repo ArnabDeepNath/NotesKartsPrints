@@ -70,7 +70,7 @@ function toComponentBook(b: ApiBook): Book {
       ? { node: { sourceUrl: b.coverImage, altText: b.title } }
       : undefined,
     categories: b.genre ? { nodes: [{ name: b.genre.name }] } : undefined,
-    author: { node: { name: b.author || "Basakzi Team" } },
+    author: { node: { name: b.author || "NoteKart Team" } },
   };
 }
 

@@ -170,7 +170,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
               <span className="text-white font-semibold">
                 {(metrics.copiesSold || bookCount).toLocaleString()}+
               </span>{" "}
-              copies sold across the current Basakzi catalog
+              copies sold across the current NoteKart catalog
             </span>
           </motion.div>
 
@@ -197,10 +197,10 @@ export default function HeroSection({ bookCount, metrics }: Props) {
             ref={subtitleRef}
             className="opacity-0 text-lg md:text-xl text-[#86868b] max-w-[640px] leading-relaxed mb-10 mx-auto lg:mx-0"
           >
-            Basakzi helps students, educators, and coaching centers upload PDFs,
-            configure print specs, and receive professionally bound notes
-            without juggling local vendors, manual follow-ups, or uncertain
-            delivery.
+            NoteKart Prints helps students, educators, and coaching centers
+            upload PDFs, configure print specs, and receive professionally bound
+            notes without juggling local vendors, manual follow-ups, or
+            uncertain delivery.
           </p>
 
           <div
@@ -274,7 +274,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-white font-semibold text-lg">
-                  Basakzi Print Console
+                  NoteKart Print Console
                 </p>
                 <p className="text-[#6e6e73] text-sm">
                   Turn lecture notes into premium deliverables

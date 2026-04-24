@@ -1,8 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
+
+const DotLottieReact = dynamic(
+  () =>
+    import("@lottiefiles/dotlottie-react").then(
+      (module) => module.DotLottieReact,
+    ),
+  { ssr: false },
+);
 
 interface Props {
   bookCount: number;
@@ -32,12 +41,8 @@ const HIGHLIGHTS = [
   "Student dashboard for repeat orders and tracking",
 ];
 
-const FLOATING_TILES = [
-  { top: "10%", left: "8%", size: 110, delay: 0 },
-  { top: "18%", right: "12%", size: 84, delay: 1.2 },
-  { bottom: "20%", left: "18%", size: 96, delay: 2.3 },
-  { bottom: "12%", right: "20%", size: 120, delay: 0.8 },
-];
+const LOTTIE_WAVE_URL =
+  "https://assets-v2.lottiefiles.com/a/4c515f18-1185-11ee-ad44-d31b95ba38d4/K3LDCMaBRC.lottie";
 
 export default function HeroSection({ bookCount, metrics }: Props) {
   const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -93,7 +98,14 @@ export default function HeroSection({ bookCount, metrics }: Props) {
         className="absolute inset-0 overflow-hidden pointer-events-none select-none"
         aria-hidden="true"
       >
-        <div className="abstract-film opacity-90" />
+        <div className="hero-wave-shell">
+          <DotLottieReact
+            src={LOTTIE_WAVE_URL}
+            autoplay
+            loop
+            className="hero-wave-player"
+          />
+        </div>
         <div className="ambient-grid absolute inset-0 opacity-[0.05]" />
         <motion.div
           animate={{ scale: [1, 1.15, 1], opacity: [0.07, 0.13, 0.07] }}
@@ -129,32 +141,6 @@ export default function HeroSection({ bookCount, metrics }: Props) {
             background: "radial-gradient(circle, #34d399, transparent 70%)",
           }}
         />
-        {FLOATING_TILES.map((tile, index) => (
-          <motion.div
-            key={index}
-            animate={{
-              y: [0, -18, 0],
-              rotate: [0, 6, -4, 0],
-              scale: [1, 1.05, 0.98, 1],
-            }}
-            transition={{
-              duration: 9 + index,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: tile.delay,
-            }}
-            className="absolute rounded-[2rem] border border-white/[0.08] bg-white/[0.04] backdrop-blur-md"
-            style={{
-              top: tile.top,
-              left: tile.left,
-              right: tile.right,
-              bottom: tile.bottom,
-              width: tile.size,
-              height: tile.size,
-              boxShadow: "0 20px 80px rgba(0,0,0,0.25)",
-            }}
-          />
-        ))}
       </div>
 
       {/* Subtle grid */}

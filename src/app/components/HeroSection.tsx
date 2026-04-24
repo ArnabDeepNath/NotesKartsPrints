@@ -41,8 +41,8 @@ const HIGHLIGHTS = [
   "Student dashboard for repeat orders and tracking",
 ];
 
-const LOTTIE_WAVE_URL =
-  "https://assets-v2.lottiefiles.com/a/4c515f18-1185-11ee-ad44-d31b95ba38d4/K3LDCMaBRC.lottie";
+const HERO_LOTTIE_URL =
+  "https://assets-v2.lottiefiles.com/a/442a5f34-1189-11ee-9268-6f28020cd70a/MPRAHoC0Wd.lottie";
 
 export default function HeroSection({ bookCount, metrics }: Props) {
   const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -100,7 +100,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
       >
         <div className="hero-wave-shell">
           <DotLottieReact
-            src={LOTTIE_WAVE_URL}
+            src={HERO_LOTTIE_URL}
             autoplay
             loop
             className="hero-wave-player"

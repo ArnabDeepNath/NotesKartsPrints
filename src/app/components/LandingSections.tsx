@@ -12,8 +12,8 @@ const DotLottieReact = dynamic(
   { ssr: false },
 );
 
-const LOTTIE_WAVE_URL =
-  "https://assets-v2.lottiefiles.com/a/4c515f18-1185-11ee-ad44-d31b95ba38d4/K3LDCMaBRC.lottie";
+const GRID_LOTTIE_URL =
+  "https://assets-v2.lottiefiles.com/a/444c0c60-1189-11ee-928a-0fde9216846a/8vCQb9OkKV.lottie";
 
 interface Props {
   featuredBook: Book | null;
@@ -200,17 +200,7 @@ export default function LandingSections({
               className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
               style={{ transformStyle: "preserve-3d" }}
             >
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 opacity-45 mix-blend-screen"
-              >
-                <DotLottieReact
-                  src={LOTTIE_WAVE_URL}
-                  autoplay
-                  loop
-                  className="h-full w-full scale-[1.8] rotate-[14deg]"
-                />
-              </div>
+              <div className="trust-panel-glow" aria-hidden="true" />
               <p className="text-xs uppercase tracking-[0.22em] text-[#8ec8ff] font-semibold mb-3">
                 Trust snapshot
               </p>
@@ -496,7 +486,7 @@ export default function LandingSections({
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.55, delay: index * 0.08 }}
                 whileHover={{ y: -8, scale: 1.015 }}
-                className={`rounded-[2rem] border p-7 ${
+                className={`abstract-panel relative overflow-hidden rounded-[2rem] border p-7 ${
                   index === 1
                     ? "border-[#2997ff]/40 bg-[linear-gradient(180deg,rgba(41,151,255,0.14),rgba(255,255,255,0.03))]"
                     : "border-white/[0.07] bg-white/[0.025]"
@@ -505,13 +495,13 @@ export default function LandingSections({
                 {index === 1 && (
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-10 -top-12 h-24 opacity-35 mix-blend-screen"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-20 opacity-22 mix-blend-screen"
                   >
                     <DotLottieReact
-                      src={LOTTIE_WAVE_URL}
+                      src={GRID_LOTTIE_URL}
                       autoplay
                       loop
-                      className="h-full w-full scale-[1.6]"
+                      className="h-full w-full scale-[1.1]"
                     />
                   </div>
                 )}

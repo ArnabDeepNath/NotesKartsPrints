@@ -32,6 +32,13 @@ const HIGHLIGHTS = [
   "Student dashboard for repeat orders and tracking",
 ];
 
+const FLOATING_TILES = [
+  { top: "10%", left: "8%", size: 110, delay: 0 },
+  { top: "18%", right: "12%", size: 84, delay: 1.2 },
+  { bottom: "20%", left: "18%", size: 96, delay: 2.3 },
+  { bottom: "12%", right: "20%", size: 120, delay: 0.8 },
+];
+
 export default function HeroSection({ bookCount, metrics }: Props) {
   const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
@@ -86,6 +93,8 @@ export default function HeroSection({ bookCount, metrics }: Props) {
         className="absolute inset-0 overflow-hidden pointer-events-none select-none"
         aria-hidden="true"
       >
+        <div className="abstract-film opacity-90" />
+        <div className="ambient-grid absolute inset-0 opacity-[0.05]" />
         <motion.div
           animate={{ scale: [1, 1.15, 1], opacity: [0.07, 0.13, 0.07] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
@@ -120,6 +129,32 @@ export default function HeroSection({ bookCount, metrics }: Props) {
             background: "radial-gradient(circle, #34d399, transparent 70%)",
           }}
         />
+        {FLOATING_TILES.map((tile, index) => (
+          <motion.div
+            key={index}
+            animate={{
+              y: [0, -18, 0],
+              rotate: [0, 6, -4, 0],
+              scale: [1, 1.05, 0.98, 1],
+            }}
+            transition={{
+              duration: 9 + index,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: tile.delay,
+            }}
+            className="absolute rounded-[2rem] border border-white/[0.08] bg-white/[0.04] backdrop-blur-md"
+            style={{
+              top: tile.top,
+              left: tile.left,
+              right: tile.right,
+              bottom: tile.bottom,
+              width: tile.size,
+              height: tile.size,
+              boxShadow: "0 20px 80px rgba(0,0,0,0.25)",
+            }}
+          />
+        ))}
       </div>
 
       {/* Subtle grid */}
@@ -221,15 +256,17 @@ export default function HeroSection({ bookCount, metrics }: Props) {
 
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto lg:mx-0">
             {HIGHLIGHTS.map((item) => (
-              <div
+              <motion.div
                 key={item}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-sm text-[#b2b2b8]"
+                whileHover={{ y: -6, scale: 1.015 }}
+                transition={{ type: "spring", stiffness: 220, damping: 20 }}
+                className="abstract-panel rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-sm text-[#b2b2b8]"
               >
                 <span className="block text-white font-medium mb-1">
                   Built for serious print orders
                 </span>
                 {item}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -241,7 +278,13 @@ export default function HeroSection({ bookCount, metrics }: Props) {
           className="relative"
         >
           <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-[#2997ff]/15 via-transparent to-cyan-400/10 blur-2xl" />
-          <div className="relative rounded-[2rem] border border-white/[0.08] bg-[#0b0d10]/85 backdrop-blur-xl p-5 md:p-6 shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
+          <motion.div
+            whileHover={{ y: -8, rotateX: -2, rotateY: 2 }}
+            transition={{ type: "spring", stiffness: 160, damping: 18 }}
+            className="abstract-panel relative rounded-[2rem] border border-white/[0.08] bg-[#0b0d10]/85 backdrop-blur-xl p-5 md:p-6 shadow-[0_30px_120px_rgba(0,0,0,0.45)]"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            <div className="abstract-film opacity-60" />
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-white font-semibold text-lg">
@@ -260,7 +303,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
               {dashboardMetrics.map((metric) => (
                 <div
                   key={metric.label}
-                  className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3"
+                  className="abstract-panel rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3"
                 >
                   <p className="text-[#6e6e73] text-[11px] uppercase tracking-[0.18em]">
                     {metric.label}
@@ -273,7 +316,13 @@ export default function HeroSection({ bookCount, metrics }: Props) {
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-[1.5rem] border border-white/[0.07] bg-[linear-gradient(135deg,rgba(41,151,255,0.12),rgba(255,255,255,0.03))] p-5">
+              <motion.div
+                animate={{
+                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                }}
+                transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+                className="abstract-panel rounded-[1.5rem] border border-white/[0.07] bg-[linear-gradient(135deg,rgba(41,151,255,0.12),rgba(255,255,255,0.03),rgba(14,165,233,0.14),rgba(255,255,255,0.03))] bg-[length:220%_220%] p-5"
+              >
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <p className="text-[#8ec8ff] text-xs uppercase tracking-[0.22em] font-semibold">
@@ -289,23 +338,28 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-2xl bg-black/20 border border-white/[0.08] p-4">
+                  <div className="abstract-panel rounded-2xl bg-black/20 border border-white/[0.08] p-4">
                     <p className="text-[#6e6e73] mb-1">Average rating</p>
                     <p className="text-white font-semibold">
-                      {metrics.averageRating.toFixed(1)} / 5 across top catalog titles
+                      {metrics.averageRating.toFixed(1)} / 5 across top catalog
+                      titles
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-black/20 border border-white/[0.08] p-4">
+                  <div className="abstract-panel rounded-2xl bg-black/20 border border-white/[0.08] p-4">
                     <p className="text-[#6e6e73] mb-1">Distinct authors</p>
                     <p className="text-white font-semibold">
-                      {metrics.totalAuthors} writers already represented in the store
+                      {metrics.totalAuthors} writers already represented in the
+                      store
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4">
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  className="abstract-panel rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4"
+                >
                   <p className="text-[#6e6e73] text-xs uppercase tracking-[0.2em] mb-2">
                     Workflow
                   </p>
@@ -314,8 +368,11 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                     <li>Choose paper, print sides, and binding</li>
                     <li>Track status from payment to dispatch</li>
                   </ul>
-                </div>
-                <div className="rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4">
+                </motion.div>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  className="abstract-panel rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4"
+                >
                   <p className="text-[#6e6e73] text-xs uppercase tracking-[0.2em] mb-2">
                     Why teams use it
                   </p>
@@ -324,10 +381,10 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                     <li>Instant estimates before checkout</li>
                     <li>Centralized orders for classes and coaching centers</li>
                   </ul>
-                </div>
+                </motion.div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
 

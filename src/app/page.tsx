@@ -151,7 +151,9 @@ export default async function Home() {
       ratedBooks.length
     : 0;
 
-  const publishers = [...new Set(catalogBooks.map((book) => book.publisher).filter(Boolean))]
+  const publishers = [
+    ...new Set(catalogBooks.map((book) => book.publisher).filter(Boolean)),
+  ]
     .slice(0, 5)
     .map((publisher) => publisher as string);
 
@@ -165,11 +167,15 @@ export default async function Home() {
   }));
 
   const landingMetrics: LandingMetrics = {
-    totalTitles: catalogSnapshot.pagination?.total || catalogBooks.length || EMPTY_LANDING_METRICS.totalTitles,
+    totalTitles:
+      catalogSnapshot.pagination?.total ||
+      catalogBooks.length ||
+      EMPTY_LANDING_METRICS.totalTitles,
     totalGenres: uniqueCategories.length || EMPTY_LANDING_METRICS.totalGenres,
     totalAuthors: uniqueAuthors.length || EMPTY_LANDING_METRICS.totalAuthors,
     featuredTitles:
-      catalogBooks.filter((book) => book.featured).length || featuredBooks.length,
+      catalogBooks.filter((book) => book.featured).length ||
+      featuredBooks.length,
     copiesSold: totalCopiesSold,
     catalogReviews: totalCatalogReviews,
     averageRating,

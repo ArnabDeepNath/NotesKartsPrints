@@ -163,9 +163,10 @@ export default function LandingSections({
                 key={publisher}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -4, scale: 1.02 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.08, duration: 0.45 }}
-                className="rounded-2xl border border-white/[0.06] bg-black/30 px-4 py-4 text-center text-xs md:text-sm font-semibold tracking-[0.18em] text-[#d5d7de]"
+                className="abstract-panel rounded-2xl border border-white/[0.06] bg-black/30 px-4 py-4 text-center text-xs md:text-sm font-semibold tracking-[0.18em] text-[#d5d7de]"
               >
                 {publisher}
               </motion.div>
@@ -176,9 +177,16 @@ export default function LandingSections({
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -8, scale: 1.015, rotateX: -2, rotateY: 1.5 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
+              transition={{
+                duration: 0.5,
+                type: "spring",
+                stiffness: 220,
+                damping: 18,
+              }}
+              className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
+              style={{ transformStyle: "preserve-3d" }}
             >
               <p className="text-xs uppercase tracking-[0.22em] text-[#8ec8ff] font-semibold mb-3">
                 Trust snapshot
@@ -219,9 +227,27 @@ export default function LandingSections({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.08, duration: 0.5 }}
-                  whileHover={{ y: -4, borderColor: "rgba(41,151,255,0.24)" }}
-                  className="rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
+                  whileHover={{
+                    y: -10,
+                    scale: 1.02,
+                    borderColor: "rgba(41,151,255,0.24)",
+                  }}
+                  className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
+                  style={{ transformStyle: "preserve-3d" }}
                 >
+                  <motion.div
+                    animate={{
+                      opacity: [0.18, 0.32, 0.18],
+                      scale: [1, 1.08, 1],
+                    }}
+                    transition={{
+                      duration: 7 + index,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl"
+                    style={{ background: "rgba(41,151,255,0.18)" }}
+                  />
                   <p className="text-[11px] uppercase tracking-[0.2em] text-[#8ec8ff] font-semibold mb-3">
                     {item.publisher}
                   </p>
@@ -294,8 +320,12 @@ export default function LandingSections({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.55, delay: index * 0.08 }}
-                whileHover={{ y: -4, borderColor: "rgba(41,151,255,0.24)" }}
-                className="rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-6"
+                whileHover={{
+                  y: -8,
+                  scale: 1.015,
+                  borderColor: "rgba(41,151,255,0.24)",
+                }}
+                className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-6"
               >
                 <p className="text-[#2997ff] text-sm font-black tracking-[0.22em] mb-6">
                   {item.step}
@@ -343,7 +373,12 @@ export default function LandingSections({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ duration: 0.5, delay: index * 0.06 }}
-                  className="rounded-[1.75rem] border border-white/[0.07] bg-white/[0.025] p-6"
+                  whileHover={{
+                    y: -8,
+                    scale: 1.015,
+                    borderColor: "rgba(41,151,255,0.22)",
+                  }}
+                  className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-white/[0.025] p-6"
                 >
                   <h3 className="text-white text-xl font-bold mb-3">
                     {feature.title}
@@ -361,7 +396,8 @@ export default function LandingSections({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(41,151,255,0.13),rgba(255,255,255,0.02))] p-6 lg:sticky lg:top-28"
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="abstract-panel rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(41,151,255,0.13),rgba(255,255,255,0.02))] p-6 lg:sticky lg:top-28"
           >
             <p className="text-xs uppercase tracking-[0.24em] text-[#8ec8ff] font-semibold mb-3">
               Conversion snapshot

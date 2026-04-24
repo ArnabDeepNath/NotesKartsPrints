@@ -69,3 +69,126 @@ body {
 .excerpt-clean p {
   margin: 0;
 }
+
+.abstract-film {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.abstract-film::before,
+.abstract-film::after {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  opacity: 0.7;
+}
+
+.abstract-film::before {
+  background:
+    radial-gradient(
+      circle at 18% 30%,
+      rgba(41, 151, 255, 0.24),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 82% 22%,
+      rgba(14, 165, 233, 0.22),
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 56% 78%,
+      rgba(52, 211, 153, 0.16),
+      transparent 22%
+    ),
+    linear-gradient(
+      125deg,
+      rgba(255, 255, 255, 0.03),
+      transparent 45%,
+      rgba(41, 151, 255, 0.08)
+    );
+  filter: blur(28px) saturate(130%);
+  animation: abstractDrift 18s ease-in-out infinite alternate;
+}
+
+.abstract-film::after {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 0,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px,
+      transparent 56px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04),
+      transparent 42%,
+      rgba(41, 151, 255, 0.08)
+    );
+  mix-blend-mode: screen;
+  opacity: 0.24;
+  animation: abstractScan 16s linear infinite;
+}
+
+.abstract-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.abstract-panel::before {
+  content: "";
+  position: absolute;
+  inset: -40% 10% auto -10%;
+  height: 70%;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.16),
+    transparent 40%,
+    rgba(41, 151, 255, 0.12) 72%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: translate3d(-12%, 0, 0) rotate(-8deg);
+  transition:
+    opacity 0.35s ease,
+    transform 0.6s ease;
+}
+
+.abstract-panel:hover::before {
+  opacity: 1;
+  transform: translate3d(10%, 0, 0) rotate(-4deg);
+}
+
+.ambient-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at center, black 36%, transparent 85%);
+}
+
+@keyframes abstractDrift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(2%, 2%, 0) scale(1.08) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(-1%, 4%, 0) scale(1.03) rotate(-4deg);
+  }
+}
+
+@keyframes abstractScan {
+  0% {
+    transform: translate3d(-2%, -3%, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(1%, 2%, 0) scale(1.01);
+  }
+  100% {
+    transform: translate3d(3%, -1%, 0) scale(1.05);
+  }
+}

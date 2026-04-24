@@ -6,21 +6,44 @@ import gsap from "gsap";
 
 interface Props {
   bookCount: number;
+  metrics: {
+    totalTitles: number;
+    totalGenres: number;
+    totalAuthors: number;
+    featuredTitles: number;
+    copiesSold: number;
+    catalogReviews: number;
+    averageRating: number;
+  };
 }
 
 const TITLE_PARTS = [
-  { text: "The", highlight: false },
-  { text: "World's", highlight: false },
-  { text: "Most", highlight: false },
-  { text: "Beautiful", highlight: true },
-  { text: "Book", highlight: true },
-  { text: "Inventory.", highlight: true },
+  { text: "Print", highlight: false },
+  { text: "Notes", highlight: false },
+  { text: "On", highlight: false },
+  { text: "Demand", highlight: true },
+  { text: "For", highlight: true },
+  { text: "Every Campus.", highlight: true },
 ];
 
-export default function HeroSection({ bookCount }: Props) {
+const HIGHLIGHTS = [
+  "Same-day dispatch for urgent orders",
+  "Premium paper, binding, and cover choices",
+  "Student dashboard for repeat orders and tracking",
+];
+
+export default function HeroSection({ bookCount, metrics }: Props) {
   const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const dashboardMetrics = [
+    { label: "Active titles", value: metrics.totalTitles.toString() },
+    { label: "Genres", value: metrics.totalGenres.toString() },
+    {
+      label: "Catalog reviews",
+      value: `${(metrics.catalogReviews / 1000).toFixed(1)}k`,
+    },
+  ];
 
   useEffect(() => {
     const validWords = wordsRef.current.filter(Boolean);
@@ -57,7 +80,7 @@ export default function HeroSection({ bookCount }: Props) {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden pt-20">
+    <section className="relative min-h-screen flex items-center px-6 overflow-hidden pt-24 pb-16">
       {/* Animated background orbs */}
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none select-none"
@@ -81,7 +104,7 @@ export default function HeroSection({ bookCount }: Props) {
           }}
           className="absolute bottom-[10%] right-[5%] w-[45vw] h-[45vw] max-w-[600px] max-h-[600px] rounded-full blur-[80px]"
           style={{
-            background: "radial-gradient(circle, #a855f7, transparent 70%)",
+            background: "radial-gradient(circle, #0ea5e9, transparent 70%)",
           }}
         />
         <motion.div
@@ -110,88 +133,202 @@ export default function HeroSection({ bookCount }: Props) {
         aria-hidden="true"
       />
 
-      {/* Live Badge */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: "backOut" }}
-        className="relative mb-8 inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.1] rounded-full px-4 py-2"
-      >
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-        </span>
-        <span className="text-sm text-[#86868b]">
-          <span className="text-white font-semibold">{bookCount}</span>{" "}
-          {bookCount === 1 ? "Book" : "Books"} in collection
-        </span>
-      </motion.div>
-
-      {/* Title */}
-      <h1
-        className="text-[clamp(48px,8vw,100px)] font-black tracking-tight leading-[1.03] mb-7"
-        style={{ perspective: "1200px" }}
-      >
-        {TITLE_PARTS.map((part, i) => (
-          <span
-            key={i}
-            ref={(el) => {
-              wordsRef.current[i] = el;
-            }}
-            className={`inline-block mr-[0.2em] opacity-0 ${
-              part.highlight ? "text-gradient-blue" : "text-white"
-            }`}
+      <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_460px] gap-12 lg:gap-10 items-center">
+        <div className="text-center lg:text-left">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "backOut" }}
+            className="relative mb-8 inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.1] rounded-full px-4 py-2"
           >
-            {part.text}
-          </span>
-        ))}
-      </h1>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+            </span>
+            <span className="text-sm text-[#86868b]">
+              <span className="text-white font-semibold">
+                {(metrics.copiesSold || bookCount).toLocaleString()}+
+              </span>{" "}
+              copies sold across the current Basakzi catalog
+            </span>
+          </motion.div>
 
-      {/* Subtitle */}
-      <p
-        ref={subtitleRef}
-        className="opacity-0 text-lg md:text-xl text-[#86868b] max-w-[520px] leading-relaxed mb-12"
-      >
-        Discover, organize, and curate an extraordinary collection. Designed for
-        readers who believe every book deserves to be celebrated.
-      </p>
-
-      {/* CTA Buttons */}
-      <div
-        ref={ctaRef}
-        className="opacity-0 flex flex-col sm:flex-row gap-4 items-center"
-      >
-        <motion.a
-          href="#books"
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
-          className="inline-flex items-center gap-2.5 bg-[#2997ff] hover:bg-[#1a83ff] text-white font-semibold px-8 py-4 rounded-full text-[15px] transition-colors"
-        >
-          Explore Collection
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <h1
+            className="text-[clamp(48px,8vw,96px)] font-black tracking-tight leading-[1.02] mb-7"
+            style={{ perspective: "1200px" }}
           >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </motion.a>
-        <motion.a
-          href="#featured"
-          whileHover={{
-            scale: 1.04,
-            backgroundColor: "rgba(255,255,255,0.09)",
-          }}
-          whileTap={{ scale: 0.97 }}
-          className="inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.12] text-white font-semibold px-8 py-4 rounded-full text-[15px] transition-colors"
+            {TITLE_PARTS.map((part, i) => (
+              <span
+                key={i}
+                ref={(el) => {
+                  wordsRef.current[i] = el;
+                }}
+                className={`inline-block mr-[0.2em] opacity-0 ${
+                  part.highlight ? "text-gradient-blue" : "text-white"
+                }`}
+              >
+                {part.text}
+              </span>
+            ))}
+          </h1>
+
+          <p
+            ref={subtitleRef}
+            className="opacity-0 text-lg md:text-xl text-[#86868b] max-w-[640px] leading-relaxed mb-10 mx-auto lg:mx-0"
+          >
+            Basakzi helps students, educators, and coaching centers upload PDFs,
+            configure print specs, and receive professionally bound notes
+            without juggling local vendors, manual follow-ups, or uncertain
+            delivery.
+          </p>
+
+          <div
+            ref={ctaRef}
+            className="opacity-0 flex flex-col sm:flex-row gap-4 items-center lg:items-start"
+          >
+            <motion.a
+              href="#pricing"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-2.5 bg-[#2997ff] hover:bg-[#1a83ff] text-white font-semibold px-8 py-4 rounded-full text-[15px] transition-colors"
+            >
+              Start Printing Now
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </motion.a>
+            <motion.a
+              href="#workflow"
+              whileHover={{
+                scale: 1.04,
+                backgroundColor: "rgba(255,255,255,0.09)",
+              }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.12] text-white font-semibold px-8 py-4 rounded-full text-[15px] transition-colors"
+            >
+              See How It Works
+            </motion.a>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto lg:mx-0">
+            {HIGHLIGHTS.map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-sm text-[#b2b2b8]"
+              >
+                <span className="block text-white font-medium mb-1">
+                  Built for serious print orders
+                </span>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.35, ease: "easeOut" }}
+          className="relative"
         >
-          Featured Picks
-        </motion.a>
+          <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-[#2997ff]/15 via-transparent to-cyan-400/10 blur-2xl" />
+          <div className="relative rounded-[2rem] border border-white/[0.08] bg-[#0b0d10]/85 backdrop-blur-xl p-5 md:p-6 shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-white font-semibold text-lg">
+                  Basakzi Print Console
+                </p>
+                <p className="text-[#6e6e73] text-sm">
+                  Turn lecture notes into premium deliverables
+                </p>
+              </div>
+              <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+                Live pricing
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {dashboardMetrics.map((metric) => (
+                <div
+                  key={metric.label}
+                  className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3"
+                >
+                  <p className="text-[#6e6e73] text-[11px] uppercase tracking-[0.18em]">
+                    {metric.label}
+                  </p>
+                  <p className="text-white text-xl font-black mt-1">
+                    {metric.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-[1.5rem] border border-white/[0.07] bg-[linear-gradient(135deg,rgba(41,151,255,0.12),rgba(255,255,255,0.03))] p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <p className="text-[#8ec8ff] text-xs uppercase tracking-[0.22em] font-semibold">
+                      Catalog snapshot
+                    </p>
+                    <h3 className="text-white text-2xl font-black mt-2">
+                      Built on proof visitors can verify
+                    </h3>
+                  </div>
+                  <span className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/80 border border-white/[0.08]">
+                    {metrics.featuredTitles} featured picks
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-2xl bg-black/20 border border-white/[0.08] p-4">
+                    <p className="text-[#6e6e73] mb-1">Average rating</p>
+                    <p className="text-white font-semibold">
+                      {metrics.averageRating.toFixed(1)} / 5 across top catalog titles
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-black/20 border border-white/[0.08] p-4">
+                    <p className="text-[#6e6e73] mb-1">Distinct authors</p>
+                    <p className="text-white font-semibold">
+                      {metrics.totalAuthors} writers already represented in the store
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4">
+                  <p className="text-[#6e6e73] text-xs uppercase tracking-[0.2em] mb-2">
+                    Workflow
+                  </p>
+                  <ul className="space-y-2 text-sm text-[#b8b8be]">
+                    <li>Upload PDF or notes bundle</li>
+                    <li>Choose paper, print sides, and binding</li>
+                    <li>Track status from payment to dispatch</li>
+                  </ul>
+                </div>
+                <div className="rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4">
+                  <p className="text-[#6e6e73] text-xs uppercase tracking-[0.2em] mb-2">
+                    Why teams use it
+                  </p>
+                  <ul className="space-y-2 text-sm text-[#b8b8be]">
+                    <li>Standardized quality across every batch</li>
+                    <li>Instant estimates before checkout</li>
+                    <li>Centralized orders for classes and coaching centers</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Scroll Indicator */}
@@ -199,7 +336,7 @@ export default function HeroSection({ bookCount }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.8, duration: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
         <motion.div
           animate={{ y: [0, 8, 0] }}

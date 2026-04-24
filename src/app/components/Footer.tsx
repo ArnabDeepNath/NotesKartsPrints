@@ -3,9 +3,14 @@
 import { motion } from "framer-motion";
 
 const FOOTER_LINKS = {
-  Explore: ["All Books", "New Arrivals", "Bestsellers", "Collections"],
-  Support: ["Help Center", "Contact Us", "Privacy Policy", "Terms of Use"],
-  Company: ["About Basak", "Our Mission", "Blog", "Careers"],
+  Product: [
+    "Upload Notes",
+    "Bulk Print Orders",
+    "Binding Options",
+    "Campus Delivery",
+  ],
+  Resources: ["Help Center", "Contact Us", "Privacy Policy", "Terms of Use"],
+  Company: ["About Basakzi", "Why On-Demand", "Blog", "Careers"],
 };
 
 const SOCIALS = [
@@ -71,12 +76,12 @@ export default function Footer() {
                 </svg>
               </div>
               <span className="text-white font-bold text-[17px]">
-                Basak Library
+                Basakzi Prints
               </span>
             </div>
             <p className="text-[#86868b] text-sm leading-relaxed max-w-[220px]">
-              A world-class book inventory experience. Designed for readers who
-              care about every detail.
+              Professional note printing for students, educators, and learning
+              businesses that need speed, quality, and predictable fulfillment.
             </p>
 
             {/* Socials */}
@@ -148,7 +153,7 @@ export default function Footer() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
         >
           <p className="text-[#6e6e73] text-xs">
-            © {year} Basak Library. All rights reserved.
+            © {year} Basakzi. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             {["Privacy", "Terms", "Cookies"].map((item) => (
@@ -162,8 +167,7 @@ export default function Footer() {
             ))}
           </div>
           <p className="text-[#6e6e73] text-xs">
-            Built with <span className="text-[#2997ff]">Next.js</span> &{" "}
-            <span className="text-[#2997ff]">WordPress</span>
+            Built for modern print-on-demand operations
           </p>
         </div>
       </div>

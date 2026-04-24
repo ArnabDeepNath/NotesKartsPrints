@@ -12,11 +12,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_LINKS = [
-  { label: "Explore", href: "/books" },
-  { label: "Featured", href: "/books?featured=true" },
-  { label: "Collections", href: "/books#collections" },
+  { label: "How It Works", href: "/#workflow" },
+  { label: "Features", href: "/#features" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "Catalog", href: "/#books" },
   { label: "Print", href: "/print" },
-  { label: "About", href: "#about" },
 ];
 
 export default function Navbar() {
@@ -93,7 +93,7 @@ export default function Navbar() {
               </svg>
             </div>
             <span className="text-white font-bold text-[17px] tracking-tight">
-              Basak <span className="text-[#86868b] font-normal">Library</span>
+              Basak <span className="text-[#86868b] font-normal">Prints</span>
             </span>
           </motion.div>
         </Link>
@@ -220,7 +220,9 @@ export default function Navbar() {
                               ₹{(item.price * item.quantity).toFixed(0)}
                             </p>
                             <button
-                              onClick={() => removeFromCart(item.bookId, item.variationId)}
+                              onClick={() =>
+                                removeFromCart(item.bookId, item.variationId)
+                              }
                               className="text-[10px] text-[#ff453a] hover:underline mt-0.5"
                             >
                               Remove

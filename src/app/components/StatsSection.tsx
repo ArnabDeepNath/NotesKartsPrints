@@ -69,45 +69,53 @@ function StatCard({
 }
 
 interface Props {
-  totalBooks: number;
-  totalCategories: number;
-  totalAuthors: number;
+  metrics: {
+    totalTitles: number;
+    totalGenres: number;
+    totalAuthors: number;
+    featuredTitles: number;
+    copiesSold: number;
+    catalogReviews: number;
+    averageRating: number;
+  };
 }
 
-export default function StatsSection({
-  totalBooks,
-  totalCategories,
-  totalAuthors,
-}: Props) {
+export default function StatsSection({ metrics }: Props) {
   const stats = [
     {
-      value: totalBooks > 0 ? totalBooks : 0,
-      label: "Books",
+      value: metrics.totalTitles,
+      label: "Titles",
       suffix: "+",
-      description: "Catalogued titles",
+      description: "Active catalog entries",
     },
     {
-      value: totalCategories > 0 ? totalCategories : 12,
+      value: metrics.totalGenres,
       label: "Genres",
       suffix: "+",
-      description: "Rich categories",
+      description: "Organized subject lanes",
     },
     {
-      value: totalAuthors > 0 ? totalAuthors : 8,
-      label: "Authors",
-      description: "Curated voices",
+      value: metrics.featuredTitles,
+      label: "Featured",
+      description: "Highlighted bestsellers",
     },
     {
-      value: 99,
-      label: "Satisfaction",
-      suffix: "%",
-      description: "Reader approval",
+      value: metrics.copiesSold,
+      label: "Copies Sold",
+      suffix: "+",
+      description: "Total sold from seeded catalog",
+    },
+    {
+      value: metrics.catalogReviews,
+      label: "Reviews",
+      suffix: "+",
+      description: "Verified catalog review volume",
     },
   ];
 
   return (
     <section className="py-16 px-6">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -115,9 +123,9 @@ export default function StatsSection({
           transition={{ duration: 0.5 }}
           className="text-center text-xs text-[#6e6e73] uppercase tracking-[0.22em] mb-8"
         >
-          By the numbers
+          Trusted by students, creators, and academic teams
         </motion.p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {stats.map((s) => (
             <StatCard key={s.label} {...s} />
           ))}

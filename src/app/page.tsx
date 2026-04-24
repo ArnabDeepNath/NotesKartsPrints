@@ -3,12 +3,34 @@ import HeroSection from "./components/HeroSection";
 import StatsSection from "./components/StatsSection";
 import FeaturedBook from "./components/FeaturedBook";
 import BookGrid from "./components/BookGrid";
+import LandingSections from "./components/LandingSections";
 import Footer from "./components/Footer";
 import { Book } from "./components/BookCard";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-function toComponentBook(b: any): Book {
+const FALLBACK_LANDING_METRICS = {
+  totalTitles: 11,
+  totalGenres: 8,
+  totalAuthors: 11,
+  featuredTitles: 6,
+  copiesSold: 7461,
+  catalogReviews: 84815,
+  averageRating: 4.6,
+};
+
+interface ApiBook {
+  id: string;
+  title: string;
+  createdAt?: string;
+  description?: string;
+  shortDesc?: string;
+  coverImage?: string;
+  author?: string;
+  genre?: { name: string };
+}
+
+function toComponentBook(b: ApiBook): Book {
   return {
     id: b.id,
     title: b.title,
@@ -19,7 +41,7 @@ function toComponentBook(b: any): Book {
       ? { node: { sourceUrl: b.coverImage, altText: b.title } }
       : undefined,
     categories: b.genre ? { nodes: [{ name: b.genre.name }] } : undefined,
-    author: { node: { name: b.author } },
+    author: { node: { name: b.author || "Basakzi Team" } },
   };
 }
 
@@ -65,15 +87,24 @@ export default async function Home() {
   const allAuthors = books.map((b) => b.author?.node?.name).filter(Boolean);
   const uniqueAuthors = [...new Set(allAuthors)];
 
+  const landingMetrics = {
+    totalTitles: books.length || FALLBACK_LANDING_METRICS.totalTitles,
+    totalGenres:
+      uniqueCategories.length || FALLBACK_LANDING_METRICS.totalGenres,
+    totalAuthors: uniqueAuthors.length || FALLBACK_LANDING_METRICS.totalAuthors,
+    featuredTitles:
+      featuredBooks.length || FALLBACK_LANDING_METRICS.featuredTitles,
+    copiesSold: FALLBACK_LANDING_METRICS.copiesSold,
+    catalogReviews: FALLBACK_LANDING_METRICS.catalogReviews,
+    averageRating: FALLBACK_LANDING_METRICS.averageRating,
+  };
+
   return (
     <main className="bg-black min-h-screen">
       <Navbar />
-      <HeroSection bookCount={books.length} />
-      <StatsSection
-        totalBooks={books.length}
-        totalCategories={uniqueCategories.length}
-        totalAuthors={uniqueAuthors.length}
-      />
+      <HeroSection bookCount={books.length} metrics={landingMetrics} />
+      <StatsSection metrics={landingMetrics} />
+      <LandingSections featuredBook={featuredBook} metrics={landingMetrics} />
       {featuredBook && <FeaturedBook book={featuredBook} />}
       <BookGrid books={books} />
       <Footer />

@@ -14,42 +14,16 @@ interface Props {
     catalogReviews: number;
     averageRating: number;
   };
+  publishers: string[];
+  trustCards: Array<{
+    title: string;
+    publisher: string;
+    sold: number;
+    rating: number;
+    reviews: number;
+    summary: string;
+  }>;
 }
-
-const CATALOG_PUBLISHERS = [
-  "Canongate Books",
-  "Penguin Random House",
-  "Harper Perennial",
-  "MIT Press",
-  "Universities Press",
-];
-
-const TRUST_PROOF = [
-  {
-    title: "Wings of Fire",
-    publisher: "Universities Press",
-    sold: 2341,
-    rating: 4.9,
-    reviews: 18923,
-    summary: "The most proven title in the current seeded catalog, with the highest review volume and strongest rating.",
-  },
-  {
-    title: "The Alchemist",
-    publisher: "HarperOne",
-    sold: 1203,
-    rating: 4.6,
-    reviews: 12543,
-    summary: "Consistent long-tail demand that works well as a trust anchor for visitors scanning the collection quickly.",
-  },
-  {
-    title: "Atomic Habits",
-    publisher: "Penguin Random House",
-    sold: 891,
-    rating: 4.8,
-    reviews: 5234,
-    summary: "A recognizable bestseller with strong ratings, useful for replacing fake proof blocks with real catalog momentum.",
-  },
-];
 
 const WORKFLOW = [
   {
@@ -170,7 +144,12 @@ const FAQS = [
   },
 ];
 
-export default function LandingSections({ featuredBook, metrics }: Props) {
+export default function LandingSections({
+  featuredBook,
+  metrics,
+  publishers,
+  trustCards,
+}: Props) {
   return (
     <>
       <section className="px-6 py-12 md:py-14">
@@ -179,7 +158,7 @@ export default function LandingSections({ featuredBook, metrics }: Props) {
             Real catalog proof replacing placeholder brand names
           </p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-            {CATALOG_PUBLISHERS.map((publisher, index) => (
+            {publishers.map((publisher, index) => (
               <motion.div
                 key={publisher}
                 initial={{ opacity: 0, y: 24 }}
@@ -209,25 +188,31 @@ export default function LandingSections({ featuredBook, metrics }: Props) {
                   <p className="text-white text-3xl font-black">
                     {metrics.copiesSold.toLocaleString()}+
                   </p>
-                  <p className="text-[#86868b] text-sm mt-1">copies sold across 11 seeded titles</p>
+                  <p className="text-[#86868b] text-sm mt-1">
+                    copies sold across 11 seeded titles
+                  </p>
                 </div>
                 <div>
                   <p className="text-white text-3xl font-black">
                     {metrics.catalogReviews.toLocaleString()}+
                   </p>
-                  <p className="text-[#86868b] text-sm mt-1">catalog reviews already attached to those titles</p>
+                  <p className="text-[#86868b] text-sm mt-1">
+                    catalog reviews already attached to those titles
+                  </p>
                 </div>
                 <div>
                   <p className="text-white text-3xl font-black">
                     {metrics.averageRating.toFixed(1)}
                   </p>
-                  <p className="text-[#86868b] text-sm mt-1">average rating across the trust set shown here</p>
+                  <p className="text-[#86868b] text-sm mt-1">
+                    average rating across the trust set shown here
+                  </p>
                 </div>
               </div>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {TRUST_PROOF.map((item, index) => (
+              {trustCards.map((item, index) => (
                 <motion.div
                   key={item.title}
                   initial={{ opacity: 0, y: 28 }}
@@ -240,22 +225,36 @@ export default function LandingSections({ featuredBook, metrics }: Props) {
                   <p className="text-[11px] uppercase tracking-[0.2em] text-[#8ec8ff] font-semibold mb-3">
                     {item.publisher}
                   </p>
-                  <h3 className="text-white text-xl font-bold mb-2">{item.title}</h3>
+                  <h3 className="text-white text-xl font-bold mb-2">
+                    {item.title}
+                  </h3>
                   <p className="text-[#b6bac3] text-sm leading-relaxed mb-4">
                     {item.summary}
                   </p>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
-                      <p className="text-white font-black text-lg">{item.rating.toFixed(1)}</p>
-                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">rating</p>
+                      <p className="text-white font-black text-lg">
+                        {item.rating.toFixed(1)}
+                      </p>
+                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">
+                        rating
+                      </p>
                     </div>
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
-                      <p className="text-white font-black text-lg">{(item.reviews / 1000).toFixed(1)}k</p>
-                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">reviews</p>
+                      <p className="text-white font-black text-lg">
+                        {(item.reviews / 1000).toFixed(1)}k
+                      </p>
+                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">
+                        reviews
+                      </p>
                     </div>
                     <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
-                      <p className="text-white font-black text-lg">{item.sold}</p>
-                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">sold</p>
+                      <p className="text-white font-black text-lg">
+                        {item.sold}
+                      </p>
+                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">
+                        sold
+                      </p>
                     </div>
                   </div>
                 </motion.div>
@@ -372,7 +371,8 @@ export default function LandingSections({ featuredBook, metrics }: Props) {
             </h3>
             <p className="text-[#c1c3cb] text-sm leading-relaxed mb-6">
               Visitors should understand what Basakzi offers, why the workflow
-              is easier than offline printing, and what proof supports the offer.
+              is easier than offline printing, and what proof supports the
+              offer.
             </p>
             <div className="space-y-3">
               {[

@@ -97,32 +97,32 @@ function BooksPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#f7f8fa]">
       <Navbar />
-      <main className="pt-24 pb-20 px-6 max-w-7xl mx-auto">
+      <main className="pt-6 pb-20 px-4 max-w-7xl mx-auto">
         {/* Header */}
-        <div ref={headerRef} className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-2">
-            Browse <span className="text-gradient-blue">Collection</span>
+        <div ref={headerRef} className="mb-6 pt-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#232f3e] mb-1">
+            Browse Collection
           </h1>
-          <p className="text-[#86868b]">
+          <p className="text-gray-500 text-sm">
             Showing {total.toLocaleString()} titles
           </p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-10">
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
           <form onSubmit={handleSearch} className="flex-1 relative">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search books, authors, genres..."
-              className="w-full bg-white/[0.05] border border-white/[0.1] rounded-2xl px-5 py-3.5 text-white placeholder-[#48484a] text-sm focus:outline-none focus:border-[#2997ff]/50 pr-12"
+              className="w-full bg-white border border-gray-300 rounded-md px-4 py-2.5 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] pr-10"
             />
             <button
               type="submit"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#48484a] hover:text-white transition-colors"
+              className="absolute right-0 top-0 h-full px-3 bg-[#e47911] hover:bg-[#c45500] text-white rounded-r-md transition-colors"
             >
               <svg
                 width="16"
@@ -139,20 +139,18 @@ function BooksPageInner() {
             </button>
           </form>
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2 flex-wrap">
             <select
               value={genre}
               onChange={(e) => {
                 setGenre(e.target.value);
                 setPage(1);
               }}
-              className="bg-white/[0.05] border border-white/[0.1] rounded-2xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/50 appearance-none cursor-pointer"
+              className="bg-white border border-gray-300 rounded-md px-3 py-2.5 text-gray-700 text-sm focus:outline-none focus:border-[#e47911] cursor-pointer"
             >
-              <option value="" className="bg-[#1c1c1e]">
-                All Genres
-              </option>
+              <option value="">All Genres</option>
               {genres.map((g) => (
-                <option key={g.id} value={g.slug} className="bg-[#1c1c1e]">
+                <option key={g.id} value={g.slug}>
                   {g.name}
                 </option>
               ))}
@@ -164,10 +162,10 @@ function BooksPageInner() {
                 setSort(e.target.value);
                 setPage(1);
               }}
-              className="bg-white/[0.05] border border-white/[0.1] rounded-2xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/50 appearance-none cursor-pointer"
+              className="bg-white border border-gray-300 rounded-md px-3 py-2.5 text-gray-700 text-sm focus:outline-none focus:border-[#e47911] cursor-pointer"
             >
               {SORT_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value} className="bg-[#1c1c1e]">
+                <option key={s.value} value={s.value}>
                   {s.label}
                 </option>
               ))}
@@ -178,7 +176,7 @@ function BooksPageInner() {
                 setFeatured((f) => !f);
                 setPage(1);
               }}
-              className={`px-4 py-3.5 rounded-2xl text-sm font-medium transition-all border ${featured ? "bg-[#f5a623]/15 border-[#f5a623]/30 text-[#f5a623]" : "bg-white/[0.05] border-white/[0.1] text-[#86868b] hover:text-white"}`}
+              className={`px-3 py-2.5 rounded-md text-sm font-medium transition-all border ${featured ? "bg-[#e47911] border-[#e47911] text-white" : "bg-white border-gray-300 text-gray-600 hover:border-[#e47911] hover:text-[#e47911]"}`}
             >
               ★ Featured
             </button>
@@ -187,10 +185,10 @@ function BooksPageInner() {
 
         {/* Genre pills */}
         {genres.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-8">
+          <div className="flex gap-2 flex-wrap mb-6">
             <button
               onClick={() => setGenre("")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${!genre ? "bg-white/[0.12] text-white" : "text-[#86868b] hover:text-white"}`}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${!genre ? "bg-[#232f3e] text-white border-[#232f3e]" : "bg-white text-gray-600 border-gray-300 hover:border-[#232f3e] hover:text-[#232f3e]"}`}
             >
               All
             </button>
@@ -201,20 +199,16 @@ function BooksPageInner() {
                   setGenre(g.slug);
                   setPage(1);
                 }}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${genre === g.slug ? "text-white" : "text-[#86868b] hover:text-white"}`}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${genre === g.slug ? "text-white" : "bg-white text-gray-600 border-gray-300 hover:border-gray-500"}`}
                 style={
                   genre === g.slug
-                    ? {
-                        backgroundColor: `${g.color}22`,
-                        border: `1px solid ${g.color}44`,
-                        color: g.color,
-                      }
+                    ? { backgroundColor: g.color, borderColor: g.color }
                     : {}
                 }
               >
                 {g.name}{" "}
                 {g._count && (
-                  <span className="opacity-60">({g._count.books})</span>
+                  <span className="opacity-70">({g._count.books})</span>
                 )}
               </button>
             ))}
@@ -223,16 +217,17 @@ function BooksPageInner() {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white/[0.04] rounded-3xl overflow-hidden animate-pulse"
+                className="bg-white rounded-md overflow-hidden animate-pulse border border-gray-200"
               >
-                <div className="bg-white/[0.06] h-56 w-full" />
-                <div className="p-4 space-y-2">
-                  <div className="bg-white/[0.06] h-3 rounded-full w-3/4" />
-                  <div className="bg-white/[0.06] h-2.5 rounded-full w-1/2" />
+                <div className="bg-gray-200 h-48 w-full" />
+                <div className="p-3 space-y-2">
+                  <div className="bg-gray-200 h-3 rounded w-3/4" />
+                  <div className="bg-gray-200 h-2.5 rounded w-1/2" />
+                  <div className="bg-gray-200 h-3 rounded w-1/3" />
                 </div>
               </div>
             ))}
@@ -240,10 +235,10 @@ function BooksPageInner() {
         ) : books.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="text-6xl mb-4">📚</div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-semibold text-[#232f3e] mb-2">
               No books found
             </h3>
-            <p className="text-[#86868b]">
+            <p className="text-gray-500">
               Try a different search term or filter
             </p>
             <button
@@ -252,7 +247,7 @@ function BooksPageInner() {
                 setGenre("");
                 setFeatured(false);
               }}
-              className="mt-6 text-[#2997ff] text-sm hover:underline"
+              className="mt-6 text-[#146eb4] text-sm hover:underline"
             >
               Clear filters
             </button>
@@ -260,7 +255,7 @@ function BooksPageInner() {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
           >
             <AnimatePresence>
               {books.map((book, i) => (
@@ -284,13 +279,13 @@ function BooksPageInner() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-12">
+          <div className="flex items-center justify-center gap-2 mt-10">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white disabled:opacity-40 hover:bg-white/[0.1] transition-colors flex items-center justify-center"
+              className="px-3 py-2 rounded border border-gray-300 bg-white text-gray-700 disabled:opacity-40 hover:border-[#e47911] hover:text-[#e47911] transition-colors text-sm"
             >
-              ‹
+              ‹ Prev
             </button>
             {Array.from({ length: Math.min(7, totalPages) }).map((_, i) => {
               const p = i + 1;
@@ -298,7 +293,7 @@ function BooksPageInner() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-10 h-10 rounded-xl text-sm font-medium transition-colors ${p === page ? "bg-[#2997ff] text-white" : "bg-white/[0.05] border border-white/[0.1] text-[#86868b] hover:text-white"}`}
+                  className={`w-9 h-9 rounded border text-sm font-medium transition-colors ${p === page ? "bg-[#e47911] border-[#e47911] text-white" : "bg-white border-gray-300 text-gray-700 hover:border-[#e47911] hover:text-[#e47911]"}`}
                 >
                   {p}
                 </button>
@@ -307,9 +302,9 @@ function BooksPageInner() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white disabled:opacity-40 hover:bg-white/[0.1] transition-colors flex items-center justify-center"
+              className="px-3 py-2 rounded border border-gray-300 bg-white text-gray-700 disabled:opacity-40 hover:border-[#e47911] hover:text-[#e47911] transition-colors text-sm"
             >
-              ›
+              Next ›
             </button>
           </div>
         )}
@@ -321,7 +316,7 @@ function BooksPageInner() {
 
 export default function BooksPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#f7f8fa]" />}>
       <BooksPageInner />
     </Suspense>
   );
@@ -339,13 +334,9 @@ function BookCard({
     : 0;
 
   return (
-    <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="group bg-white/[0.04] border border-white/[0.08] rounded-3xl overflow-hidden hover:border-white/[0.15] transition-all duration-300"
-    >
+    <div className="group bg-white border border-gray-200 rounded-md overflow-hidden hover:shadow-md transition-shadow duration-200">
       <Link href={`/books/${book.id}`}>
-        <div className="relative overflow-hidden bg-[#1c1c1e] h-56">
+        <div className="relative overflow-hidden bg-gray-100 h-48">
           {book.coverImage ? (
             <img
               src={book.coverImage}
@@ -353,48 +344,46 @@ function BookCard({
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <svg
-                className="text-white/10 w-16 h-16"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-              </svg>
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, #232f3e 0%, #37475a 100%)",
+              }}
+            >
+              <span className="text-white/60 text-3xl">📚</span>
             </div>
           )}
           {discount > 0 && (
-            <div className="absolute top-3 left-3 bg-[#ff453a] text-white text-[10px] font-bold px-2 py-1 rounded-lg">
-              -{discount}%
+            <div className="absolute top-2 left-2 bg-[#e47911] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+              -{discount}% OFF
             </div>
           )}
           {book.featured && (
-            <div className="absolute top-3 right-3 bg-[#f5a623]/90 text-black text-[10px] font-bold px-2 py-1 rounded-lg">
+            <div className="absolute top-2 right-2 bg-[#232f3e] text-white text-[10px] font-bold px-2 py-0.5 rounded">
               ★ Featured
             </div>
           )}
         </div>
       </Link>
 
-      <div className="p-4">
+      <div className="p-3">
         {book.genre && (
           <span
-            className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
+            className="text-[10px] font-semibold uppercase tracking-wider mb-1 block"
             style={{ color: book.genre.color }}
           >
             {book.genre.name}
           </span>
         )}
         <Link href={`/books/${book.id}`}>
-          <h3 className="text-sm font-semibold text-white leading-snug mb-0.5 line-clamp-2 hover:text-[#2997ff] transition-colors">
+          <h3 className="text-sm font-semibold text-[#232f3e] leading-snug mb-0.5 line-clamp-2 hover:text-[#146eb4] transition-colors">
             {book.title}
           </h3>
         </Link>
-        <p className="text-xs text-[#86868b] mb-3">{book.author}</p>
+        <p className="text-xs text-gray-500 mb-2">{book.author}</p>
 
         {book.rating !== undefined && (
-          <div className="flex items-center gap-1 mb-3">
+          <div className="flex items-center gap-1 mb-2">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((s) => (
                 <svg
@@ -402,56 +391,45 @@ function BookCard({
                   width="10"
                   height="10"
                   viewBox="0 0 24 24"
-                  fill={s <= Math.round(book.rating!) ? "#f5a623" : "none"}
-                  stroke="#f5a623"
+                  fill={s <= Math.round(book.rating!) ? "#e47911" : "none"}
+                  stroke="#e47911"
                   strokeWidth="2"
-                  className="opacity-80"
                 >
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               ))}
             </div>
-            <span className="text-[10px] text-[#86868b]">
+            <span className="text-[10px] text-gray-500">
               ({book.reviewCount || 0})
             </span>
           </div>
         )}
 
+        <p className="text-[10px] text-green-600 font-medium mb-2">FREE Delivery</p>
+
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-base font-bold text-white">
-              ₹{Number(book.price).toFixed(0)}
+            <span className="text-base font-bold text-[#232f3e]">
+              Rs. {Number(book.price).toFixed(0)}
             </span>
             {book.comparePrice && (
-              <span className="text-xs text-[#86868b] line-through ml-2">
-                ₹{Number(book.comparePrice).toFixed(0)}
+              <span className="text-xs text-gray-400 line-through ml-1.5">
+                Rs. {Number(book.comparePrice).toFixed(0)}
               </span>
             )}
           </div>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+          <button
             onClick={onAddToCart}
             disabled={book.stock === 0}
-            className="w-8 h-8 rounded-xl bg-[#2997ff] hover:bg-[#1a83ff] flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-xs px-2 py-1 rounded bg-[#e47911] hover:bg-[#c45500] text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </motion.button>
+            + Cart
+          </button>
         </div>
         {book.stock === 0 && (
-          <p className="text-[10px] text-[#ff453a] mt-1">Out of stock</p>
+          <p className="text-[10px] text-red-500 mt-1">Out of stock</p>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

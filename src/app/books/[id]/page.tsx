@@ -27,7 +27,7 @@ function StarRating({
           onClick={() => onRate?.(star)}
           onMouseEnter={() => onRate && setHover(star)}
           onMouseLeave={() => onRate && setHover(0)}
-          className={`text-xl transition-colors ${star <= (hover || rating) ? "text-[#f5a623]" : "text-white/20"} ${onRate ? "cursor-pointer" : "cursor-default"}`}
+          className={`text-xl transition-colors ${star <= (hover || rating) ? "text-[#e47911]" : "text-gray-300"} ${onRate ? "cursor-pointer" : "cursor-default"}`}
         >
           ★
         </button>
@@ -131,15 +131,15 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-[#f7f8fa]">
         <Navbar />
-        <div className="pt-28 pb-20 px-6 max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-[320px_1fr] gap-12">
-            <div className="aspect-[3/4] bg-white/[0.06] rounded-3xl animate-pulse" />
+        <div className="pt-6 pb-20 px-4 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-[300px_1fr] gap-10">
+            <div className="aspect-[3/4] bg-gray-200 rounded-md animate-pulse" />
             <div className="space-y-4 pt-4">
-              <div className="h-8 bg-white/[0.06] rounded-xl animate-pulse" />
-              <div className="h-4 w-1/2 bg-white/[0.04] rounded-xl animate-pulse" />
-              <div className="h-12 bg-white/[0.04] rounded-xl animate-pulse mt-6" />
+              <div className="h-8 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse" />
+              <div className="h-12 bg-gray-200 rounded animate-pulse mt-6" />
             </div>
           </div>
         </div>
@@ -149,11 +149,11 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
   if (!book) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center">
         <div className="text-center">
           <p className="text-5xl mb-4">📚</p>
-          <h2 className="text-xl font-bold text-white mb-2">Book not found</h2>
-          <Link href="/books" className="text-[#2997ff] hover:underline">
+          <h2 className="text-xl font-bold text-[#232f3e] mb-2">Book not found</h2>
+          <Link href="/books" className="text-[#146eb4] hover:underline">
             ← Browse books
           </Link>
         </div>
@@ -166,13 +166,13 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
     : 0;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#f7f8fa]">
       <Navbar />
 
-      <div className="pt-28 pb-20 px-6 max-w-6xl mx-auto">
+      <div className="pt-6 pb-20 px-4 max-w-6xl mx-auto">
         <Link
           href="/books"
-          className="inline-flex items-center gap-1 text-sm text-[#86868b] hover:text-white transition-colors mb-8"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#232f3e] transition-colors mb-6"
         >
           <svg
             className="w-4 h-4"
@@ -194,7 +194,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid md:grid-cols-[320px_1fr] gap-12 mb-16"
+          className="grid md:grid-cols-[300px_1fr] gap-10 mb-12"
         >
           {/* Cover */}
           <div className="relative">
@@ -202,16 +202,16 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               <img
                 src={selectedVariation?.image || book.coverImage}
                 alt={book.title}
-                className="w-full aspect-[3/4] object-cover rounded-3xl shadow-2xl shadow-black/60"
+                className="w-full aspect-[3/4] object-cover rounded-md shadow-lg"
               />
             ) : (
-              <div className="w-full aspect-[3/4] bg-white/[0.06] rounded-3xl flex items-center justify-center text-8xl">
+              <div className="w-full aspect-[3/4] bg-gray-200 rounded-md flex items-center justify-center text-8xl">
                 📖
               </div>
             )}
             {discount > 0 && (
-              <div className="absolute top-4 left-4 bg-[#ff453a] text-white text-xs font-bold px-3 py-1.5 rounded-xl">
-                -{discount}%
+              <div className="absolute top-3 left-3 bg-[#e47911] text-white text-xs font-bold px-2 py-1 rounded">
+                -{discount}% OFF
               </div>
             )}
           </div>
@@ -219,24 +219,24 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           {/* Info */}
           <div className="flex flex-col">
             {book.genre && (
-              <span className="text-xs font-semibold text-[#2997ff] uppercase tracking-wider mb-3">
+              <span className="text-xs font-semibold text-[#e47911] uppercase tracking-wider mb-3">
                 {book.genre.name}
               </span>
             )}
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#232f3e] leading-tight">
               {book.title}
             </h1>
             {book.subtitle && (
-              <p className="text-lg text-[#86868b] mt-1">{book.subtitle}</p>
+              <p className="text-lg text-gray-500 mt-1">{book.subtitle}</p>
             )}
-            <p className="text-base text-[#86868b] mt-2">
-              by <span className="text-white">{book.author}</span>
+            <p className="text-base text-gray-500 mt-2">
+              by <span className="text-[#232f3e] font-medium">{book.author}</span>
             </p>
 
             {/* Rating */}
             <div className="flex items-center gap-3 mt-4">
               <StarRating rating={Math.round(book.rating || 0)} />
-              <span className="text-sm text-[#86868b]">
+              <span className="text-sm text-gray-500">
                 {Number(book.rating || 0).toFixed(1)} ({book.reviewCount || 0}{" "}
                 reviews)
               </span>
@@ -244,34 +244,35 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Price */}
             <div className="flex items-baseline gap-3 mt-6">
-              <span className="text-3xl font-bold text-white">
-                ₹{Number(selectedVariation ? selectedVariation.price : book.price).toLocaleString("en-IN")}
+              <span className="text-3xl font-bold text-[#232f3e]">
+                Rs. {Number(selectedVariation ? selectedVariation.price : book.price).toLocaleString("en-IN")}
               </span>
               {(selectedVariation ? selectedVariation.comparePrice : book.comparePrice) && (
-                <span className="text-lg text-[#86868b] line-through">
-                  ₹{Number(selectedVariation ? selectedVariation.comparePrice : book.comparePrice).toLocaleString("en-IN")}
+                <span className="text-lg text-gray-400 line-through">
+                  Rs. {Number(selectedVariation ? selectedVariation.comparePrice : book.comparePrice).toLocaleString("en-IN")}
                 </span>
               )}
               {discount > 0 && (
-                <span className="text-sm font-semibold text-[#30d158]">
+                <span className="text-sm font-semibold text-green-600">
                   Save {discount}%
                 </span>
               )}
             </div>
+            <p className="text-sm text-green-600 font-medium mt-1">FREE Delivery</p>
 
             {/* Variations Selector */}
             {book.variations && book.variations.length > 0 && (
               <div className="mt-6">
-                <p className="text-xs font-semibold text-[#86868b] uppercase tracking-wider mb-3">Options</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Options</p>
                 <div className="flex flex-wrap gap-3">
                   {book.variations.map((v: any) => (
                     <button
                       key={v.id}
                       onClick={() => setSelectedVariation(v)}
-                      className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
+                      className={`px-4 py-2 rounded border text-sm font-medium transition-all ${
                         selectedVariation?.id === v.id
-                          ? "border-[#2997ff] bg-[#2997ff]/10 text-white"
-                          : "border-white/[0.1] text-[#86868b] hover:border-white/[0.2] hover:text-white"
+                          ? "border-[#e47911] bg-[#e47911]/10 text-[#e47911]"
+                          : "border-gray-300 text-gray-600 hover:border-[#e47911] hover:text-[#e47911]"
                       }`}
                     >
                       {v.attributes?.value || 'Option'}
@@ -283,8 +284,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Stock */}
             <p
-              className={`text-sm mt-4 ${
-                (selectedVariation ? selectedVariation.stock : book.stock) === 0 ? "text-[#ff453a]" : (selectedVariation ? selectedVariation.stock : book.stock) < 10 ? "text-[#f5a623]" : "text-[#30d158]"
+              className={`text-sm mt-4 font-medium ${
+                (selectedVariation ? selectedVariation.stock : book.stock) === 0 ? "text-red-500" : (selectedVariation ? selectedVariation.stock : book.stock) < 10 ? "text-[#e47911]" : "text-green-600"
               }`}
             >
               {(selectedVariation ? selectedVariation.stock : book.stock) === 0
@@ -300,12 +301,12 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 whileTap={{ scale: 0.96 }}
                 onClick={handleAddToCart}
                 disabled={(selectedVariation ? selectedVariation.stock : book.stock) === 0}
-                className={`flex-1 py-3.5 rounded-2xl font-semibold text-sm transition-all ${
+                className={`flex-1 py-3 rounded font-semibold text-sm transition-all ${
                   (selectedVariation ? selectedVariation.stock : book.stock) === 0
-                    ? "bg-white/[0.04] text-[#86868b] cursor-not-allowed"
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : added
-                      ? "bg-[#30d158] text-white"
-                      : "bg-[#2997ff] hover:bg-[#1a83ff] text-white"
+                      ? "bg-green-600 text-white"
+                      : "bg-[#e47911] hover:bg-[#c45500] text-white"
                 }`}
               >
                 {added
@@ -319,10 +320,10 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 whileTap={{ scale: 0.92 }}
                 onClick={handleWishlist}
                 disabled={wishlistLoading}
-                className={`w-12 h-12 rounded-2xl border flex items-center justify-center transition-all ${
+                className={`w-11 h-11 rounded border flex items-center justify-center transition-all ${
                   inWishlist
-                    ? "border-[#ff453a]/40 bg-[#ff453a]/10 text-[#ff453a]"
-                    : "border-white/[0.1] bg-white/[0.04] text-[#86868b] hover:text-[#ff453a]"
+                    ? "border-red-300 bg-red-50 text-red-500"
+                    : "border-gray-300 bg-white text-gray-400 hover:text-red-500 hover:border-red-300"
                 }`}
               >
                 <svg
@@ -342,7 +343,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Book details */}
-            <div className="grid grid-cols-2 gap-3 mt-8 border-t border-white/[0.06] pt-6">
+            <div className="grid grid-cols-2 gap-3 mt-8 border-t border-gray-200 pt-6">
               {[
                 { label: "Publisher", value: book.publisher },
                 {
@@ -356,10 +357,10 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 .filter((d) => d.value)
                 .map((d) => (
                   <div key={d.label}>
-                    <p className="text-[10px] font-semibold text-[#48484a] uppercase tracking-wider">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                       {d.label}
                     </p>
-                    <p className="text-sm text-white mt-0.5">{d.value}</p>
+                    <p className="text-sm text-[#232f3e] mt-0.5">{d.value}</p>
                   </div>
                 ))}
             </div>
@@ -374,11 +375,11 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             transition={{ delay: 0.1 }}
             className="mb-12"
           >
-            <h2 className="text-xl font-bold text-white mb-4">
+            <h2 className="text-xl font-bold text-[#232f3e] mb-4">
               About this Book
             </h2>
-            <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-6">
-              <p className="text-[#86868b] leading-relaxed whitespace-pre-line">
+            <div className="bg-white border border-gray-200 rounded-md p-6">
+              <p className="text-gray-600 leading-relaxed whitespace-pre-line">
                 {book.description}
               </p>
             </div>
@@ -391,7 +392,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <h2 className="text-xl font-bold text-white mb-6">
+          <h2 className="text-xl font-bold text-[#232f3e] mb-6">
             Customer Reviews
           </h2>
 
@@ -400,19 +401,19 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               {book.reviews.map((review: any) => (
                 <div
                   key={review.id}
-                  className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-5"
+                  className="bg-white border border-gray-200 rounded-md p-5"
                 >
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2997ff] to-[#0066cc] flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-8 h-8 rounded-full bg-[#232f3e] flex items-center justify-center text-white text-xs font-bold">
                         {review.user?.name?.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-[#232f3e]">
                           {review.user?.name}
                         </p>
                         {review.verified && (
-                          <p className="text-[10px] text-[#30d158]">
+                          <p className="text-[10px] text-green-600">
                             ✓ Verified Purchase
                           </p>
                         )}
@@ -420,18 +421,18 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                     </div>
                     <div className="text-right">
                       <StarRating rating={review.rating} />
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                      <p className="text-[10px] text-gray-400 mt-0.5">
                         {new Date(review.createdAt).toLocaleDateString("en-IN")}
                       </p>
                     </div>
                   </div>
                   {review.title && (
-                    <p className="text-sm font-semibold text-white mt-2">
+                    <p className="text-sm font-semibold text-[#232f3e] mt-2">
                       {review.title}
                     </p>
                   )}
                   {review.comment && (
-                    <p className="text-sm text-[#86868b] mt-1">
+                    <p className="text-sm text-gray-500 mt-1">
                       {review.comment}
                     </p>
                   )}
@@ -439,8 +440,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               ))}
             </div>
           ) : (
-            <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-8 text-center mb-8">
-              <p className="text-[#86868b] text-sm">
+            <div className="bg-white border border-gray-200 rounded-md p-8 text-center mb-8">
+              <p className="text-gray-500 text-sm">
                 No reviews yet. Be the first to review!
               </p>
             </div>
@@ -448,19 +449,19 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Review form */}
           {user ? (
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-3xl p-6">
-              <h3 className="text-base font-bold text-white mb-4">
+            <div className="bg-white border border-gray-200 rounded-md p-6">
+              <h3 className="text-base font-bold text-[#232f3e] mb-4">
                 Write a Review
               </h3>
               <form onSubmit={handleReviewSubmit} className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-2 block">
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
                     Your Rating
                   </label>
                   <StarRating rating={reviewRating} onRate={setReviewRating} />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                     Title
                   </label>
                   <input
@@ -468,11 +469,11 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
                     placeholder="Summarize your review"
-                    className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60 placeholder-[#48484a]"
+                    className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] placeholder-gray-400"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                     Comment
                   </label>
                   <textarea
@@ -480,13 +481,13 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                     onChange={(e) => setReviewComment(e.target.value)}
                     placeholder="Share your thoughts about this book..."
                     rows={4}
-                    className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60 placeholder-[#48484a] resize-none"
+                    className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] placeholder-gray-400 resize-none"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submittingReview}
-                  className="bg-[#2997ff] hover:bg-[#1a83ff] disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm flex items-center gap-2"
+                  className="bg-[#e47911] hover:bg-[#c45500] disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded transition-colors text-sm flex items-center gap-2"
                 >
                   {submittingReview && (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -496,13 +497,13 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               </form>
             </div>
           ) : (
-            <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-6 text-center">
-              <p className="text-[#86868b] text-sm mb-3">
+            <div className="bg-white border border-gray-200 rounded-md p-6 text-center">
+              <p className="text-gray-500 text-sm mb-3">
                 Sign in to leave a review.
               </p>
               <Link
                 href="/login"
-                className="text-[#2997ff] hover:underline text-sm font-semibold"
+                className="text-[#146eb4] hover:underline text-sm font-semibold"
               >
                 Sign In
               </Link>

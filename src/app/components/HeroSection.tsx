@@ -1,17 +1,8 @@
-"use client";
+﻿"use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import gsap from "gsap";
-
-const DotLottieReact = dynamic(
-  () =>
-    import("@lottiefiles/dotlottie-react").then(
-      (module) => module.DotLottieReact,
-    ),
-  { ssr: false },
-);
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 interface Props {
   bookCount: number;
@@ -26,382 +17,185 @@ interface Props {
   };
 }
 
-const TITLE_PARTS = [
-  { text: "Print", highlight: false },
-  { text: "Notes", highlight: false },
-  { text: "On", highlight: false },
-  { text: "Demand", highlight: true },
-  { text: "For", highlight: true },
-  { text: "Every Campus.", highlight: true },
+const HERO_SLIDES = [
+  {
+    title: "Customize, Print & Get Your Notes",
+    subtitle: "Delivered right to your doorstep!",
+    bg: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
+    accent: "#e47911",
+    cta: "Shop Now",
+    href: "/books",
+    badge: "NEW ARRIVALS",
+    image: null,
+  },
+  {
+    title: "NEET PG Revision Notes",
+    subtitle: "All 19 Subjects – Full Colour HD Printing",
+    bg: "linear-gradient(135deg, #0d1b2a 0%, #1b4332 50%, #0d1b2a 100%)",
+    accent: "#f5a623",
+    cta: "Order Now",
+    href: "/books?category=neet-pg",
+    badge: "BESTSELLER",
+    image: null,
+  },
+  {
+    title: "Rapid Revision 2026-27",
+    subtitle: "All Subjects Full Colour – Dispatch in 24 hrs",
+    bg: "linear-gradient(135deg, #2d0036 0%, #6d28d9 50%, #2d0036 100%)",
+    accent: "#f5a623",
+    cta: "Explore",
+    href: "/books?category=rapid-revision",
+    badge: "HOT DEAL",
+    image: null,
+  },
 ];
 
-const HIGHLIGHTS = [
-  "Same-day dispatch for urgent orders",
-  "Premium paper, binding, and cover choices",
-  "Student dashboard for repeat orders and tracking",
+const CATEGORY_GRID = [
+  { name: "NEET PG Full Notes", icon: "📗", href: "/books?category=neet-pg", color: "#e8f5e9" },
+  { name: "Rapid Revision", icon: "⚡", href: "/books?category=rapid-revision", color: "#fff3e0" },
+  { name: "BTR Notes", icon: "📘", href: "/books?category=btr-notes", color: "#e3f2fd" },
+  { name: "Super Speciality", icon: "🔬", href: "/books?category=super-speciality", color: "#f3e5f5" },
+  { name: "USMLE Notes", icon: "🏥", href: "/books?category=usmle", color: "#fce4ec" },
+  { name: "Other Notes", icon: "📋", href: "/books?category=other", color: "#e0f7fa" },
+  { name: "BDS Dental Notes", icon: "🦷", href: "/books?category=bds-dental", color: "#fff8e1" },
+  { name: "Thesis & Plan Work", icon: "📄", href: "/books?category=thesis", color: "#e8eaf6" },
+  { name: "MBBS Books", icon: "📚", href: "/books?category=mbbs", color: "#e0f2f1" },
+  { name: "MD Books", icon: "🩺", href: "/books?category=md", color: "#fbe9e7" },
 ];
-
-const HERO_LOTTIE_URL =
-  "https://assets-v2.lottiefiles.com/a/442a5f34-1189-11ee-9268-6f28020cd70a/MPRAHoC0Wd.lottie";
 
 export default function HeroSection({ bookCount, metrics }: Props) {
-  const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-  const dashboardMetrics = [
-    { label: "Active titles", value: metrics.totalTitles.toString() },
-    { label: "Genres", value: metrics.totalGenres.toString() },
-    {
-      label: "Catalog reviews",
-      value: `${(metrics.catalogReviews / 1000).toFixed(1)}k`,
-    },
-  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    const validWords = wordsRef.current.filter(Boolean);
-    const tl = gsap.timeline({ delay: 0.2 });
-
-    tl.fromTo(
-      validWords,
-      { opacity: 0, y: 80, rotateX: -60, transformOrigin: "center bottom" },
-      {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        stagger: 0.09,
-        duration: 1.1,
-        ease: "power4.out",
-      },
-    )
-      .fromTo(
-        subtitleRef.current,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" },
-        "-=0.55",
-      )
-      .fromTo(
-        ctaRef.current,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
-        "-=0.4",
-      );
-
-    return () => {
-      tl.kill();
-    };
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(timer);
   }, []);
 
+  const slide = HERO_SLIDES[currentSlide];
+
   return (
-    <section className="relative min-h-screen flex items-center px-6 overflow-hidden pt-24 pb-16">
-      {/* Animated background orbs */}
-      <div
-        className="absolute inset-0 overflow-hidden pointer-events-none select-none"
-        aria-hidden="true"
-      >
-        <div className="hero-wave-shell">
-          <DotLottieReact
-            src={HERO_LOTTIE_URL}
-            autoplay
-            loop
-            className="hero-wave-player"
-          />
-        </div>
-        <div className="ambient-grid absolute inset-0 opacity-[0.05]" />
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.07, 0.13, 0.07] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[15%] left-[10%] w-[55vw] h-[55vw] max-w-[750px] max-h-[750px] rounded-full blur-[80px]"
-          style={{
-            background: "radial-gradient(circle, #2997ff, transparent 70%)",
-          }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.09, 0.05] }}
-          transition={{
-            duration: 11,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2.5,
-          }}
-          className="absolute bottom-[10%] right-[5%] w-[45vw] h-[45vw] max-w-[600px] max-h-[600px] rounded-full blur-[80px]"
-          style={{
-            background: "radial-gradient(circle, #0ea5e9, transparent 70%)",
-          }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.04, 0.07, 0.04] }}
-          transition={{
-            duration: 7,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 5,
-          }}
-          className="absolute top-[60%] left-[40%] w-[30vw] h-[30vw] max-w-[400px] max-h-[400px] rounded-full blur-[60px]"
-          style={{
-            background: "radial-gradient(circle, #34d399, transparent 70%)",
-          }}
-        />
+    <div className="bg-[#f7f8fa]">
+      {/* Promo announcement bar */}
+      <div className="bg-[#232f3e] text-center py-2 px-4">
+        <p className="text-sm text-white">
+          🎉 Enjoy{" "}
+          <span className="font-bold text-[#f5a623]">25% OFF</span> for new
+          users &nbsp;|&nbsp;{" "}
+          <span className="font-bold text-[#f5a623]">12% OFF</span> for
+          returning customers &nbsp;|&nbsp; FREE delivery above{" "}
+          <span className="font-bold text-[#f5a623]">Rs.499</span>
+          &nbsp;
+          <Link href="/books?offers=true" className="underline text-[#f5a623] font-semibold ml-1">
+            Print smart, save more →
+          </Link>
+        </p>
       </div>
 
-      {/* Subtle grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.025]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-          backgroundSize: "80px 80px",
-        }}
-        aria-hidden="true"
-      />
-
-      <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_460px] gap-12 lg:gap-10 items-center">
-        <div className="text-center lg:text-left">
+      {/* Hero Banner Slider */}
+      <div className="relative overflow-hidden" style={{ height: "340px" }}>
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: "backOut" }}
-            className="relative mb-8 inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.1] rounded-full px-4 py-2"
+            key={currentSlide}
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -60 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="absolute inset-0 flex items-center"
+            style={{ background: slide.bg }}
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-            </span>
-            <span className="text-sm text-[#86868b]">
-              <span className="text-white font-semibold">
-                {(metrics.copiesSold || bookCount).toLocaleString()}+
-              </span>{" "}
-              copies sold across the current NoteKart catalog
-            </span>
-          </motion.div>
-
-          <h1
-            className="text-[clamp(48px,8vw,96px)] font-black tracking-tight leading-[1.02] mb-7"
-            style={{ perspective: "1200px" }}
-          >
-            {TITLE_PARTS.map((part, i) => (
-              <span
-                key={i}
-                ref={(el) => {
-                  wordsRef.current[i] = el;
-                }}
-                className={`inline-block mr-[0.2em] opacity-0 ${
-                  part.highlight ? "text-gradient-blue" : "text-white"
-                }`}
-              >
-                {part.text}
-              </span>
-            ))}
-          </h1>
-
-          <p
-            ref={subtitleRef}
-            className="opacity-0 text-lg md:text-xl text-[#86868b] max-w-[640px] leading-relaxed mb-10 mx-auto lg:mx-0"
-          >
-            NoteKart Prints helps students, educators, and coaching centers
-            upload PDFs, configure print specs, and receive professionally bound
-            notes without juggling local vendors, manual follow-ups, or
-            uncertain delivery.
-          </p>
-
-          <div
-            ref={ctaRef}
-            className="opacity-0 flex flex-col sm:flex-row gap-4 items-center lg:items-start"
-          >
-            <motion.a
-              href="#pricing"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2.5 bg-[#2997ff] hover:bg-[#1a83ff] text-white font-semibold px-8 py-4 rounded-full text-[15px] transition-colors"
-            >
-              Start Printing Now
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </motion.a>
-            <motion.a
-              href="#workflow"
-              whileHover={{
-                scale: 1.04,
-                backgroundColor: "rgba(255,255,255,0.09)",
-              }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2.5 bg-white/[0.06] border border-white/[0.12] text-white font-semibold px-8 py-4 rounded-full text-[15px] transition-colors"
-            >
-              See How It Works
-            </motion.a>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto lg:mx-0">
-            {HIGHLIGHTS.map((item) => (
-              <motion.div
-                key={item}
-                whileHover={{ y: -6, scale: 1.015 }}
-                transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                className="abstract-panel rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-sm text-[#b2b2b8]"
-              >
-                <span className="block text-white font-medium mb-1">
-                  Built for serious print orders
+            <div className="max-w-7xl mx-auto px-8 md:px-12 w-full">
+              <div className="max-w-2xl">
+                <span
+                  className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-widest"
+                  style={{ background: slide.accent, color: "#fff" }}
+                >
+                  {slide.badge}
                 </span>
-                {item}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.35, ease: "easeOut" }}
-          className="relative"
-        >
-          <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-[#2997ff]/15 via-transparent to-cyan-400/10 blur-2xl" />
-          <motion.div
-            whileHover={{ y: -8, rotateX: -2, rotateY: 2 }}
-            transition={{ type: "spring", stiffness: 160, damping: 18 }}
-            className="abstract-panel relative rounded-[2rem] border border-white/[0.08] bg-[#0b0d10]/85 backdrop-blur-xl p-5 md:p-6 shadow-[0_30px_120px_rgba(0,0,0,0.45)]"
-            style={{ transformStyle: "preserve-3d" }}
-          >
-            <div className="abstract-film opacity-60" />
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-white font-semibold text-lg">
-                  NoteKart Print Console
+                <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-3">
+                  {slide.title}
+                </h1>
+                <p className="text-base md:text-lg text-white/80 mb-6">
+                  {slide.subtitle}
                 </p>
-                <p className="text-[#6e6e73] text-sm">
-                  Turn lecture notes into premium deliverables
-                </p>
-              </div>
-              <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
-                Live pricing
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 mb-5">
-              {dashboardMetrics.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="abstract-panel rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3"
-                >
-                  <p className="text-[#6e6e73] text-[11px] uppercase tracking-[0.18em]">
-                    {metric.label}
-                  </p>
-                  <p className="text-white text-xl font-black mt-1">
-                    {metric.value}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <Link href={slide.href}>
+                    <button
+                      className="px-8 py-3 font-bold text-sm rounded-md transition-all hover:scale-105"
+                      style={{ background: slide.accent, color: "#fff" }}
+                    >
+                      {slide.cta}
+                    </button>
+                  </Link>
+                  <Link href="/print">
+                    <button className="px-8 py-3 font-bold text-sm rounded-md border-2 border-white/40 text-white hover:bg-white/10 transition-all">
+                      Print Now
+                    </button>
+                  </Link>
                 </div>
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <motion.div
-                animate={{
-                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                }}
-                transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-                className="abstract-panel rounded-[1.5rem] border border-white/[0.07] bg-[linear-gradient(135deg,rgba(41,151,255,0.12),rgba(255,255,255,0.03),rgba(14,165,233,0.14),rgba(255,255,255,0.03))] bg-[length:220%_220%] p-5"
-              >
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div>
-                    <p className="text-[#8ec8ff] text-xs uppercase tracking-[0.22em] font-semibold">
-                      Catalog snapshot
-                    </p>
-                    <h3 className="text-white text-2xl font-black mt-2">
-                      Built on proof visitors can verify
-                    </h3>
-                  </div>
-                  <span className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/80 border border-white/[0.08]">
-                    {metrics.featuredTitles} featured picks
-                  </span>
+                <div className="mt-5 flex items-center gap-5 text-white/60 text-xs">
+                  <span>✓ {metrics.totalTitles}+ Titles</span>
+                  <span>✓ Same-day dispatch</span>
+                  <span>✓ Premium binding</span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="abstract-panel rounded-2xl bg-black/20 border border-white/[0.08] p-4">
-                    <p className="text-[#6e6e73] mb-1">Average rating</p>
-                    <p className="text-white font-semibold">
-                      {metrics.averageRating.toFixed(1)} / 5 across top catalog
-                      titles
-                    </p>
-                  </div>
-                  <div className="abstract-panel rounded-2xl bg-black/20 border border-white/[0.08] p-4">
-                    <p className="text-[#6e6e73] mb-1">Distinct authors</p>
-                    <p className="text-white font-semibold">
-                      {metrics.totalAuthors} writers already represented in the
-                      store
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  className="abstract-panel rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4"
-                >
-                  <p className="text-[#6e6e73] text-xs uppercase tracking-[0.2em] mb-2">
-                    Workflow
-                  </p>
-                  <ul className="space-y-2 text-sm text-[#b8b8be]">
-                    <li>Upload PDF or notes bundle</li>
-                    <li>Choose paper, print sides, and binding</li>
-                    <li>Track status from payment to dispatch</li>
-                  </ul>
-                </motion.div>
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  className="abstract-panel rounded-[1.25rem] border border-white/[0.07] bg-white/[0.03] p-4"
-                >
-                  <p className="text-[#6e6e73] text-xs uppercase tracking-[0.2em] mb-2">
-                    Why teams use it
-                  </p>
-                  <ul className="space-y-2 text-sm text-[#b8b8be]">
-                    <li>Standardized quality across every batch</li>
-                    <li>Instant estimates before checkout</li>
-                    <li>Centralized orders for classes and coaching centers</li>
-                  </ul>
-                </motion.div>
               </div>
             </div>
           </motion.div>
-        </motion.div>
+        </AnimatePresence>
+
+        {/* Slide indicators */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {HERO_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`h-2 rounded-full transition-all ${
+                i === currentSlide ? "w-6 bg-[#e47911]" : "w-2 bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Prev / Next arrows */}
+        <button
+          onClick={() => setCurrentSlide((p) => (p - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors z-10"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button
+          onClick={() => setCurrentSlide((p) => (p + 1) % HERO_SLIDES.length)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors z-10"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
       </div>
 
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.8, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-1.5"
-        >
-          <span className="text-[10px] text-[#6e6e73] uppercase tracking-[0.22em]">
-            Scroll
-          </span>
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#6e6e73"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          >
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
-        </motion.div>
-      </motion.div>
-    </section>
+      {/* Category Grid */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="text-lg font-bold text-[#232f3e] mb-4">Browse by Category</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {CATEGORY_GRID.map((cat) => (
+            <Link key={cat.name} href={cat.href}>
+              <motion.div
+                whileHover={{ y: -3, boxShadow: "0 6px 20px rgba(0,0,0,0.1)" }}
+                className="category-card bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer"
+                style={{ borderTopColor: "transparent", borderTopWidth: "3px" }}
+              >
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-2"
+                  style={{ background: cat.color }}
+                >
+                  {cat.icon}
+                </div>
+                <span className="text-xs font-semibold text-[#232f3e] leading-tight">{cat.name}</span>
+                <span className="text-[10px] text-[#e47911] font-medium mt-1">Explore More →</span>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

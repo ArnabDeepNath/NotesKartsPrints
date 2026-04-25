@@ -182,17 +182,17 @@ export default async function Home() {
   };
 
   return (
-    <main className="bg-black min-h-screen">
+    <main className="bg-[#f7f8fa] min-h-screen">
       <Navbar />
       <HeroSection bookCount={books.length} metrics={landingMetrics} />
       <StatsSection metrics={landingMetrics} />
+      {featuredBook && <FeaturedBook book={featuredBook} allBooks={books} />}
       <LandingSections
         featuredBook={featuredBook}
         metrics={landingMetrics}
         publishers={publishers}
         trustCards={trustCards}
       />
-      {featuredBook && <FeaturedBook book={featuredBook} />}
       <BookGrid books={books} />
       <Footer />
     </main>

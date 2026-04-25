@@ -1,287 +1,125 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import gsap from "gsap";
+import Link from "next/link";
 import { Book } from "./BookCard";
+import BookCard from "./BookCard";
 
 interface Props {
   book: Book;
+  allBooks?: Book[];
 }
 
-const SPINE_COLORS = [
-  { a: "#1d3557", b: "#457b9d", c: "#a8dadc" },
-  { a: "#0f172a", b: "#1e40af", c: "#60a5fa" },
-  { a: "#1b4332", b: "#2d6a4f", c: "#52b788" },
-];
-
-export default function FeaturedBook({ book }: Props) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const coverRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-
-  const category = book.categories?.nodes?.[0]?.name ?? "Literature";
-  const author = book.author?.node?.name ?? "Unknown Author";
+export default function FeaturedBook({ book, allBooks = [] }: Props) {
+  const category = book.categories?.nodes?.[0]?.name ?? "Featured";
+  const author = book.author?.node?.name ?? "NoteKart Team";
   const coverImg = book.featuredImage?.node?.sourceUrl;
-  const palette = SPINE_COLORS[0];
+  const price = book.price ?? 599;
+  const originalPrice = book.originalPrice ?? Math.round(price * 1.3);
 
-  useEffect(() => {
-    let ctx: gsap.Context | undefined;
-
-    import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
-      gsap.registerPlugin(ScrollTrigger);
-
-      ctx = gsap.context(() => {
-        // Cover slides in from left
-        gsap.fromTo(
-          coverRef.current,
-          { x: -90, opacity: 0, rotateY: 20 },
-          {
-            x: 0,
-            opacity: 1,
-            rotateY: 0,
-            duration: 1.3,
-            ease: "power4.out",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top 75%",
-              once: true,
-            },
-          },
-        );
-
-        // Text children stagger in from right
-        const children = textRef.current
-          ? Array.from(textRef.current.children)
-          : [];
-        gsap.fromTo(
-          children,
-          { x: 70, opacity: 0 },
-          {
-            x: 0,
-            opacity: 1,
-            stagger: 0.11,
-            duration: 0.85,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top 70%",
-              once: true,
-            },
-          },
-        );
-      }, sectionRef);
-    });
-
-    return () => ctx?.revert();
-  }, []);
+  const topSelling = allBooks.slice(0, 6);
 
   return (
-    <section id="featured" className="py-24 px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Label */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-flex items-center gap-2 text-xs text-[#f5a623] font-semibold uppercase tracking-[0.22em]">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#f5a623">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            Editor&apos;s Pick
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#f5a623">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-          </span>
-          <h2 className="text-4xl md:text-5xl font-black text-white mt-3">
-            Featured Book
-          </h2>
-        </motion.div>
-
-        {/* Feature Card */}
-        <div
-          ref={sectionRef}
-          className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center rounded-[2rem] overflow-hidden p-10 md:p-16 lg:p-20"
-          style={{
-            background:
-              "linear-gradient(140deg, #111 0%, #1c1c1e 60%, #0f0f0f 100%)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
-          {/* Ambient glows */}
-          <div
-            className="absolute inset-0 overflow-hidden pointer-events-none rounded-[2rem]"
-            aria-hidden="true"
-          >
-            <div
-              className="absolute -top-32 -left-32 w-72 h-72 rounded-full blur-[80px]"
-              style={{ background: "rgba(41,151,255,0.09)" }}
-            />
-            <div
-              className="absolute -bottom-32 -right-32 w-72 h-72 rounded-full blur-[80px]"
-              style={{ background: "rgba(168,85,247,0.07)" }}
-            />
-          </div>
-
-          {/* Book Cover 3D */}
-          <div
-            ref={coverRef}
-            className="relative flex justify-center opacity-0"
-            style={{ perspective: "900px" }}
-          >
-            <div className="relative">
-              {/* Shadow */}
-              <div
-                className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-10 rounded-full blur-3xl"
-                style={{ background: "rgba(0,0,0,0.7)" }}
-              />
-
-              {/* Book body */}
-              <motion.div
-                whileHover={{ rotateY: -8, rotateX: 3 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="relative w-52 sm:w-60 md:w-64 rounded-xl overflow-hidden"
-                style={{
-                  aspectRatio: "2/3",
-                  background: coverImg
-                    ? undefined
-                    : `linear-gradient(155deg, ${palette.a} 0%, ${palette.b} 55%, ${palette.c} 100%)`,
-                  boxShadow:
-                    "0 40px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)",
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                {coverImg ? (
-                  <img
-                    src={coverImg}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex flex-col justify-end p-7">
-                    <div className="absolute inset-0 opacity-15">
-                      {[...Array(7)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="absolute w-full"
-                          style={{
-                            height: "1px",
-                            background: "white",
-                            top: `${12 + i * 12}%`,
-                          }}
-                        />
-                      ))}
-                      <div className="absolute top-6 right-6 w-20 h-20 rounded-full border-2 border-white/20" />
-                    </div>
-                    <div className="relative z-10">
-                      <span className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em] block mb-2">
-                        {category}
-                      </span>
-                      <h3 className="text-white font-black text-xl leading-tight">
-                        {book.title}
-                      </h3>
-                    </div>
-                  </div>
-                )}
-                {/* Shine layer */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background:
-                      "linear-gradient(120deg, rgba(255,255,255,0.12) 0%, transparent 50%)",
-                  }}
-                />
-              </motion.div>
-
-              {/* Spine */}
-              <div
-                className="absolute left-0 top-0 w-4 h-full rounded-l-xl"
-                style={{
-                  background: `linear-gradient(to right, ${palette.a}, transparent)`,
-                  filter: "brightness(0.65)",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Text Content */}
-          <div ref={textRef} className="relative z-10 flex flex-col gap-5">
-            <span className="text-xs text-[#2997ff] font-semibold uppercase tracking-[0.22em]">
-              {category}
-            </span>
-            <h3 className="text-3xl md:text-4xl lg:text-[44px] font-black text-white leading-[1.05]">
-              {book.title}
-            </h3>
-            <div
-              className="text-[#86868b] text-base leading-relaxed line-clamp-4 excerpt-clean"
-              dangerouslySetInnerHTML={{ __html: book.excerpt }}
-            />
-
-            {/* Author */}
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-sm"
-                style={{
-                  background: `linear-gradient(135deg, ${palette.b}, ${palette.c})`,
-                }}
-              >
-                {author.charAt(0).toUpperCase()}
-              </div>
+    <>
+      {/* New Offers Section */}
+      {allBooks.length > 0 && (
+        <section className="bg-[#f7f8fa] py-8 px-4 border-t border-gray-200">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-white text-sm font-semibold">{author}</p>
-                <p className="text-[#6e6e73] text-xs">
-                  {new Date(book.date).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
+                <span className="text-[10px] font-bold text-[#e47911] uppercase tracking-widest block mb-0.5">Limited Time</span>
+                <h2 className="text-2xl font-black text-[#232f3e]">New Offers</h2>
               </div>
+              <Link href="/books?offers=true">
+                <span className="text-sm font-bold text-[#146eb4] hover:underline cursor-pointer">View All Offers →</span>
+              </Link>
             </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {["Featured", category, "Must Read"].map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-3 py-1 rounded-full text-[#86868b]"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.09)",
-                  }}
-                >
-                  {tag}
-                </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {allBooks.slice(0, 12).map((b, i) => (
+                <BookCard key={b.id} book={b} index={i} />
               ))}
             </div>
+          </div>
+        </section>
+      )}
 
-            {/* CTAs */}
-            <div className="flex gap-3 mt-2 flex-wrap">
-              <motion.button
-                whileHover={{ scale: 1.04, backgroundColor: "#1a83ff" }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-[#2997ff] text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-colors"
-                style={{ boxShadow: "0 0 25px rgba(41,151,255,0.3)" }}
-              >
-                Read Now
-              </motion.button>
-              <motion.button
-                whileHover={{
-                  scale: 1.04,
-                  backgroundColor: "rgba(255,255,255,0.09)",
-                }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-white/[0.06] border border-white/[0.1] text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-colors"
-              >
-                Add to List
-              </motion.button>
+      {/* Featured / Editor Pick */}
+      <section className="bg-white py-8 px-4 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-2 mb-5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#e47911">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <h2 className="text-2xl font-black text-[#232f3e]">Editor&apos;s Pick</h2>
+          </div>
+
+          <div className="bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-2xl overflow-hidden flex flex-col md:flex-row">
+            {/* Cover */}
+            <div className="md:w-64 flex-shrink-0 flex items-center justify-center p-8">
+              {coverImg ? (
+                <img src={coverImg} alt={book.title} className="w-40 h-52 object-cover rounded-xl shadow-2xl" />
+              ) : (
+                <div className="w-40 h-52 rounded-xl shadow-2xl bg-gradient-to-b from-[#2d3a8c] to-[#1a2060] flex flex-col items-center justify-center p-4">
+                  <span className="text-white/60 text-[8px] uppercase tracking-widest mb-2">{category}</span>
+                  <p className="text-white font-bold text-sm text-center leading-snug">{book.title}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
+              <span className="inline-block bg-[#e47911] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest w-fit mb-3">
+                {category}
+              </span>
+              <h3 className="text-2xl md:text-3xl font-black text-white mb-2">{book.title}</h3>
+              <p className="text-white/60 text-sm mb-4">by {author}</p>
+              {book.excerpt && (
+                <p className="text-white/70 text-sm leading-relaxed mb-5 line-clamp-2 excerpt-clean"
+                  dangerouslySetInnerHTML={{ __html: book.excerpt }}
+                />
+              )}
+              <div className="flex items-center gap-4 mb-5">
+                <span className="text-2xl font-black text-[#f5a623]">Rs. {price.toLocaleString()}</span>
+                <span className="text-white/40 line-through text-sm">Rs. {originalPrice.toLocaleString()}</span>
+              </div>
+              <div className="flex gap-3">
+                <Link href={`/books/${book.slug || book.id}`}>
+                  <button className="bg-[#e47911] hover:bg-[#c45500] text-white font-bold px-6 py-2.5 rounded-md transition-colors text-sm">
+                    Order Now
+                  </button>
+                </Link>
+                <Link href="/books">
+                  <button className="border-2 border-white/30 text-white font-bold px-6 py-2.5 rounded-md hover:bg-white/10 transition-colors text-sm">
+                    Browse All
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Top Selling Section */}
+      {topSelling.length > 0 && (
+        <section className="bg-[#f7f8fa] py-8 px-4 border-t border-gray-200">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <span className="text-[10px] font-bold text-[#e47911] uppercase tracking-widest block mb-0.5">Most Popular</span>
+                <h2 className="text-2xl font-black text-[#232f3e]">Top Selling Books</h2>
+              </div>
+              <Link href="/books">
+                <span className="text-sm font-bold text-[#146eb4] hover:underline cursor-pointer">View All →</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {topSelling.map((b, i) => (
+                <BookCard key={b.id} book={b} index={i + 20} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </>
   );
 }

@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { useRef } from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 export interface Book {
@@ -13,159 +13,113 @@ export interface Book {
   featuredImage?: { node: { sourceUrl: string; altText: string } };
   categories?: { nodes: { name: string }[] };
   author?: { node: { name: string } };
+  price?: number;
+  originalPrice?: number;
+  rating?: number;
+  reviewCount?: number;
+  sold?: number;
 }
-
-const COVER_PALETTES = [
-  { a: "#1d3557", b: "#457b9d", c: "#a8dadc" },
-  { a: "#0f172a", b: "#1e40af", c: "#60a5fa" },
-  { a: "#1b4332", b: "#2d6a4f", c: "#52b788" },
-  { a: "#3d105a", b: "#6d28d9", c: "#a855f7" },
-  { a: "#3b0764", b: "#7c3aed", c: "#c084fc" },
-  { a: "#0c1445", b: "#1e3a8a", c: "#3b82f6" },
-  { a: "#422006", b: "#92400e", c: "#d97706" },
-  { a: "#1a1c2c", b: "#2d3748", c: "#718096" },
-  { a: "#0d2137", b: "#126782", c: "#38bdf8" },
-  { a: "#4a0e0e", b: "#991b1b", c: "#f87171" },
-];
 
 interface Props {
   book: Book;
   index: number;
 }
 
+const COVER_COLORS = [
+  "#1d3557", "#0f172a", "#1b4332", "#3d105a", "#422006",
+  "#0c1445", "#0d2137", "#4a0e0e", "#1a1c2c", "#3b0764",
+];
+
+function StarRating({ rating = 4.2 }: { rating?: number }) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg key={star} width="11" height="11" viewBox="0 0 24 24" fill={star <= Math.round(rating) ? "#e47911" : "#e0e0e0"}>
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ))}
+      <span className="text-[10px] text-gray-500 ml-0.5">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
 export default function BookCard({ book, index }: Props) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const springCfg = { stiffness: 180, damping: 22 };
-  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [7, -7]), springCfg);
-  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-7, 7]), springCfg);
-
-  const palette = COVER_PALETTES[index % COVER_PALETTES.length];
-  const category = book.categories?.nodes?.[0]?.name ?? "General";
-  const author = book.author?.node?.name ?? "Unknown";
+  const [imgError, setImgError] = useState(false);
   const coverImg = book.featuredImage?.node?.sourceUrl;
-
-  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = cardRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    x.set((e.clientX - rect.left) / rect.width - 0.5);
-    y.set((e.clientY - rect.top) / rect.height - 0.5);
-  }
-  function onMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
+  const category = book.categories?.nodes?.[0]?.name ?? "General";
+  const author = book.author?.node?.name ?? "NoteKart Team";
+  const price = book.price ?? Math.floor(299 + (index * 113) % 700);
+  const originalPrice = book.originalPrice ?? Math.round(price * 1.25);
+  const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
+  const rating = book.rating ?? (3.8 + (index % 12) * 0.1);
 
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      whileHover={{ scale: 1.025, z: 20 }}
-      transition={{ type: "spring", stiffness: 300, damping: 28 }}
-      className="group relative rounded-2xl overflow-hidden cursor-pointer select-none"
+      whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+      transition={{ duration: 0.2 }}
+      className="product-card bg-white border border-gray-200 rounded-xl overflow-hidden cursor-pointer flex flex-col"
+      onClick={() => router.push(`/books/${book.slug || book.id}`)}
     >
-      {/* Cover */}
-      <div
-        className="relative h-52 overflow-hidden"
-        style={
-          !coverImg
-            ? {
-                background: `linear-gradient(155deg, ${palette.a} 0%, ${palette.b} 55%, ${palette.c} 100%)`,
-              }
-            : undefined
-        }
-      >
-        {coverImg ? (
+      {/* Cover Image */}
+      <div className="relative bg-gray-50" style={{ height: "200px" }}>
+        {coverImg && !imgError ? (
           <img
             src={coverImg}
             alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col justify-end p-5">
-            {/* Abstract decorative lines */}
-            <div className="absolute inset-0 overflow-hidden opacity-20">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-full"
-                  style={{
-                    height: "1px",
-                    background: "white",
-                    top: `${18 + i * 15}%`,
-                    opacity: 0.4 + i * 0.12,
-                  }}
-                />
-              ))}
-              <div className="absolute top-5 right-5 w-14 h-14 rounded-full border border-white/25" />
-              <div className="absolute top-8 right-8 w-6 h-6 rounded-full border border-white/20" />
-            </div>
-            <div className="relative z-10">
-              <span className="text-[9px] font-bold text-white/55 uppercase tracking-[0.22em] block mb-1.5">
-                {category}
-              </span>
-              <p className="text-white font-bold text-sm leading-snug line-clamp-2">
-                {book.title}
-              </p>
-            </div>
+          <div
+            className="w-full h-full flex flex-col items-center justify-center p-4"
+            style={{ background: `linear-gradient(155deg, ${COVER_COLORS[index % COVER_COLORS.length]} 0%, ${COVER_COLORS[(index + 3) % COVER_COLORS.length]} 100%)` }}
+          >
+            <span className="text-[8px] font-bold text-white/60 uppercase tracking-widest block mb-1">{category}</span>
+            <p className="text-white font-bold text-sm text-center leading-snug line-clamp-3">{book.title}</p>
+            <span className="text-white/60 text-[10px] mt-2">{author}</span>
           </div>
         )}
-
-        {/* Hover shine */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-white/[0.1] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
+        {/* Discount badge */}
+        {discount > 5 && (
+          <div className="absolute top-2 left-2 bg-[#e47911] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+            -{discount}% OFF
+          </div>
+        )}
         {/* Category pill */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className="text-[9px] font-bold text-white/90 uppercase tracking-wider bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full">
-            {category}
-          </span>
+        <div className="absolute top-2 right-2 bg-white/90 text-[#232f3e] text-[9px] font-bold px-2 py-0.5 rounded-full border border-gray-200">
+          {category}
         </div>
       </div>
 
-      {/* Info panel */}
-      <div
-        className="p-4"
-        style={{
-          background: "#111111",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderTop: "none",
-          borderBottomLeftRadius: "1rem",
-          borderBottomRightRadius: "1rem",
-        }}
-      >
-        <h3 className="text-white font-bold text-sm mb-1.5 line-clamp-1">
+      {/* Product Info */}
+      <div className="p-3 flex flex-col flex-1">
+        <h3 className="text-[#0f1111] font-bold text-sm leading-snug line-clamp-2 mb-1 min-h-[2.5rem]">
           {book.title}
         </h3>
-        <div
-          className="text-[#6e6e73] text-xs line-clamp-2 mb-3 leading-relaxed excerpt-clean"
-          dangerouslySetInnerHTML={{ __html: book.excerpt }}
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-[#2997ff] font-medium truncate max-w-[65%]">
-            {author}
-          </span>
-          <span className="text-[11px] text-[#6e6e73]">
-            {new Date(book.date).getFullYear()}
-          </span>
-        </div>
-      </div>
+        <p className="text-xs text-[#565959] mb-1.5 truncate">{author}</p>
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 rounded-2xl bg-black/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => router.push(`/books/${book.id}`)}
-          className="bg-[#2997ff] text-white font-semibold px-6 py-3 rounded-full text-sm shadow-2xl"
-          style={{ boxShadow: "0 0 30px rgba(41,151,255,0.4)" }}
+        <StarRating rating={rating} />
+
+        {/* Price */}
+        <div className="flex items-baseline gap-2 mt-2">
+          <span className="text-[#0f1111] font-black text-base">Rs. {price.toLocaleString()}</span>
+          <span className="text-gray-400 text-xs line-through">Rs. {originalPrice.toLocaleString()}</span>
+        </div>
+
+        {/* Free delivery badge */}
+        <p className="text-[10px] text-[#007600] font-medium mt-0.5">FREE Delivery</p>
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/books/${book.slug || book.id}`);
+          }}
+          className="mt-auto w-full bg-[#e47911] hover:bg-[#c45500] text-white font-bold text-xs py-2 rounded-md mt-3 transition-colors"
         >
           View Details
-        </motion.button>
+        </button>
       </div>
     </motion.div>
   );

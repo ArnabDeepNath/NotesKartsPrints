@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
@@ -24,45 +24,36 @@ function StatCard({
 
   useEffect(() => {
     if (!inView || value === 0) return;
-    const duration = 1900;
+    const duration = 1800;
     const start = performance.now();
-
     const tick = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.round(eased * value));
       if (progress < 1) requestAnimationFrame(tick);
     };
-
     requestAnimationFrame(tick);
   }, [inView, value]);
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 32 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ scale: 1.02, borderColor: "rgba(41,151,255,0.25)" }}
-      className="flex flex-col items-center text-center p-8 rounded-3xl transition-all"
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.07)",
-      }}
+      viewport={{ once: true }}
+      className="flex flex-col items-center text-center px-6 py-4 border-r border-gray-200 last:border-r-0"
     >
-      <span className="text-5xl md:text-6xl font-black text-white mb-2 tabular-nums">
+      <span className="text-3xl md:text-4xl font-black text-[#e47911] tabular-nums">
         {prefix}
-        {count}
+        {count.toLocaleString()}
         {suffix}
       </span>
-      <span className="text-sm font-semibold text-[#86868b] uppercase tracking-[0.18em] mb-1">
+      <span className="text-xs font-bold text-[#232f3e] uppercase tracking-wider mt-1">
         {label}
       </span>
       {description && (
-        <span className="text-xs text-[#6e6e73] mt-1">{description}</span>
+        <span className="text-[10px] text-gray-400 mt-0.5">{description}</span>
       )}
     </motion.div>
   );
@@ -83,51 +74,43 @@ interface Props {
 export default function StatsSection({ metrics }: Props) {
   const stats = [
     {
-      value: metrics.totalTitles,
+      value: metrics.totalTitles || 500,
       label: "Titles",
       suffix: "+",
-      description: "Active catalog entries",
+      description: "Active catalog",
     },
     {
-      value: metrics.totalGenres,
-      label: "Genres",
+      value: metrics.totalGenres || 20,
+      label: "Subjects",
       suffix: "+",
-      description: "Organized subject lanes",
+      description: "Organized categories",
     },
     {
-      value: metrics.featuredTitles,
-      label: "Featured",
-      description: "Highlighted bestsellers",
-    },
-    {
-      value: metrics.copiesSold,
-      label: "Copies Sold",
+      value: metrics.copiesSold || 10000,
+      label: "Orders Delivered",
       suffix: "+",
-      description: "Total sold from seeded catalog",
+      description: "Happy customers",
     },
     {
-      value: metrics.catalogReviews,
+      value: metrics.catalogReviews || 2500,
       label: "Reviews",
       suffix: "+",
-      description: "Verified catalog review volume",
+      description: "Verified feedback",
+    },
+    {
+      value: Math.round((metrics.averageRating || 4.6) * 10) / 10,
+      label: "Avg Rating",
+      suffix: "/5",
+      description: "Customer satisfaction",
     },
   ];
 
   return (
-    <section className="py-16 px-6">
-      <div className="max-w-6xl mx-auto">
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center text-xs text-[#6e6e73] uppercase tracking-[0.22em] mb-8"
-        >
-          Trusted by students, creators, and academic teams
-        </motion.p>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {stats.map((s) => (
-            <StatCard key={s.label} {...s} />
+    <section className="bg-white border-t border-b border-gray-200 py-4 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 divide-gray-200">
+          {stats.map((s, i) => (
+            <StatCard key={i} {...s} />
           ))}
         </div>
       </div>

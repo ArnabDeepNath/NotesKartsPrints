@@ -10,12 +10,12 @@ interface Props {
 
 const container: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
+  show: { transition: { staggerChildren: 0.04 } },
 };
 
 const item: Variants = {
-  hidden: { opacity: 0, y: 44, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1 },
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0 },
 };
 
 export default function BookGrid({ books }: Props) {
@@ -34,46 +34,34 @@ export default function BookGrid({ books }: Props) {
   }, [books, search]);
 
   return (
-    <section id="books" className="py-24 px-6">
+    <section id="books" className="py-8 px-4 bg-[#f7f8fa]">
       <div className="max-w-7xl mx-auto">
         {/* Section header */}
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7 }}
-          className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14"
-        >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <span className="text-xs text-[#2997ff] font-semibold uppercase tracking-[0.22em]">
-              The Collection
-            </span>
-            <h2 className="text-4xl md:text-5xl font-black text-white mt-2 mb-1">
-              All Books
-            </h2>
-            <p className="text-[#86868b] text-base">
+            <h2 className="text-2xl font-black text-[#232f3e]">All Products</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
               Showing{" "}
-              <span className="text-white font-medium">{filtered.length}</span>{" "}
-              of <span className="text-white font-medium">{books.length}</span>{" "}
+              <span className="font-semibold text-[#232f3e]">
+                {filtered.length}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-[#232f3e]">
+                {books.length}
+              </span>{" "}
               titles
             </p>
           </div>
 
           {/* Search */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="relative max-w-xs w-full"
-          >
+          <div className="relative max-w-xs w-full">
             <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
               width="14"
               height="14"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#86868b"
+              stroke="#9ca3af"
               strokeWidth="2"
               strokeLinecap="round"
             >
@@ -85,12 +73,12 @@ export default function BookGrid({ books }: Props) {
               placeholder="Search books, authors, genres…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/[0.05] border border-white/[0.1] text-white placeholder-[#6e6e73] text-sm pl-10 pr-4 py-3 rounded-full outline-none focus:border-[#2997ff]/60 focus:bg-white/[0.08] transition-all"
+              className="w-full bg-white border border-gray-300 text-gray-800 placeholder-gray-400 text-sm pl-9 pr-4 py-2.5 rounded-lg outline-none focus:border-[#e47911] focus:ring-1 focus:ring-[#e47911]/30 transition-all"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6e6e73] hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <svg
                   width="13"
@@ -105,8 +93,8 @@ export default function BookGrid({ books }: Props) {
                 </svg>
               </button>
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Grid */}
         <AnimatePresence mode="popLayout">
@@ -117,7 +105,7 @@ export default function BookGrid({ books }: Props) {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-60px" }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
             >
               {filtered.map((book, i) => (
                 <motion.div
@@ -136,13 +124,13 @@ export default function BookGrid({ books }: Props) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center py-28 rounded-3xl border border-white/[0.07] bg-white/[0.02]"
+              className="text-center py-20 rounded-xl border border-gray-200 bg-white"
             >
               <div className="text-5xl mb-5">📚</div>
-              <p className="text-[#86868b] text-lg font-medium">
+              <p className="text-gray-500 text-lg font-medium">
                 No results for &ldquo;{search}&rdquo;
               </p>
-              <p className="text-[#6e6e73] text-sm mt-2">
+              <p className="text-gray-400 text-sm mt-2">
                 Try a different search term
               </p>
             </motion.div>

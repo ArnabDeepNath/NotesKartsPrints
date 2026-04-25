@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #000000;
-  --bg-secondary: #111111;
-  --bg-tertiary: #1c1c1e;
-  --surface: rgba(255, 255, 255, 0.04);
-  --border: rgba(255, 255, 255, 0.08);
-  --text-primary: #f5f5f7;
-  --text-secondary: #86868b;
-  --text-tertiary: #6e6e73;
-  --accent-blue: #2997ff;
-  --accent-gold: #f5a623;
+  --bg-primary: #f7f8fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eef0f3;
+  --surface: #ffffff;
+  --border: #e3e6ea;
+  --text-primary: #0f1111;
+  --text-secondary: #565959;
+  --text-tertiary: #8d9091;
+  --accent-orange: #e47911;
+  --accent-orange-hover: #c45500;
+  --accent-navy: #232f3e;
+  --accent-blue: #146eb4;
   --font-sans: var(--font-inter);
 }
 
@@ -38,28 +40,28 @@ body {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000;
+  background: #f1f1f1;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: #c5c5c5;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #a0a0a0;
 }
 
 /* Selection */
 ::selection {
-  background: rgba(41, 151, 255, 0.3);
-  color: #f5f5f7;
+  background: rgba(228, 121, 17, 0.25);
+  color: #0f1111;
 }
 
 /* Utility: text gradient */
-.text-gradient-blue {
-  background: linear-gradient(135deg, #2997ff 0%, #66b8ff 100%);
+.text-gradient-orange {
+  background: linear-gradient(135deg, #e47911 0%, #f5a623 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -70,6 +72,41 @@ body {
   margin: 0;
 }
 
+/* Product card hover */
+.product-card {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.product-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Category card */
+.category-card {
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.category-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-color: #e47911;
+}
+
+/* Promo banner gradient */
+.promo-banner {
+  background: linear-gradient(90deg, #232f3e 0%, #37475a 50%, #232f3e 100%);
+}
+
+/* Section card */
+.section-panel {
+  background: #ffffff;
+  border: 1px solid #e3e6ea;
+  border-radius: 8px;
+}
+
+/* Abstract film - kept as no-op for compat */
 .abstract-film {
   position: absolute;
   inset: 0;
@@ -134,7 +171,11 @@ body {
   height: 12rem;
   border-radius: 9999px;
   background:
-    radial-gradient(circle at center, rgba(41, 151, 255, 0.18), transparent 60%),
+    radial-gradient(
+      circle at center,
+      rgba(41, 151, 255, 0.18),
+      transparent 60%
+    ),
     repeating-linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.08) 0,

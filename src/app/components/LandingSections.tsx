@@ -1,19 +1,10 @@
-"use client";
+﻿"use client";
 
-import dynamic from "next/dynamic";
+import { useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import type { Book } from "./BookCard";
-
-const DotLottieReact = dynamic(
-  () =>
-    import("@lottiefiles/dotlottie-react").then(
-      (module) => module.DotLottieReact,
-    ),
-  { ssr: false },
-);
-
-const GRID_LOTTIE_URL =
-  "https://assets-v2.lottiefiles.com/a/444c0c60-1189-11ee-928a-0fde9216846a/8vCQb9OkKV.lottie";
+import BookCard from "./BookCard";
 
 interface Props {
   featuredBook: Book | null;
@@ -40,120 +31,80 @@ interface Props {
 const WORKFLOW = [
   {
     step: "01",
-    title: "Upload your notes",
-    description:
-      "Drop PDFs, chapter packs, or class handouts into one clean order flow with instant file checks.",
+    icon: "👤",
+    title: "Register or Login",
+    description: "Create your free account to get started with your order.",
   },
   {
     step: "02",
-    title: "Customize the print job",
-    description:
-      "Choose paper weight, color mode, double-sided printing, covers, and binding without back-and-forth calls.",
+    icon: "📤",
+    title: "Upload & Setting File",
+    description: "Upload your PDF or select from our catalog. Configure print options.",
   },
   {
     step: "03",
-    title: "Track production live",
-    description:
-      "Students and teams see pricing, payment, queue status, and delivery progress from a single dashboard.",
+    icon: "🛒",
+    title: "Add Shipping Address",
+    description: "Enter your delivery address for doorstep delivery.",
   },
   {
     step: "04",
-    title: "Receive or distribute",
-    description:
-      "Dispatch to hostels, campus pickup points, or bulk drop locations for classes and coaching batches.",
+    icon: "💳",
+    title: "Make Payment",
+    description: "Secure payment via Razorpay. COD available on select orders.",
   },
 ];
 
-const FEATURES = [
+const USP_POINTS = [
   {
-    title: "Built for academic urgency",
-    description:
-      "Fast-turnaround printing for exam prep, revision bundles, and faculty handouts when timing actually matters.",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e47911" strokeWidth="2" strokeLinecap="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    ),
+    title: "Best Online Document Printing Service",
   },
   {
-    title: "Consistent premium finishing",
-    description:
-      "Maintain professional output with controlled paper quality, durable binding, and clean cover presentation.",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e47911" strokeWidth="2" strokeLinecap="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    ),
+    title: "Upload – Print Setting – Payment",
   },
   {
-    title: "Bulk ordering without chaos",
-    description:
-      "Organize department orders, classroom distributions, and coaching material runs without manual spreadsheet work.",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e47911" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    ),
+    title: "Standard Turnaround 48–72 Hours",
   },
   {
-    title: "Transparent pricing logic",
-    description:
-      "Preview costs before checkout so students know exactly how quantity, binding, and paper settings affect the bill.",
-  },
-  {
-    title: "Repeat-order friendly",
-    description:
-      "Reprint high-demand note packs in seconds using saved configurations and tracked order history.",
-  },
-  {
-    title: "Made for growth",
-    description:
-      "Start with single student orders and scale to campus societies, test-prep institutes, and local print operations.",
-  },
-];
-
-const PLANS = [
-  {
-    name: "Starter",
-    price: "Pay per order",
-    description:
-      "For individual students printing notes, assignments, and quick revision sets.",
-    bullets: [
-      "Instant quote calculation",
-      "Single-order checkout",
-      "Pickup and local delivery options",
-    ],
-  },
-  {
-    name: "Campus Team",
-    price: "Built for groups",
-    description:
-      "For clubs, faculty cells, and coaching centers managing recurring note distribution.",
-    bullets: [
-      "Bulk upload workflows",
-      "Shared order tracking",
-      "Priority production windows",
-    ],
-  },
-  {
-    name: "NoteKart Pro",
-    price: "Custom setup",
-    description:
-      "For high-volume operations that need branded ordering flows and managed fulfillment.",
-    bullets: [
-      "Dedicated support",
-      "Advanced fulfillment coordination",
-      "Custom pricing and SLA support",
-    ],
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e47911" strokeWidth="2" strokeLinecap="round">
+        <line x1="12" y1="1" x2="12" y2="23"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    ),
+    title: "Low Pricing for Every Product",
   },
 ];
 
-const FAQS = [
-  {
-    question: "What can users print on NoteKart Prints?",
-    answer:
-      "Users can upload class notes, lab manuals, assignments, exam prep compilations, and book-ready PDF bundles with configurable print settings.",
-  },
-  {
-    question: "Can this handle bulk academic orders?",
-    answer:
-      "Yes. The workflow is designed to support coaching centers, student groups, and faculty teams that need repeated high-volume print runs.",
-  },
-  {
-    question: "How does delivery work?",
-    answer:
-      "Orders can be routed for campus pickup, local delivery, or coordinated bulk handoff depending on the production setup you enable.",
-  },
-  {
-    question: "Why position this like a SaaS product?",
-    answer:
-      "Because the value is not only printing. It is the software-led ordering, pricing, and fulfillment workflow that removes offline friction from repeat print demand.",
-  },
+const PRINT_TIPS = [
+  "PDF, DOC, DOCX, PPT, PPTX, JPEG, PNG",
+  "We recommend: Upload a PDF for perfect print",
+];
+
+const REVIEWS = [
+  { name: "Arun K.", stars: 5, text: "Printing was good and I appreciate the printer for printing in low prices for a students like us." },
+  { name: "Priyam", stars: 5, text: "ONLY GIVE QUALITY SERVICE SO DON'T THINK TOO MUCH AND THEIR CUSTOMER SERVICE IS ALSO GOOD!" },
+  { name: "Anand", stars: 5, text: "Superb stuff and well bound, reasonable price too. Looking forward to more orders from here." },
+  { name: "Arif", stars: 5, text: "The Quality of printing is quite good and Softcover binding is professional." },
+  { name: "Sudhir", stars: 5, text: "Nice Printing. Nice front cover quality and also great side info on edge." },
 ];
 
 export default function LandingSections({
@@ -162,419 +113,220 @@ export default function LandingSections({
   publishers,
   trustCards,
 }: Props) {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const FAQS = [
+    {
+      q: "What can I print on NoteKart Prints?",
+      a: "You can upload class notes, lab manuals, assignments, exam prep PDFs, revision bundles – virtually any printable document.",
+    },
+    {
+      q: "Can this handle bulk academic orders?",
+      a: "Yes! The workflow is designed for coaching centers, student groups, and faculty teams needing high-volume print runs.",
+    },
+    {
+      q: "How does delivery work?",
+      a: "Orders are dispatched in 24–72 hours. We deliver to hostel, home, or coaching centre addresses across India.",
+    },
+    {
+      q: "Are orders cancellable or refundable?",
+      a: "Orders cannot be cancelled or refunded once placed since we print on demand. Please review your order carefully before payment.",
+    },
+    {
+      q: "Is COD available?",
+      a: "COD is available on select orders. For COD orders, a 40% advance payment is required which is non-refundable.",
+    },
+  ];
+
   return (
     <>
-      <section className="px-6 py-12 md:py-14">
-        <div className="max-w-6xl mx-auto rounded-[2.25rem] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(41,151,255,0.04),rgba(255,255,255,0.02))] px-5 py-6 md:px-8 md:py-8 shadow-[0_20px_80px_rgba(0,0,0,0.25)]">
-          <p className="text-center text-[11px] uppercase tracking-[0.24em] text-[#6e6e73] mb-5">
-            Real catalog proof replacing placeholder brand names
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-            {publishers.map((publisher, index) => (
-              <motion.div
-                key={publisher}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -4, scale: 1.02 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.08, duration: 0.45 }}
-                className="abstract-panel rounded-2xl border border-white/[0.06] bg-black/30 px-4 py-4 text-center text-xs md:text-sm font-semibold tracking-[0.18em] text-[#d5d7de]"
-              >
-                {publisher}
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5 items-start">
+      {/* USP / Trust Badges Section */}
+      <section className="bg-white border-t border-b border-gray-200 py-6 px-4">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+          {USP_POINTS.map((usp, i) => (
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -8, scale: 1.015, rotateX: -2, rotateY: 1.5 }}
               viewport={{ once: true }}
-              transition={{
-                duration: 0.5,
-                type: "spring",
-                stiffness: 220,
-                damping: 18,
-              }}
-              className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
-              style={{ transformStyle: "preserve-3d" }}
+              transition={{ delay: i * 0.08 }}
+              className="flex flex-col items-center text-center gap-2 p-4"
             >
-              <div className="trust-panel-glow" aria-hidden="true" />
-              <p className="text-xs uppercase tracking-[0.22em] text-[#8ec8ff] font-semibold mb-3">
-                Trust snapshot
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-white text-3xl font-black">
-                    {metrics.copiesSold.toLocaleString()}+
-                  </p>
-                  <p className="text-[#86868b] text-sm mt-1">
-                    copies sold across 11 seeded titles
-                  </p>
-                </div>
-                <div>
-                  <p className="text-white text-3xl font-black">
-                    {metrics.catalogReviews.toLocaleString()}+
-                  </p>
-                  <p className="text-[#86868b] text-sm mt-1">
-                    catalog reviews already attached to those titles
-                  </p>
-                </div>
-                <div>
-                  <p className="text-white text-3xl font-black">
-                    {metrics.averageRating.toFixed(1)}
-                  </p>
-                  <p className="text-[#86868b] text-sm mt-1">
-                    average rating across the trust set shown here
-                  </p>
-                </div>
-              </div>
+              <div>{usp.icon}</div>
+              <p className="text-xs font-bold text-[#232f3e] leading-snug">{usp.title}</p>
+              <div className="w-8 h-0.5 bg-[#e47911] rounded-full mt-1" />
             </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {trustCards.map((item, index) => (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.08, duration: 0.5 }}
-                  whileHover={{
-                    y: -10,
-                    scale: 1.02,
-                    borderColor: "rgba(41,151,255,0.24)",
-                  }}
-                  className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-black/25 p-5"
-                  style={{ transformStyle: "preserve-3d" }}
-                >
-                  <motion.div
-                    animate={{
-                      opacity: [0.18, 0.32, 0.18],
-                      scale: [1, 1.08, 1],
-                    }}
-                    transition={{
-                      duration: 7 + index,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl"
-                    style={{ background: "rgba(41,151,255,0.18)" }}
-                  />
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-[#8ec8ff] font-semibold mb-3">
-                    {item.publisher}
-                  </p>
-                  <h3 className="text-white text-xl font-bold mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-[#b6bac3] text-sm leading-relaxed mb-4">
-                    {item.summary}
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
-                      <p className="text-white font-black text-lg">
-                        {item.rating.toFixed(1)}
-                      </p>
-                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">
-                        rating
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
-                      <p className="text-white font-black text-lg">
-                        {(item.reviews / 1000).toFixed(1)}k
-                      </p>
-                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">
-                        reviews
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
-                      <p className="text-white font-black text-lg">
-                        {item.sold}
-                      </p>
-                      <p className="text-[#6e6e73] text-[10px] uppercase tracking-[0.18em]">
-                        sold
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      <section id="workflow" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mb-14"
-          >
-            <p className="text-xs uppercase tracking-[0.24em] text-[#2997ff] font-semibold mb-3">
-              How it works
-            </p>
-            <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.05] mb-4">
-              A complete print workflow, not just a storefront.
-            </h2>
-            <p className="text-[#86868b] text-lg leading-relaxed">
-              NoteKart Prints combines a storefront, quoting layer, and print
-              workflow. This flow turns raw files into a dependable ordering
-              experience with less manual coordination and clearer expectations.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-            {WORKFLOW.map((item, index) => (
+      {/* Easy Steps Section */}
+      <section id="how-it-works" className="bg-[#f7f8fa] py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black text-[#232f3e]">Easy Steps to Get Prints</h2>
+            <p className="text-sm text-gray-500 mt-1">Simple 4-step process to get your notes printed</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {WORKFLOW.map((step, i) => (
               <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 32 }}
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.55, delay: index * 0.08 }}
-                whileHover={{
-                  y: -8,
-                  scale: 1.015,
-                  borderColor: "rgba(41,151,255,0.24)",
-                }}
-                className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-6"
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white border border-gray-200 rounded-xl p-5 text-center relative"
               >
-                <p className="text-[#2997ff] text-sm font-black tracking-[0.22em] mb-6">
-                  {item.step}
-                </p>
-                <h3 className="text-white text-2xl font-bold mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-[#86868b] leading-relaxed text-sm">
-                  {item.description}
-                </p>
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-orange-50 border-2 border-[#e47911] flex items-center justify-center text-2xl">
+                  {step.icon}
+                </div>
+                <h3 className="font-bold text-[#232f3e] text-sm mb-1">{step.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{step.description}</p>
+                {i < WORKFLOW.length - 1 && (
+                  <div className="hidden md:block absolute top-10 -right-3 text-gray-300 text-lg font-bold z-10">→</div>
+                )}
               </motion.div>
             ))}
           </div>
+          <p className="text-center text-xs text-gray-400 mt-4">
+            🔒 Your Files are Secure. After Printing Files will be Deleted.
+          </p>
         </div>
       </section>
 
-      <section id="features" className="py-24 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-10 items-start">
-          <div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.6 }}
-              className="mb-12"
-            >
-              <p className="text-xs uppercase tracking-[0.24em] text-[#2997ff] font-semibold mb-3">
-                Why NoteKart wins
-              </p>
-              <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.05] mb-4">
-                Position the product like a serious service platform.
-              </h2>
-              <p className="text-[#86868b] text-lg max-w-3xl leading-relaxed">
-                Strong print landing pages communicate reliability, production
-                control, and proof. These sections now do that with real catalog
-                names and repo-backed numbers instead of filler content.
-              </p>
-            </motion.div>
+      {/* Print Tips + Order by Email + Corporate Pricing */}
+      <section className="bg-white py-10 px-4 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Print Artwork Tips */}
+          <div className="border border-gray-200 rounded-xl p-5">
+            <h3 className="font-bold text-[#232f3e] mb-3 flex items-center gap-2">
+              <span className="text-lg">🖨️</span> Print Artwork Tips
+            </h3>
+            <p className="text-xs text-gray-600 mb-3">
+              To make ordering as print-ready as possible, we accept 5 different file types:
+            </p>
+            {PRINT_TIPS.map((tip, i) => (
+              <div key={i} className="flex items-start gap-2 mb-2">
+                <span className="text-[#e47911] font-bold text-xs mt-0.5">✓</span>
+                <p className="text-xs text-gray-700">{tip}</p>
+              </div>
+            ))}
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {FEATURES.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.5, delay: index * 0.06 }}
-                  whileHover={{
-                    y: -8,
-                    scale: 1.015,
-                    borderColor: "rgba(41,151,255,0.22)",
-                  }}
-                  className="abstract-panel rounded-[1.75rem] border border-white/[0.07] bg-white/[0.025] p-6"
-                >
-                  <h3 className="text-white text-xl font-bold mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-[#86868b] text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              ))}
+          {/* Order by Email */}
+          <div className="border border-gray-200 rounded-xl p-5">
+            <h3 className="font-bold text-[#232f3e] mb-3 flex items-center gap-2">
+              <span className="text-lg">📧</span> Order by Email
+            </h3>
+            <p className="text-xs text-gray-600 mb-3">
+              E-mail your file with printing and contact details to <strong>print@notekart.in</strong>
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-[#e47911] font-bold text-xs mt-0.5">✓</span>
+                <p className="text-xs text-gray-700">We Will send you the Payment Link</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-[#e47911] font-bold text-xs mt-0.5">✓</span>
+                <p className="text-xs text-gray-700">Make Payment and We will process your Order</p>
+              </div>
             </div>
           </div>
 
-          <motion.aside
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            whileHover={{ y: -6, scale: 1.01 }}
-            className="abstract-panel rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(41,151,255,0.13),rgba(255,255,255,0.02))] p-6 lg:sticky lg:top-28"
-          >
-            <p className="text-xs uppercase tracking-[0.24em] text-[#8ec8ff] font-semibold mb-3">
-              Conversion snapshot
-            </p>
-            <h3 className="text-3xl font-black text-white leading-tight mb-4">
-              Make the value proposition obvious in under 10 seconds.
+          {/* Corporate Pricing */}
+          <div className="border-2 border-[#e47911] rounded-xl p-5 bg-orange-50">
+            <h3 className="font-bold text-[#232f3e] mb-3 flex items-center gap-2">
+              <span className="text-lg">🏢</span> Corporate Pricing
             </h3>
-            <p className="text-[#c1c3cb] text-sm leading-relaxed mb-6">
-              Visitors should understand what NoteKart Prints offers, why the
-              workflow is easier than offline printing, and what proof supports
-              the offer.
+            <p className="text-xs text-gray-600 mb-3">
+              We Accept Corporate Bulk orders. Just Contact us at:
             </p>
-            <div className="space-y-3">
-              {[
-                `${metrics.totalTitles} active titles already in the catalog`,
-                `${metrics.featuredTitles} featured titles supporting the landing flow`,
-                `${metrics.catalogReviews.toLocaleString()}+ reviews reinforcing buyer confidence`,
-              ].map((point) => (
-                <div
-                  key={point}
-                  className="rounded-2xl border border-white/[0.07] bg-black/20 px-4 py-3 text-sm text-white/85"
-                >
-                  {point}
-                </div>
-              ))}
-            </div>
-            {featuredBook && (
-              <div className="mt-6 rounded-[1.5rem] border border-white/[0.07] bg-black/20 p-4">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-[#6e6e73] mb-2">
-                  Live catalog preview
-                </p>
-                <p className="text-white font-semibold leading-snug">
-                  {featuredBook.title}
-                </p>
-                <p className="text-[#86868b] text-sm mt-2 line-clamp-3">
-                  {featuredBook.excerpt.replace(/<[^>]+>/g, " ").trim() ||
-                    "A featured title remains available below so the landing page still connects to the product catalog."}
-                </p>
-              </div>
-            )}
-          </motion.aside>
+            <a
+              href="mailto:info@notekart.in"
+              className="inline-block bg-[#e47911] text-white text-xs font-bold px-4 py-2 rounded-md hover:bg-[#c45500] transition-colors"
+            >
+              info@notekart.in
+            </a>
+          </div>
         </div>
       </section>
 
-      <section id="pricing" className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto mb-12"
-          >
-            <p className="text-xs uppercase tracking-[0.24em] text-[#2997ff] font-semibold mb-3">
-              Flexible pricing
-            </p>
-            <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.05] mb-4">
-              Structured for single orders and high-volume demand.
-            </h2>
-            <p className="text-[#86868b] text-lg leading-relaxed">
-              You do not need to expose exact rates in the hero. It is enough to
-              show that the product serves both one-off users and larger
-              recurring buyers.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {PLANS.map((plan, index) => (
+      {/* Customer Reviews */}
+      <section className="bg-[#f7f8fa] py-10 px-4 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-2xl font-black text-[#232f3e] mb-6">Customer Reviews</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {REVIEWS.map((review, i) => (
               <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 32 }}
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.55, delay: index * 0.08 }}
-                whileHover={{ y: -8, scale: 1.015 }}
-                className={`abstract-panel relative overflow-hidden rounded-[2rem] border p-7 ${
-                  index === 1
-                    ? "border-[#2997ff]/40 bg-[linear-gradient(180deg,rgba(41,151,255,0.14),rgba(255,255,255,0.03))]"
-                    : "border-white/[0.07] bg-white/[0.025]"
-                }`}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+                className="bg-white border border-gray-200 rounded-xl p-4"
               >
-                {index === 1 && (
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 top-0 h-20 opacity-22 mix-blend-screen"
-                  >
-                    <DotLottieReact
-                      src={GRID_LOTTIE_URL}
-                      autoplay
-                      loop
-                      className="h-full w-full scale-[1.1]"
-                    />
-                  </div>
-                )}
-                <p className="text-sm text-[#8ec8ff] font-semibold uppercase tracking-[0.2em] mb-4">
-                  {plan.name}
-                </p>
-                <p className="text-white text-3xl font-black mb-3">
-                  {plan.price}
-                </p>
-                <p className="text-[#86868b] text-sm leading-relaxed mb-6">
-                  {plan.description}
-                </p>
-                <div className="space-y-3">
-                  {plan.bullets.map((bullet) => (
-                    <div
-                      key={bullet}
-                      className="flex items-start gap-3 text-sm text-white/85"
-                    >
-                      <span className="mt-1 h-2 w-2 rounded-full bg-[#2997ff]" />
-                      <span>{bullet}</span>
-                    </div>
+                <div className="flex items-center gap-0.5 mb-2">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <svg key={s} width="11" height="11" viewBox="0 0 24 24" fill={s <= review.stars ? "#e47911" : "#e0e0e0"}>
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
                   ))}
                 </div>
+                <p className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-4">&ldquo;{review.text}&rdquo;</p>
+                <p className="text-xs font-bold text-[#232f3e]">— {review.name}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto rounded-[2.2rem] border border-white/[0.07] bg-[linear-gradient(135deg,rgba(41,151,255,0.12),rgba(255,255,255,0.02),rgba(14,165,233,0.08))] p-8 md:p-12">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-10 items-start">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-[#8ec8ff] font-semibold mb-3">
-                FAQ and reassurance
-              </p>
-              <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.05] mb-5">
-                Remove the hesitation before checkout.
-              </h2>
-              <p className="text-[#d7d9df] text-lg leading-relaxed max-w-2xl">
-                A stronger landing page answers operational questions early so
-                users trust the platform enough to upload files and place
-                orders.
-              </p>
-            </div>
-
-            <motion.a
-              href="/print"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center justify-center rounded-full bg-white text-black font-semibold px-7 py-4 text-sm"
-            >
-              Go to Print Dashboard
-            </motion.a>
+      {/* Promo Banner */}
+      <section className="bg-[#232f3e] py-8 px-4 text-center">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-xl md:text-2xl font-black text-white mb-2">
+            Still Thinking!! Tired of Home Deliveries of Pizza??
+          </h2>
+          <p className="text-[#f5a623] font-bold text-lg">Now Try even Crispier Prints 😉</p>
+          <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
+            <Link href="/books">
+              <button className="bg-[#e47911] hover:bg-[#c45500] text-white font-bold px-8 py-3 rounded-md transition-colors">
+                Shop Now
+              </button>
+            </Link>
+            <Link href="/print">
+              <button className="border-2 border-white text-white font-bold px-8 py-3 rounded-md hover:bg-white/10 transition-colors">
+                Print Your Notes
+              </button>
+            </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10">
-            {FAQS.map((faq, index) => (
-              <motion.div
-                key={faq.question}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.45, delay: index * 0.06 }}
-                className="rounded-[1.5rem] border border-white/[0.08] bg-black/20 p-5"
-              >
-                <h3 className="text-white font-semibold text-lg mb-2">
-                  {faq.question}
-                </h3>
-                <p className="text-[#b8bbc3] text-sm leading-relaxed">
-                  {faq.answer}
-                </p>
-              </motion.div>
+      {/* FAQ Section */}
+      <section id="faqs" className="bg-white py-12 px-4 border-t border-gray-200">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-black text-[#232f3e] mb-6 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-2">
+            {FAQS.map((faq, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-sm font-semibold text-[#232f3e]">{faq.q}</span>
+                  <svg
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5"
+                    className={`flex-shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`}
+                  >
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </button>
+                {openFaq === i && (
+                  <div className="px-4 pb-3 text-sm text-gray-600 bg-gray-50 border-t border-gray-100">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

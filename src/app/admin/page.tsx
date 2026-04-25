@@ -26,13 +26,13 @@ const ADMIN_TABS = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-[#f5a623]/15 text-[#f5a623]",
-  PAID: "bg-[#30d158]/15 text-[#30d158]",
-  PROCESSING: "bg-[#2997ff]/15 text-[#2997ff]",
-  SHIPPED: "bg-[#bf5af2]/15 text-[#bf5af2]",
-  DELIVERED: "bg-[#30d158]/15 text-[#30d158]",
-  CANCELLED: "bg-[#ff453a]/15 text-[#ff453a]",
-  REFUNDED: "bg-white/[0.08] text-[#86868b]",
+  PENDING: "bg-yellow-100 text-yellow-700",
+  PAID: "bg-green-100 text-green-700",
+  PROCESSING: "bg-blue-100 text-blue-700",
+  SHIPPED: "bg-purple-100 text-purple-700",
+  DELIVERED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-700",
+  REFUNDED: "bg-gray-100 text-gray-500",
 };
 
 const ORDER_STATUSES = [
@@ -181,29 +181,25 @@ export default function AdminPanel() {
 
   if (authLoading || !user || user.role !== "ADMIN") {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#2997ff] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#e47911] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#f7f8fa]">
       <Navbar />
-      <div className="pt-20 flex">
+      <div className="pt-0 flex">
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col w-64 min-h-screen border-r border-white/[0.07] px-4 py-6 bg-black/50 backdrop-blur-xl">
-          <div className="mb-8">
-            <span className="text-xs font-semibold text-[#48484a] uppercase tracking-widest">
-              Admin Panel
-            </span>
+        <aside className="hidden md:flex flex-col w-64 min-h-screen border-r border-gray-200 px-4 py-6 bg-white">
+          <div className="mb-8 pt-4">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Admin Panel</span>
             <div className="mt-3 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#f5a623] to-[#ff9500] flex items-center justify-center text-black text-xs font-bold">
-                A
-              </div>
+              <div className="w-8 h-8 rounded bg-[#e47911] flex items-center justify-center text-white text-xs font-bold">A</div>
               <div>
-                <p className="text-sm font-medium text-white">{user.name}</p>
-                <p className="text-[10px] text-[#86868b]">Administrator</p>
+                <p className="text-sm font-medium text-[#232f3e]">{user.name}</p>
+                <p className="text-[10px] text-gray-400">Administrator</p>
               </div>
             </div>
           </div>
@@ -213,33 +209,33 @@ export default function AdminPanel() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${tab === t.id ? "bg-white/[0.1] text-white" : "text-[#86868b] hover:text-white hover:bg-white/[0.05]"}`}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium transition-all text-left ${
+                  tab === t.id ? "bg-[#232f3e] text-white" : "text-gray-600 hover:text-[#232f3e] hover:bg-gray-100"
+                }`}
               >
-                <span>{t.icon}</span>
-                {t.label}
+                <span>{t.icon}</span>{t.label}
               </button>
             ))}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-white/[0.07]">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-xs text-[#86868b] hover:text-white transition-colors"
-            >
+          <div className="mt-auto pt-6 border-t border-gray-200">
+            <Link href="/" className="flex items-center gap-2 text-xs text-gray-500 hover:text-[#232f3e] transition-colors">
               ← Back to Site
             </Link>
           </div>
         </aside>
 
         {/* Main */}
-        <main className="flex-1 px-6 py-8 overflow-y-auto max-h-screen">
+        <main className="flex-1 px-6 py-6 overflow-y-auto max-h-screen">
           {/* Mobile tabs */}
           <div className="flex gap-2 mb-6 md:hidden overflow-x-auto pb-2">
             {ADMIN_TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-medium whitespace-nowrap ${tab === t.id ? "bg-white/[0.1] text-white" : "text-[#86868b] bg-white/[0.04]"}`}
+                className={`px-4 py-2 rounded text-xs font-medium whitespace-nowrap border ${
+                  tab === t.id ? "bg-[#232f3e] text-white border-[#232f3e]" : "text-gray-600 bg-white border-gray-200"
+                }`}
               >
                 {t.icon} {t.label}
               </button>
@@ -254,93 +250,42 @@ export default function AdminPanel() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h1 className="text-2xl font-bold text-white mb-6">
-                  Dashboard Overview
-                </h1>
-                <div
-                  ref={statsRef}
-                  className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-                >
+                <h1 className="text-2xl font-bold text-[#232f3e] mb-6">Dashboard Overview</h1>
+                <div ref={statsRef} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                   {[
-                    {
-                      label: "Total Books",
-                      value: stats?.totalBooks ?? "—",
-                      icon: "📚",
-                      color: "#2997ff",
-                    },
-                    {
-                      label: "Total Users",
-                      value: stats?.totalUsers ?? "—",
-                      icon: "👥",
-                      color: "#30d158",
-                    },
-                    {
-                      label: "Total Orders",
-                      value: stats?.totalOrders ?? "—",
-                      icon: "📦",
-                      color: "#bf5af2",
-                    },
-                    {
-                      label: "Revenue",
-                      value: stats
-                        ? `₹${Number(stats.revenue).toLocaleString("en-IN")}`
-                        : "—",
-                      icon: "💰",
-                      color: "#f5a623",
-                    },
+                    { label: "Total Books", value: stats?.totalBooks ?? "—", icon: "📚" },
+                    { label: "Total Users", value: stats?.totalUsers ?? "—", icon: "👥" },
+                    { label: "Total Orders", value: stats?.totalOrders ?? "—", icon: "📦" },
+                    { label: "Revenue", value: stats ? `Rs. ${Number(stats.revenue).toLocaleString("en-IN")}` : "—", icon: "💰" },
                   ].map((s) => (
-                    <div
-                      key={s.label}
-                      className="stat-card bg-white/[0.04] border border-white/[0.08] rounded-3xl p-5"
-                    >
+                    <div key={s.label} className="stat-card bg-white border border-gray-200 rounded-md p-5">
                       <div className="text-2xl mb-3">{s.icon}</div>
-                      <div className="text-2xl font-bold text-white">
-                        {s.value}
-                      </div>
-                      <div className="text-xs text-[#86868b] mt-1">
-                        {s.label}
-                      </div>
+                      <div className="text-2xl font-bold text-[#e47911]">{s.value}</div>
+                      <div className="text-xs text-gray-500 mt-1">{s.label}</div>
                     </div>
                   ))}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Recent Orders */}
-                  <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
-                    <div className="p-5 border-b border-white/[0.07] flex justify-between">
-                      <h3 className="font-semibold text-white text-sm">
-                        Recent Orders
-                      </h3>
-                      <button
-                        onClick={() => setTab("orders")}
-                        className="text-xs text-[#2997ff]"
-                      >
-                        View all
-                      </button>
+                  <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex justify-between">
+                      <h3 className="font-semibold text-[#232f3e] text-sm">Recent Orders</h3>
+                      <button onClick={() => setTab("orders")} className="text-xs text-[#146eb4] hover:underline">View all</button>
                     </div>
-                    <div className="divide-y divide-white/[0.05]">
+                    <div className="divide-y divide-gray-100">
                       {recentOrders.slice(0, 5).map((o: any) => (
                         <div key={o.id} className="flex items-center gap-3 p-4">
-                          <div className="w-8 h-8 rounded-xl bg-white/[0.06] flex items-center justify-center text-xs font-bold text-white">
+                          <div className="w-8 h-8 rounded bg-[#232f3e] flex items-center justify-center text-xs font-bold text-white">
                             {o.user?.name?.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-white truncate">
-                              {o.user?.name}
-                            </p>
-                            <p className="text-[10px] text-[#86868b]">
-                              {o.items?.length || 0} book(s)
-                            </p>
+                            <p className="text-xs font-medium text-[#232f3e] truncate">{o.user?.name}</p>
+                            <p className="text-[10px] text-gray-400">{o.items?.length || 0} book(s)</p>
                           </div>
                           <div className="text-right">
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[o.status]}`}
-                            >
-                              {o.status}
-                            </span>
-                            <p className="text-xs font-bold text-white mt-0.5">
-                              ₹{Number(o.total).toFixed(0)}
-                            </p>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[o.status]}`}>{o.status}</span>
+                            <p className="text-xs font-bold text-[#232f3e] mt-0.5">Rs. {Number(o.total).toFixed(0)}</p>
                           </div>
                         </div>
                       ))}
@@ -348,42 +293,23 @@ export default function AdminPanel() {
                   </div>
 
                   {/* Top Books */}
-                  <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
-                    <div className="p-5 border-b border-white/[0.07] flex justify-between">
-                      <h3 className="font-semibold text-white text-sm">
-                        Top Selling Books
-                      </h3>
-                      <button
-                        onClick={() => setTab("books")}
-                        className="text-xs text-[#2997ff]"
-                      >
-                        Manage
-                      </button>
+                  <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex justify-between">
+                      <h3 className="font-semibold text-[#232f3e] text-sm">Top Selling Books</h3>
+                      <button onClick={() => setTab("books")} className="text-xs text-[#146eb4] hover:underline">Manage</button>
                     </div>
-                    <div className="divide-y divide-white/[0.05]">
+                    <div className="divide-y divide-gray-100">
                       {topBooks.map((b: any, i: number) => (
                         <div key={b.id} className="flex items-center gap-3 p-4">
-                          <span className="text-xs font-bold text-[#86868b] w-4">
-                            #{i + 1}
-                          </span>
+                          <span className="text-xs font-bold text-gray-400 w-4">#{i + 1}</span>
                           {b.coverImage && (
-                            <img
-                              src={b.coverImage}
-                              alt={b.title}
-                              className="w-8 h-11 object-cover rounded-lg"
-                            />
+                            <img src={b.coverImage} alt={b.title} className="w-8 h-11 object-cover rounded" />
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-white truncate">
-                              {b.title}
-                            </p>
-                            <p className="text-[10px] text-[#86868b]">
-                              {b.sold} sold
-                            </p>
+                            <p className="text-xs font-medium text-[#232f3e] truncate">{b.title}</p>
+                            <p className="text-[10px] text-gray-400">{b.sold} sold</p>
                           </div>
-                          <p className="text-xs font-bold text-white">
-                            ₹{Number(b.price).toFixed(0)}
-                          </p>
+                          <p className="text-xs font-bold text-[#232f3e]">Rs. {Number(b.price).toFixed(0)}</p>
                         </div>
                       ))}
                     </div>
@@ -400,99 +326,58 @@ export default function AdminPanel() {
                 exit={{ opacity: 0 }}
               >
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    Manage Books
-                  </h2>
+                  <h2 className="text-2xl font-bold text-[#232f3e]">Manage Books</h2>
                   <div className="flex gap-4">
                     <Link href="/admin/categories">
-                      <button className="bg-white/[0.05] hover:bg-white/[0.1] text-white text-sm font-semibold px-5 py-2.5 rounded-xl border border-white/[0.1] transition-colors">
+                      <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
                         📦 Manage Categories
                       </button>
                     </Link>
                     <Link href="/admin/books/new">
-                      <button className="bg-[#2997ff] hover:bg-[#1a83ff] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
+                      <button className="bg-[#e47911] hover:bg-[#c45500] text-white text-sm font-semibold px-5 py-2.5 rounded transition-colors">
                         + Add Book
                       </button>
                     </Link>
                   </div>
                 </div>
-                <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
+                <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-white/[0.07]">
-                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Book
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Price
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Stock
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Rating
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Actions
-                          </th>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Book</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Rating</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.05]">
+                      <tbody className="divide-y divide-gray-100">
                         {books.map((b: any) => (
-                          <tr
-                            key={b.id}
-                            className="hover:bg-white/[0.02] transition-colors"
-                          >
+                          <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
                                 {b.coverImage && (
-                                  <img
-                                    src={b.coverImage}
-                                    alt={b.title}
-                                    className="w-8 h-11 object-cover rounded-lg"
-                                  />
+                                  <img src={b.coverImage} alt={b.title} className="w-8 h-11 object-cover rounded" />
                                 )}
                                 <div>
-                                  <p className="text-sm font-medium text-white">
-                                    {b.title}
-                                  </p>
-                                  <p className="text-[10px] text-[#86868b]">
-                                    {b.author}
-                                  </p>
+                                  <p className="text-sm font-medium text-[#232f3e]">{b.title}</p>
+                                  <p className="text-[10px] text-gray-400">{b.author}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-white">
-                              ₹{Number(b.price).toFixed(0)}
-                            </td>
+                            <td className="px-4 py-3 text-sm text-[#232f3e]">Rs. {Number(b.price).toFixed(0)}</td>
                             <td className="px-4 py-3 text-sm">
-                              <span
-                                className={`font-medium ${b.stock === 0 ? "text-[#ff453a]" : b.stock < 10 ? "text-[#f5a623]" : "text-[#30d158]"}`}
-                              >
-                                {b.stock}
-                              </span>
+                              <span className={`font-medium ${b.stock === 0 ? "text-red-500" : b.stock < 10 ? "text-yellow-600" : "text-green-600"}`}>{b.stock}</span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-[#f5a623]">
-                              ★ {Number(b.rating).toFixed(1)}
-                            </td>
+                            <td className="px-4 py-3 text-sm text-yellow-500">★ {Number(b.rating).toFixed(1)}</td>
                             <td className="px-4 py-3">
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => {
-                                    setBookForm(b);
-                                    setBookModal({ open: true, book: b });
-                                  }}
-                                  className="text-xs text-[#2997ff] hover:underline"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteBook(b.id)}
-                                  className="text-xs text-[#ff453a] hover:underline"
-                                >
-                                  Delete
-                                </button>
+                                  onClick={() => { setBookForm(b); setBookModal({ open: true, book: b }); }}
+                                  className="text-xs text-[#146eb4] hover:underline"
+                                >Edit</button>
+                                <button onClick={() => handleDeleteBook(b.id)} className="text-xs text-red-500 hover:underline">Delete</button>
                               </div>
                             </td>
                           </tr>
@@ -511,84 +396,49 @@ export default function AdminPanel() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Manage Users
-                </h2>
-                <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
+                <h2 className="text-2xl font-bold text-[#232f3e] mb-6">Manage Users</h2>
+                <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-white/[0.07]">
-                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            User
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Role
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Orders
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Joined
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Actions
-                          </th>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">User</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.05]">
+                      <tbody className="divide-y divide-gray-100">
                         {users.map((u: any) => (
-                          <tr
-                            key={u.id}
-                            className="hover:bg-white/[0.02] transition-colors"
-                          >
+                          <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2997ff] to-[#0066cc] flex items-center justify-center text-white text-xs font-bold">
-                                  {u.name.charAt(0)}
-                                </div>
+                                <div className="w-8 h-8 rounded bg-[#232f3e] flex items-center justify-center text-white text-xs font-bold">{u.name.charAt(0)}</div>
                                 <div>
-                                  <p className="text-sm font-medium text-white">
-                                    {u.name}
-                                  </p>
-                                  <p className="text-[10px] text-[#86868b]">
-                                    {u.email}
-                                  </p>
+                                  <p className="text-sm font-medium text-[#232f3e]">{u.name}</p>
+                                  <p className="text-[10px] text-gray-400">{u.email}</p>
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <span
-                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${u.role === "ADMIN" ? "bg-[#f5a623]/15 text-[#f5a623]" : "bg-[#2997ff]/15 text-[#2997ff]"}`}
-                              >
-                                {u.role}
-                              </span>
+                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${
+                                u.role === "ADMIN" ? "bg-[#e47911]/15 text-[#e47911]" : "bg-blue-100 text-blue-700"
+                              }`}>{u.role}</span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-[#86868b]">
-                              {u._count?.orders || 0}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-[#86868b]">
-                              {new Date(u.createdAt).toLocaleDateString()}
-                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-500">{u._count?.orders || 0}</td>
+                            <td className="px-4 py-3 text-xs text-gray-400">{new Date(u.createdAt).toLocaleDateString()}</td>
                             <td className="px-4 py-3">
-                              <span
-                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${u.isActive ? "bg-[#30d158]/15 text-[#30d158]" : "bg-[#ff453a]/15 text-[#ff453a]"}`}
-                              >
-                                {u.isActive ? "Active" : "Banned"}
-                              </span>
+                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                                u.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
+                              }`}>{u.isActive ? "Active" : "Banned"}</span>
                             </td>
                             <td className="px-4 py-3">
                               <button
-                                onClick={() =>
-                                  handleToggleUserStatus(u.id, u.isActive)
-                                }
-                                className={`text-xs hover:underline ${u.isActive ? "text-[#ff453a]" : "text-[#30d158]"}`}
-                              >
-                                {u.isActive ? "Deactivate" : "Activate"}
-                              </button>
+                                onClick={() => handleToggleUserStatus(u.id, u.isActive)}
+                                className={`text-xs hover:underline ${u.isActive ? "text-red-500" : "text-green-600"}`}
+                              >{u.isActive ? "Deactivate" : "Activate"}</button>
                             </td>
                           </tr>
                         ))}
@@ -606,86 +456,43 @@ export default function AdminPanel() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h2 className="text-2xl font-bold text-white mb-6">
-                  Manage Orders
-                </h2>
-                <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
+                <h2 className="text-2xl font-bold text-[#232f3e] mb-6">Manage Orders</h2>
+                <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-white/[0.07]">
-                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Order
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Customer
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Total
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Date
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                            Update
-                          </th>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Order</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Update</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.05]">
+                      <tbody className="divide-y divide-gray-100">
                         {orders.map((o: any) => (
-                          <tr
-                            key={o.id}
-                            className="hover:bg-white/[0.02] transition-colors"
-                          >
+                          <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-5 py-3">
-                              <p className="text-sm font-mono text-white">
-                                #{o.id.slice(-8).toUpperCase()}
-                              </p>
-                              <p className="text-[10px] text-[#86868b]">
-                                {o.items?.length || 0} item(s)
-                              </p>
+                              <p className="text-sm font-mono text-[#232f3e]">#{o.id.slice(-8).toUpperCase()}</p>
+                              <p className="text-[10px] text-gray-400">{o.items?.length || 0} item(s)</p>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-sm text-white">
-                                {o.user?.name}
-                              </p>
-                              <p className="text-[10px] text-[#86868b]">
-                                {o.user?.email}
-                              </p>
+                              <p className="text-sm text-[#232f3e]">{o.user?.name}</p>
+                              <p className="text-[10px] text-gray-400">{o.user?.email}</p>
                             </td>
-                            <td className="px-4 py-3 text-sm font-bold text-white">
-                              ₹{Number(o.total).toFixed(0)}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-[#86868b]">
-                              {new Date(o.createdAt).toLocaleDateString()}
-                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-[#232f3e]">Rs. {Number(o.total).toFixed(0)}</td>
+                            <td className="px-4 py-3 text-xs text-gray-400">{new Date(o.createdAt).toLocaleDateString()}</td>
                             <td className="px-4 py-3">
-                              <span
-                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${STATUS_COLORS[o.status]}`}
-                              >
-                                {o.status}
-                              </span>
+                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${STATUS_COLORS[o.status]}`}>{o.status}</span>
                             </td>
                             <td className="px-4 py-3">
                               <select
                                 defaultValue={o.status}
-                                onChange={(e) =>
-                                  handleOrderStatus(o.id, e.target.value)
-                                }
-                                className="bg-white/[0.06] border border-white/[0.1] rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                                onChange={(e) => handleOrderStatus(o.id, e.target.value)}
+                                className="bg-white border border-gray-300 rounded px-2 py-1 text-gray-700 text-xs focus:outline-none focus:border-[#e47911]"
                               >
-                                {ORDER_STATUSES.map((s) => (
-                                  <option
-                                    key={s}
-                                    value={s}
-                                    className="bg-[#1c1c1e]"
-                                  >
-                                    {s}
-                                  </option>
-                                ))}
+                                {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                               </select>
                             </td>
                           </tr>
@@ -707,7 +514,7 @@ export default function AdminPanel() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
             onClick={(e) =>
               e.target === e.currentTarget && setBookModal({ open: false })
             }
@@ -716,18 +523,16 @@ export default function AdminPanel() {
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-[#1c1c1e] border border-white/[0.1] rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-white border border-gray-200 rounded-md p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-[#232f3e]">
                   {bookModal.book ? "Edit Book" : "Add New Book"}
                 </h3>
                 <button
                   onClick={() => setBookModal({ open: false })}
-                  className="w-8 h-8 rounded-full bg-white/[0.08] flex items-center justify-center text-[#86868b] hover:text-white"
-                >
-                  ✕
-                </button>
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-[#232f3e]"
+                >✕</button>
               </div>
               <form
                 onSubmit={handleBookFormSubmit}
@@ -753,7 +558,7 @@ export default function AdminPanel() {
                   { key: "isbn", label: "ISBN", span: 2 },
                 ].map((f) => (
                   <div key={f.key} className={f.span === 2 ? "col-span-2" : ""}>
-                    <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                       {f.label}
                     </label>
                     <input
@@ -766,16 +571,13 @@ export default function AdminPanel() {
                           [f.key]: e.target.value,
                         }))
                       }
-                      className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60"
+                      className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911]"
                     />
                   </div>
                 ))}
                 
-                {/* Custom render for Cover Image Upload */}
                 <div className="col-span-2">
-                  <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
-                    Cover Image
-                  </label>
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Cover Image</label>
                   <div className="flex gap-4 items-end">
                     <div className="flex-1">
                       <input
@@ -783,11 +585,11 @@ export default function AdminPanel() {
                         value={bookForm.coverImage || ""}
                         onChange={(e) => setBookForm((prev: any) => ({ ...prev, coverImage: e.target.value }))}
                         placeholder="Image URL or upload..."
-                        className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60"
+                        className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911]"
                       />
                     </div>
                     <div className="flex-shrink-0">
-                       <div className="relative overflow-hidden inline-block border border-white/[0.1] bg-[#2c2c2e] hover:bg-[#3a3a3c] rounded-xl px-4 py-2.5 text-sm text-white font-medium cursor-pointer transition-colors">
+                       <div className="relative overflow-hidden inline-block border border-gray-300 bg-white hover:bg-gray-50 rounded px-4 py-2.5 text-sm text-gray-700 font-medium cursor-pointer transition-colors">
                          {isUploadingCover ? "Uploading..." : "Upload File"}
                          <input
                            type="file"
@@ -800,25 +602,18 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   {bookForm.coverImage && (
-                    <div className="mt-4 p-2 border border-white/[0.1] bg-white/[0.02] rounded-xl inline-block">
-                      <img src={bookForm.coverImage} className="h-32 object-contain rounded-lg" alt="Cover Preview" />
+                    <div className="mt-4 p-2 border border-gray-200 rounded inline-block">
+                      <img src={bookForm.coverImage} className="h-32 object-contain rounded" alt="Cover Preview" />
                     </div>
                   )}
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
-                    Description
-                  </label>
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Description</label>
                   <textarea
                     value={bookForm.description || ""}
-                    onChange={(e) =>
-                      setBookForm((prev: any) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setBookForm((prev: any) => ({ ...prev, description: e.target.value }))}
                     rows={4}
-                    className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60 resize-none"
+                    className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] resize-none"
                   />
                 </div>
                 <div className="col-span-2 flex items-center gap-3 mt-2">
@@ -834,25 +629,19 @@ export default function AdminPanel() {
                       }
                       className="rounded"
                     />
-                    <span className="text-sm text-[#86868b]">
-                      Featured Book
-                    </span>
+                    <span className="text-sm text-gray-600">Featured Book</span>
                   </label>
                 </div>
                 <div className="col-span-2 flex gap-3 justify-end mt-2">
                   <button
                     type="button"
                     onClick={() => setBookModal({ open: false })}
-                    className="px-6 py-2.5 rounded-xl border border-white/[0.1] text-[#86868b] hover:text-white text-sm transition-colors"
-                  >
-                    Cancel
-                  </button>
+                    className="px-6 py-2.5 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors"
+                  >Cancel</button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-[#2997ff] hover:bg-[#1a83ff] text-white text-sm font-semibold transition-colors"
-                  >
-                    {bookModal.book ? "Update Book" : "Create Book"}
-                  </button>
+                    className="px-6 py-2.5 rounded bg-[#e47911] hover:bg-[#c45500] text-white text-sm font-semibold transition-colors"
+                  >{bookModal.book ? "Update Book" : "Create Book"}</button>
                 </div>
               </form>
             </motion.div>

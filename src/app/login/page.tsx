@@ -32,22 +32,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] opacity-10"
-          style={{
-            background: "radial-gradient(circle, #2997ff, transparent)",
-          }}
-        />
-        <div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] opacity-10"
-          style={{
-            background: "radial-gradient(circle, #bf5af2, transparent)",
-          }}
-        />
-      </div>
+    <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center px-4">
+      {/* Background accent */}
+      <div className="absolute top-0 left-0 right-0 h-2 bg-[#e47911]" />
 
       <motion.div
         initial={{ opacity: 0, y: 32 }}
@@ -55,47 +42,27 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="w-full max-w-md"
       >
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/">
-            <div className="inline-flex items-center gap-2.5 mb-6">
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #2997ff 0%, #0066cc 100%)",
-                  boxShadow: "0 0 24px rgba(41,151,255,0.4)",
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+            <div className="inline-flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#e47911] flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
                 </svg>
               </div>
+              <span className="font-bold text-[#232f3e] text-lg">NoteKart Prints</span>
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-            Welcome back
-          </h1>
-          <p className="text-[#86868b] text-sm">
-            Sign in to your Basak Library account
-          </p>
+          <h1 className="text-3xl font-bold text-[#232f3e] mb-1">Welcome back</h1>
+          <p className="text-gray-500 text-sm">Sign in to your NoteKart account</p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-3xl p-8 backdrop-blur-xl">
+        <div className="bg-white border border-gray-200 rounded-md p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <label className="text-xs font-medium text-[#86868b] uppercase tracking-wider mb-2 block">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                 Email
               </label>
               <input
@@ -104,11 +71,11 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-[#48484a] text-sm focus:outline-none focus:border-[#2997ff]/60 focus:bg-white/[0.08] transition-all"
+                className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-[#86868b] uppercase tracking-wider mb-2 block">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
                 Password
               </label>
               <div className="relative">
@@ -118,13 +85,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-[#48484a] text-sm focus:outline-none focus:border-[#2997ff]/60 focus:bg-white/[0.08] transition-all pr-10"
+                  className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#48484a] hover:text-white transition-colors"
-                >
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
                   {showPassword ? (
                     <svg
                       width="16"
@@ -165,27 +131,24 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-white/[0.08] text-center">
-            <p className="text-sm text-[#86868b]">
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-600">
               Don&apos;t have an account?{" "}
-              <Link
-                href="/register"
-                className="text-[#2997ff] hover:underline font-medium"
-              >
+              <Link href="/register" className="text-[#146eb4] hover:underline font-medium">
                 Create one
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Demo credentials hint */}
+        {/* Demo hint */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-4 p-3 bg-[#f5a623]/10 border border-[#f5a623]/20 rounded-2xl text-center"
+          className="mt-4 p-3 bg-[#e47911]/10 border border-[#e47911]/30 rounded text-center"
         >
-          <p className="text-xs text-[#f5a623]">
+          <p className="text-xs text-[#e47911] font-medium">
             Admin demo: admin@basaklibrary.com / Admin@123456
           </p>
         </motion.div>

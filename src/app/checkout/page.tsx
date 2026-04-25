@@ -143,7 +143,7 @@ export default function CheckoutPage() {
           contact: shipping.phone,
         },
         theme: {
-          color: "#2997ff",
+          color: "#e47911",
         },
       };
 
@@ -160,44 +160,33 @@ export default function CheckoutPage() {
     }
   };
 
-  if (authLoading || !user) return <div className="min-h-screen bg-black" />;
+  if (authLoading || !user) return <div className="min-h-screen bg-[#f7f8fa]" />;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#f7f8fa]">
       <Navbar />
 
-      <div className="pt-28 pb-20 px-6 max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-3xl font-bold text-white mb-8">Checkout</h1>
+      <div className="pt-6 pb-20 px-4 max-w-5xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl font-bold text-[#232f3e] mb-6 pt-4">Checkout</h1>
 
           {/* Step indicator */}
-          <div className="flex items-center gap-0 mb-10">
+          <div className="flex items-center gap-0 mb-8">
             {STEPS.map((s, i) => (
               <div key={s.id} className="flex items-center">
                 <div className="flex items-center gap-2">
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      step === s.id
-                        ? "bg-[#2997ff] text-white"
-                        : STEPS.findIndex((x) => x.id === step) > i
-                          ? "bg-[#30d158] text-white"
-                          : "bg-white/[0.08] text-[#86868b]"
-                    }`}
-                  >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    step === s.id ? "bg-[#e47911] text-white" :
+                    STEPS.findIndex((x) => x.id === step) > i ? "bg-green-500 text-white" :
+                    "bg-gray-200 text-gray-500"
+                  }`}>
                     {STEPS.findIndex((x) => x.id === step) > i ? "✓" : i + 1}
                   </div>
-                  <span
-                    className={`text-sm font-medium hidden sm:block ${step === s.id ? "text-white" : "text-[#86868b]"}`}
-                  >
+                  <span className={`text-sm font-medium hidden sm:block ${step === s.id ? "text-[#232f3e]" : "text-gray-400"}`}>
                     {s.label}
                   </span>
                 </div>
-                {i < STEPS.length - 1 && (
-                  <div className="w-8 sm:w-16 h-px bg-white/[0.1] mx-2" />
-                )}
+                {i < STEPS.length - 1 && <div className="w-8 sm:w-16 h-px bg-gray-300 mx-2" />}
               </div>
             ))}
           </div>
@@ -208,99 +197,48 @@ export default function CheckoutPage() {
               <AnimatePresence mode="wait">
                 {/* Step 1: Cart Review */}
                 {step === "cart" && (
-                  <motion.div
-                    key="cart"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl overflow-hidden">
-                      <div className="p-5 border-b border-white/[0.07]">
-                        <h2 className="font-semibold text-white">
-                          Your Cart ({cart.length + printCart.length} items)
-                        </h2>
+                  <motion.div key="cart" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                    <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                      <div className="p-5 border-b border-gray-100">
+                        <h2 className="font-semibold text-[#232f3e]">Your Cart ({cart.length + printCart.length} items)</h2>
                       </div>
                       {cart.length === 0 && printCart.length === 0 ? (
                         <div className="p-10 text-center">
-                          <p className="text-[#86868b]">Your cart is empty.</p>
-                          <button
-                            onClick={() => router.push("/books")}
-                            className="mt-4 text-[#2997ff] hover:underline text-sm"
-                          >
+                          <p className="text-gray-500">Your cart is empty.</p>
+                          <button onClick={() => router.push("/books")} className="mt-4 text-[#146eb4] hover:underline text-sm">
                             Browse Books
                           </button>
                         </div>
                       ) : (
-                        <div className="divide-y divide-white/[0.05]">
+                        <div className="divide-y divide-gray-100">
                           {cart.map((item) => (
-                            <div
-                              key={item.bookId}
-                              className="flex items-center gap-4 p-5"
-                            >
+                            <div key={item.bookId} className="flex items-center gap-4 p-5">
                               {item.coverImage ? (
-                                <img
-                                  src={item.coverImage}
-                                  alt={item.title}
-                                  className="w-12 h-16 object-cover rounded-xl shrink-0"
-                                />
+                                <img src={item.coverImage} alt={item.title} className="w-12 h-16 object-cover rounded shrink-0" />
                               ) : (
-                                <div className="w-12 h-16 bg-white/[0.06] rounded-xl shrink-0 flex items-center justify-center text-xl">
-                                  📖
-                                </div>
+                                <div className="w-12 h-16 bg-gray-100 rounded shrink-0 flex items-center justify-center text-xl">📖</div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-white truncate">
-                                  {item.title}
-                                </p>
+                                <p className="text-sm font-medium text-[#232f3e] truncate">{item.title}</p>
                                 {item.variationString && (
-                                  <p className="text-[10px] text-[#2997ff] mt-0.5">
-                                    {item.variationString}
-                                  </p>
+                                  <p className="text-[10px] text-[#e47911] mt-0.5">{item.variationString}</p>
                                 )}
-                                <p className="text-xs text-[#86868b] mt-0.5">
-                                  ₹{Number(item.price).toLocaleString("en-IN")}
-                                </p>
+                                <p className="text-xs text-gray-500 mt-0.5">Rs. {Number(item.price).toLocaleString("en-IN")}</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() =>
-                                    updateCartQty(
-                                      item.bookId,
-                                      item.variationId,
-                                      Math.max(1, item.quantity - 1),
-                                    )
-                                  }
-                                  className="w-7 h-7 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.1] transition-colors flex items-center justify-center text-sm"
-                                >
+                                <button onClick={() => updateCartQty(item.bookId, item.variationId, Math.max(1, item.quantity - 1))}
+                                  className="w-7 h-7 rounded border border-gray-300 text-gray-600 hover:border-[#e47911] transition-colors flex items-center justify-center text-sm">
                                   −
                                 </button>
-                                <span className="text-sm font-medium text-white w-5 text-center">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    updateCartQty(
-                                      item.bookId,
-                                      item.variationId,
-                                      item.quantity + 1,
-                                    )
-                                  }
-                                  className="w-7 h-7 rounded-lg bg-white/[0.06] text-white hover:bg-white/[0.1] transition-colors flex items-center justify-center text-sm"
-                                >
+                                <span className="text-sm font-medium text-[#232f3e] w-5 text-center">{item.quantity}</span>
+                                <button onClick={() => updateCartQty(item.bookId, item.variationId, item.quantity + 1)}
+                                  className="w-7 h-7 rounded border border-gray-300 text-gray-600 hover:border-[#e47911] transition-colors flex items-center justify-center text-sm">
                                   +
                                 </button>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-bold text-white">
-                                  ₹
-                                  {Number(
-                                    item.price * item.quantity,
-                                  ).toLocaleString("en-IN")}
-                                </p>
-                                <button
-                                  onClick={() => removeFromCart(item.bookId, item.variationId)}
-                                  className="text-[10px] text-[#ff453a] hover:underline mt-0.5"
-                                >
+                                <p className="text-sm font-bold text-[#232f3e]">Rs. {Number(item.price * item.quantity).toLocaleString("en-IN")}</p>
+                                <button onClick={() => removeFromCart(item.bookId, item.variationId)} className="text-[10px] text-red-500 hover:underline mt-0.5">
                                   Remove
                                 </button>
                               </div>
@@ -309,27 +247,14 @@ export default function CheckoutPage() {
 
                           {printCart.map((job) => (
                             <div key={job.id} className="flex items-center gap-4 p-5">
-                              <div className="w-12 h-16 bg-white/[0.06] rounded-xl shrink-0 flex items-center justify-center text-xl">
-                                📄
-                              </div>
+                              <div className="w-12 h-16 bg-gray-100 rounded shrink-0 flex items-center justify-center text-xl">📄</div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-white truncate">
-                                  {job.fileName}
-                                </p>
-                                <p className="text-xs text-[#86868b] mt-0.5">
-                                  {job.copies} Copies • {job.colorMode} • {job.binding} Binding
-                                </p>
+                                <p className="text-sm font-medium text-[#232f3e] truncate">{job.fileName}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{job.copies} Copies • {job.colorMode} • {job.binding} Binding</p>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-bold text-white">
-                                  ₹{Number(job.price).toLocaleString("en-IN")}
-                                </p>
-                                <button
-                                  onClick={() => removeFromPrintCart(job.id)}
-                                  className="text-[10px] text-[#ff453a] hover:underline mt-0.5"
-                                >
-                                  Remove
-                                </button>
+                                <p className="text-sm font-bold text-[#232f3e]">Rs. {Number(job.price).toLocaleString("en-IN")}</p>
+                                <button onClick={() => removeFromPrintCart(job.id)} className="text-[10px] text-red-500 hover:underline mt-0.5">Remove</button>
                               </div>
                             </div>
                           ))}
@@ -338,10 +263,8 @@ export default function CheckoutPage() {
                     </div>
 
                     {(cart.length > 0 || printCart.length > 0) && (
-                      <button
-                        onClick={() => setStep("shipping")}
-                        className="mt-5 w-full bg-[#2997ff] hover:bg-[#1a83ff] text-white font-semibold py-3.5 rounded-2xl transition-colors"
-                      >
+                      <button onClick={() => setStep("shipping")}
+                        className="mt-4 w-full bg-[#e47911] hover:bg-[#c45500] text-white font-semibold py-3.5 rounded transition-colors">
                         Continue to Shipping →
                       </button>
                     )}
@@ -350,92 +273,43 @@ export default function CheckoutPage() {
 
                 {/* Step 2: Shipping */}
                 {step === "shipping" && (
-                  <motion.div
-                    key="shipping"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-6">
-                      <h2 className="font-semibold text-white mb-5">
-                        Shipping Details
-                      </h2>
+                  <motion.div key="shipping" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                    <div className="bg-white border border-gray-200 rounded-md p-6">
+                      <h2 className="font-semibold text-[#232f3e] mb-5">Shipping Details</h2>
                       <div className="grid grid-cols-2 gap-4">
                         {[
-                          {
-                            key: "name",
-                            label: "Full Name",
-                            span: 2,
-                            required: true,
-                          },
-                          {
-                            key: "email",
-                            label: "Email",
-                            type: "email",
-                            required: true,
-                          },
+                          { key: "name", label: "Full Name", span: 2, required: true },
+                          { key: "email", label: "Email", type: "email", required: true },
                           { key: "phone", label: "Phone" },
-                          {
-                            key: "address",
-                            label: "Street Address",
-                            span: 2,
-                            required: true,
-                          },
+                          { key: "address", label: "Street Address", span: 2, required: true },
                           { key: "city", label: "City", required: true },
                           { key: "state", label: "State" },
                           { key: "pincode", label: "Pincode" },
                           { key: "country", label: "Country", required: true },
                         ].map((f) => (
-                          <div
-                            key={f.key}
-                            className={f.span === 2 ? "col-span-2" : ""}
-                          >
-                            <label className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider mb-1.5 block">
-                              {f.label}
-                              {f.required && " *"}
+                          <div key={f.key} className={f.span === 2 ? "col-span-2" : ""}>
+                            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                              {f.label}{f.required && " *"}
                             </label>
-                            <input
-                              type={f.type || "text"}
-                              required={f.required}
+                            <input type={f.type || "text"} required={f.required}
                               value={(shipping as any)[f.key]}
-                              onChange={(e) =>
-                                setShipping((prev) => ({
-                                  ...prev,
-                                  [f.key]: e.target.value,
-                                }))
-                              }
-                              className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#2997ff]/60"
-                            />
+                              onChange={(e) => setShipping((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                              className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911]" />
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="flex gap-3 mt-5">
-                      <button
-                        onClick={() => setStep("cart")}
-                        className="px-6 py-3 rounded-2xl border border-white/[0.1] text-[#86868b] hover:text-white text-sm transition-colors"
-                      >
+                    <div className="flex gap-3 mt-4">
+                      <button onClick={() => setStep("cart")}
+                        className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors">
                         ← Back
                       </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            !shipping.name ||
-                            !shipping.email ||
-                            !shipping.address ||
-                            !shipping.city ||
-                            !shipping.country
-                          ) {
-                            toast(
-                              "Please fill in all required fields",
-                              "error",
-                            );
-                            return;
-                          }
-                          setStep("payment");
-                        }}
-                        className="flex-1 bg-[#2997ff] hover:bg-[#1a83ff] text-white font-semibold py-3 rounded-2xl transition-colors text-sm"
-                      >
+                      <button onClick={() => {
+                        if (!shipping.name || !shipping.email || !shipping.address || !shipping.city || !shipping.country) {
+                          toast("Please fill in all required fields", "error"); return;
+                        }
+                        setStep("payment");
+                      }} className="flex-1 bg-[#e47911] hover:bg-[#c45500] text-white font-semibold py-3 rounded transition-colors text-sm">
                         Continue to Payment →
                       </button>
                     </div>
@@ -444,94 +318,46 @@ export default function CheckoutPage() {
 
                 {/* Step 3: Payment */}
                 {step === "payment" && (
-                  <motion.div
-                    key="payment"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                  >
-                    <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-6 mb-4">
-                      <h2 className="font-semibold text-white mb-4">Payment</h2>
-                      <div className="flex items-center gap-3 bg-white/[0.04] rounded-2xl p-4">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2997ff] to-[#1a83ff] flex items-center justify-center">
-                          <svg
-                            className="w-5 h-5 text-white"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                            />
+                  <motion.div key="payment" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                    <div className="bg-white border border-gray-200 rounded-md p-6 mb-4">
+                      <h2 className="font-semibold text-[#232f3e] mb-4">Payment</h2>
+                      <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded p-4">
+                        <div className="w-10 h-10 rounded bg-[#e47911] flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">
-                            Razorpay Secure Checkout
-                          </p>
-                          <p className="text-xs text-[#86868b]">
-                            Complete your payment securely via Razorpay
-                          </p>
+                          <p className="text-sm font-semibold text-[#232f3e]">Razorpay Secure Checkout</p>
+                          <p className="text-xs text-gray-500">Complete your payment securely via Razorpay</p>
                         </div>
                       </div>
-                      <div className="mt-4 flex items-center gap-2 text-[#86868b] text-xs">
-                        <svg
-                          className="w-4 h-4 text-[#30d158]"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                          />
+                      <div className="mt-4 flex items-center gap-2 text-gray-500 text-xs">
+                        <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                         256-bit SSL Encryption · Powered by Razorpay
                       </div>
                     </div>
 
-                    {/* Shipping summary */}
-                    <div className="bg-white/[0.03] border border-white/[0.07] rounded-3xl p-5 mb-4">
+                    <div className="bg-white border border-gray-200 rounded-md p-5 mb-4">
                       <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm font-semibold text-white">
-                          Shipping To
-                        </p>
-                        <button
-                          onClick={() => setStep("shipping")}
-                          className="text-xs text-[#2997ff] hover:underline"
-                        >
-                          Edit
-                        </button>
+                        <p className="text-sm font-semibold text-[#232f3e]">Shipping To</p>
+                        <button onClick={() => setStep("shipping")} className="text-xs text-[#146eb4] hover:underline">Edit</button>
                       </div>
-                      <p className="text-sm text-[#86868b]">{shipping.name}</p>
-                      <p className="text-xs text-[#86868b]">
-                        {shipping.address}, {shipping.city}, {shipping.country}
-                      </p>
+                      <p className="text-sm text-gray-600">{shipping.name}</p>
+                      <p className="text-xs text-gray-500">{shipping.address}, {shipping.city}, {shipping.country}</p>
                     </div>
 
                     <div className="flex gap-3">
-                      <button
-                        onClick={() => setStep("shipping")}
-                        className="px-6 py-3 rounded-2xl border border-white/[0.1] text-[#86868b] hover:text-white text-sm transition-colors"
-                      >
+                      <button onClick={() => setStep("shipping")}
+                        className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors">
                         ← Back
                       </button>
-                      <button
-                        onClick={handlePlaceOrder}
-                        disabled={isLoading}
-                        className="flex-1 bg-[#2997ff] hover:bg-[#1a83ff] disabled:opacity-60 text-white font-semibold py-3 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2"
-                      >
-                        {isLoading && (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        )}
-                        {isLoading
-                          ? "Processing..."
-                          : `Pay ₹${total.toLocaleString("en-IN")}`}
+                      <button onClick={handlePlaceOrder} disabled={isLoading}
+                        className="flex-1 bg-[#e47911] hover:bg-[#c45500] disabled:opacity-60 text-white font-semibold py-3 rounded transition-colors text-sm flex items-center justify-center gap-2">
+                        {isLoading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                        {isLoading ? "Processing..." : `Pay Rs. ${total.toLocaleString("en-IN")}`}
                       </button>
                     </div>
                   </motion.div>
@@ -541,70 +367,45 @@ export default function CheckoutPage() {
 
             {/* Order summary */}
             <div className="lg:sticky lg:top-24 self-start">
-              <div className="bg-white/[0.04] border border-white/[0.08] rounded-3xl p-5">
-                <h3 className="font-semibold text-white mb-4 text-sm">
-                  Order Summary
-                </h3>
+              <div className="bg-white border border-gray-200 rounded-md p-5">
+                <h3 className="font-semibold text-[#232f3e] mb-4 text-sm">Order Summary</h3>
                 <div className="space-y-3 mb-4">
                   {cart.slice(0, 3).map((item) => (
                     <div key={item.bookId} className="flex items-center gap-3">
                       {item.coverImage && (
-                        <img
-                          src={item.coverImage}
-                          alt={item.title}
-                          className="w-8 h-11 object-cover rounded-lg shrink-0"
-                        />
+                        <img src={item.coverImage} alt={item.title} className="w-8 h-11 object-cover rounded shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white truncate">
-                          {item.title}
-                        </p>
-                        <p className="text-[10px] text-[#86868b]">
-                          ×{item.quantity}
-                        </p>
+                        <p className="text-xs font-medium text-[#232f3e] truncate">{item.title}</p>
+                        <p className="text-[10px] text-gray-500">×{item.quantity}</p>
                       </div>
-                      <p className="text-xs font-semibold text-white">
-                        ₹{(item.price * item.quantity).toLocaleString("en-IN")}
-                      </p>
+                      <p className="text-xs font-semibold text-[#232f3e]">Rs. {(item.price * item.quantity).toLocaleString("en-IN")}</p>
                     </div>
                   ))}
                   {printCart.slice(0, Math.max(0, 3 - cart.length)).map((job) => (
                     <div key={job.id} className="flex items-center gap-3">
-                      <div className="w-8 h-11 bg-white/[0.06] rounded-lg shrink-0 flex items-center justify-center">
-                        📄
-                      </div>
+                      <div className="w-8 h-11 bg-gray-100 rounded shrink-0 flex items-center justify-center">📄</div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white truncate">
-                          {job.fileName}
-                        </p>
-                        <p className="text-[10px] text-[#86868b]">
-                          ×{job.copies}
-                        </p>
+                        <p className="text-xs font-medium text-[#232f3e] truncate">{job.fileName}</p>
+                        <p className="text-[10px] text-gray-500">×{job.copies}</p>
                       </div>
-                      <p className="text-xs font-semibold text-white">
-                        ₹{Number(job.price).toLocaleString("en-IN")}
-                      </p>
+                      <p className="text-xs font-semibold text-[#232f3e]">Rs. {Number(job.price).toLocaleString("en-IN")}</p>
                     </div>
                   ))}
                   {(cart.length + printCart.length) > 3 && (
-                    <p className="text-[10px] text-[#86868b] text-center">
-                      +{(cart.length + printCart.length) - 3} more items
-                    </p>
+                    <p className="text-[10px] text-gray-400 text-center">+{(cart.length + printCart.length) - 3} more items</p>
                   )}
                 </div>
 
-                <div className="border-t border-white/[0.07] pt-4 space-y-2 text-sm">
-                  <div className="flex justify-between text-[#86868b]">
-                    <span>Subtotal</span>
-                    <span>₹{subtotal.toLocaleString("en-IN")}</span>
+                <div className="border-t border-gray-100 pt-4 space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-500">
+                    <span>Subtotal</span><span>Rs. {subtotal.toLocaleString("en-IN")}</span>
                   </div>
-                  <div className="flex justify-between text-[#86868b]">
-                    <span>GST (18%)</span>
-                    <span>₹{gst.toLocaleString("en-IN")}</span>
+                  <div className="flex justify-between text-gray-500">
+                    <span>GST (18%)</span><span>Rs. {gst.toLocaleString("en-IN")}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-white border-t border-white/[0.07] pt-2 mt-2">
-                    <span>Total</span>
-                    <span>₹{total.toLocaleString("en-IN")}</span>
+                  <div className="flex justify-between font-bold text-[#232f3e] border-t border-gray-100 pt-2 mt-2">
+                    <span>Total</span><span>Rs. {total.toLocaleString("en-IN")}</span>
                   </div>
                 </div>
               </div>

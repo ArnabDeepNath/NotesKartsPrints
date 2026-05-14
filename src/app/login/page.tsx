@@ -46,16 +46,31 @@ export default function LoginPage() {
           <Link href="/">
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-lg bg-[#e47911] flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
                 </svg>
               </div>
-              <span className="font-bold text-[#232f3e] text-lg">NoteKart Prints</span>
+              <span className="font-bold text-[#232f3e] text-lg">
+                NoteKart Prints
+              </span>
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-[#232f3e] mb-1">Welcome back</h1>
-          <p className="text-gray-500 text-sm">Sign in to your NoteKart account</p>
+          <h1 className="text-3xl font-bold text-[#232f3e] mb-1">
+            Welcome back
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Sign in to your NoteKart account
+          </p>
         </div>
 
         {/* Form Card */}
@@ -90,7 +105,8 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                >
                   {showPassword ? (
                     <svg
                       width="16"
@@ -134,7 +150,10 @@ export default function LoginPage() {
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-600">
               Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-[#146eb4] hover:underline font-medium">
+              <Link
+                href="/register"
+                className="text-[#146eb4] hover:underline font-medium"
+              >
                 Create one
               </Link>
             </p>

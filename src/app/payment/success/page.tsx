@@ -21,8 +21,8 @@ function SuccessContent() {
   if (status === "loading") {
     return (
       <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-2 border-[#e47911] border-t-transparent rounded-full animate-spin" />
-      <p className="text-gray-500">Verifying your payment…</p>
+        <div className="w-12 h-12 border-2 border-[#e47911] border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-500">Verifying your payment…</p>
       </div>
     );
   }
@@ -31,7 +31,8 @@ function SuccessContent() {
     return (
       <div className="text-center">
         <div className="w-20 h-20 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-red-500"
+          <svg
+            className="w-10 h-10 text-red-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -44,15 +45,23 @@ function SuccessContent() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-[#232f3e] mb-2">Payment Issue</h1>
+        <h1 className="text-2xl font-bold text-[#232f3e] mb-2">
+          Payment Issue
+        </h1>
         <p className="text-gray-500 mb-6">
           We couldn't verify your payment. If you were charged, contact support.
         </p>
         <div className="flex gap-3 justify-center">
-          <Link href="/user/orders" className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors">
+          <Link
+            href="/user/orders"
+            className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors"
+          >
             View Orders
           </Link>
-          <Link href="/" className="bg-[#e47911] hover:bg-[#c45500] text-white font-semibold px-6 py-3 rounded text-sm transition-colors">
+          <Link
+            href="/"
+            className="bg-[#e47911] hover:bg-[#c45500] text-white font-semibold px-6 py-3 rounded text-sm transition-colors"
+          >
             Go Home
           </Link>
         </div>
@@ -100,13 +109,22 @@ function SuccessContent() {
           Thank you for your purchase. Your books are now in your library.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
-          <Link href="/user/library" className="bg-[#e47911] hover:bg-[#c45500] text-white font-semibold px-6 py-3 rounded text-sm transition-colors">
+          <Link
+            href="/user/library"
+            className="bg-[#e47911] hover:bg-[#c45500] text-white font-semibold px-6 py-3 rounded text-sm transition-colors"
+          >
             Go to My Library
           </Link>
-          <Link href="/user/orders" className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors">
+          <Link
+            href="/user/orders"
+            className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors"
+          >
             View Orders
           </Link>
-          <Link href="/books" className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors">
+          <Link
+            href="/books"
+            className="px-6 py-3 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors"
+          >
             Browse More
           </Link>
         </div>
@@ -118,11 +136,23 @@ function SuccessContent() {
 export default function PaymentSuccessPage() {
   return (
     <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center p-6">
-      <Suspense fallback={<div className="w-8 h-8 border-2 border-[#e47911] border-t-transparent rounded-full animate-spin" />}>
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-gray-200 rounded-md p-12 w-full max-w-md">
+      <Suspense
+        fallback={
+          <div className="w-8 h-8 border-2 border-[#e47911] border-t-transparent rounded-full animate-spin" />
+        }
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-gray-200 rounded-md p-12 w-full max-w-md"
+        >
           <div className="text-center mb-2">
-            <Link href="/" className="text-gray-500 text-xs hover:text-[#232f3e] transition-colors">NoteKart Prints</Link>
+            <Link
+              href="/"
+              className="text-gray-500 text-xs hover:text-[#232f3e] transition-colors"
+            >
+              NoteKart Prints
+            </Link>
           </div>
           <SuccessContent />
         </motion.div>

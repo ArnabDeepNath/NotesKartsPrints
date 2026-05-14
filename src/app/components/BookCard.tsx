@@ -26,19 +26,35 @@ interface Props {
 }
 
 const COVER_COLORS = [
-  "#1d3557", "#0f172a", "#1b4332", "#3d105a", "#422006",
-  "#0c1445", "#0d2137", "#4a0e0e", "#1a1c2c", "#3b0764",
+  "#1d3557",
+  "#0f172a",
+  "#1b4332",
+  "#3d105a",
+  "#422006",
+  "#0c1445",
+  "#0d2137",
+  "#4a0e0e",
+  "#1a1c2c",
+  "#3b0764",
 ];
 
 function StarRating({ rating = 4.2 }: { rating?: number }) {
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
-        <svg key={star} width="11" height="11" viewBox="0 0 24 24" fill={star <= Math.round(rating) ? "#e47911" : "#e0e0e0"}>
+        <svg
+          key={star}
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill={star <= Math.round(rating) ? "#e47911" : "#e0e0e0"}
+        >
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
       ))}
-      <span className="text-[10px] text-gray-500 ml-0.5">{rating.toFixed(1)}</span>
+      <span className="text-[10px] text-gray-500 ml-0.5">
+        {rating.toFixed(1)}
+      </span>
     </div>
   );
 }
@@ -46,13 +62,34 @@ function StarRating({ rating = 4.2 }: { rating?: number }) {
 export default function BookCard({ book, index }: Props) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
-  const coverImg = book.featuredImage?.node?.sourceUrl;
-  const category = book.categories?.nodes?.[0]?.name ?? "General";
-  const author = book.author?.node?.name ?? "NoteKart Team";
-  const price = book.price ?? Math.floor(299 + (index * 113) % 700);
-  const originalPrice = book.originalPrice ?? Math.round(price * 1.25);
-  const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
-  const rating = book.rating ?? (3.8 + (index % 12) * 0.1);
+  const coverImg =
+    book.featuredImage?.node?.sourceUrl ||
+    (book as any).coverImage ||
+    (book as any).images?.[0];
+  const category =
+    book.categories?.nodes?.[0]?.name ??
+    (book as any).category?.name ??
+    "General";
+  const author =
+    book.author?.node?.name ?? (book as any).author ?? "NoteKart Team";
+
+  // Use Prisma's price and comparePrice if available
+  const rawPrice = book.price ?? (book as any).price;
+  const price = rawPrice
+    ? Number(rawPrice)
+    : Math.floor(299 + ((index * 113) % 700));
+
+  const rawOriginalPrice = book.originalPrice ?? (book as any).comparePrice;
+  const originalPrice = rawOriginalPrice
+    ? Number(rawOriginalPrice)
+    : Math.round(price * 1.25);
+
+  const discount =
+    originalPrice > price
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : 0;
+  const rating =
+    book.rating ?? (book as any).rating ?? 3.8 + (index % 12) * 0.1;
 
   return (
     <motion.div
@@ -73,10 +110,16 @@ export default function BookCard({ book, index }: Props) {
         ) : (
           <div
             className="w-full h-full flex flex-col items-center justify-center p-4"
-            style={{ background: `linear-gradient(155deg, ${COVER_COLORS[index % COVER_COLORS.length]} 0%, ${COVER_COLORS[(index + 3) % COVER_COLORS.length]} 100%)` }}
+            style={{
+              background: `linear-gradient(155deg, ${COVER_COLORS[index % COVER_COLORS.length]} 0%, ${COVER_COLORS[(index + 3) % COVER_COLORS.length]} 100%)`,
+            }}
           >
-            <span className="text-[8px] font-bold text-white/60 uppercase tracking-widest block mb-1">{category}</span>
-            <p className="text-white font-bold text-sm text-center leading-snug line-clamp-3">{book.title}</p>
+            <span className="text-[8px] font-bold text-white/60 uppercase tracking-widest block mb-1">
+              {category}
+            </span>
+            <p className="text-white font-bold text-sm text-center leading-snug line-clamp-3">
+              {book.title}
+            </p>
             <span className="text-white/60 text-[10px] mt-2">{author}</span>
           </div>
         )}
@@ -103,12 +146,18 @@ export default function BookCard({ book, index }: Props) {
 
         {/* Price */}
         <div className="flex items-baseline gap-2 mt-2">
-          <span className="text-[#0f1111] font-black text-base">Rs. {price.toLocaleString()}</span>
-          <span className="text-gray-400 text-xs line-through">Rs. {originalPrice.toLocaleString()}</span>
+          <span className="text-[#0f1111] font-black text-base">
+            Rs. {price.toLocaleString()}
+          </span>
+          <span className="text-gray-400 text-xs line-through">
+            Rs. {originalPrice.toLocaleString()}
+          </span>
         </div>
 
         {/* Free delivery badge */}
-        <p className="text-[10px] text-[#007600] font-medium mt-0.5">FREE Delivery</p>
+        <p className="text-[10px] text-[#007600] font-medium mt-0.5">
+          FREE Delivery
+        </p>
 
         {/* Add to Cart Button */}
         <button

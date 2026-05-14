@@ -54,38 +54,87 @@ export default function RegisterPage() {
           <Link href="/">
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-lg bg-[#e47911] flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
                 </svg>
               </div>
-              <span className="font-bold text-[#232f3e] text-lg">NoteKart Prints</span>
+              <span className="font-bold text-[#232f3e] text-lg">
+                NoteKart Prints
+              </span>
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-[#232f3e] mb-1">Create your account</h1>
-          <p className="text-gray-500 text-sm">Join thousands of students on NoteKart</p>
+          <h1 className="text-3xl font-bold text-[#232f3e] mb-1">
+            Create your account
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Join thousands of students on NoteKart
+          </p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">Full Name</label>
-              <input type="text" value={form.name} onChange={set("name")} required placeholder="Your name"
-                className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all" />
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={set("name")}
+                required
+                placeholder="Your name"
+                className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all"
+              />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">Email</label>
-              <input type="email" value={form.email} onChange={set("email")} required placeholder="you@example.com"
-                className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all" />
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+                Email
+              </label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={set("email")}
+                required
+                placeholder="you@example.com"
+                className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all"
+              />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">Password</label>
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+                Password
+              </label>
               <div className="relative">
-                <input type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} required placeholder="Min 8 characters"
-                  className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all pr-10" />
-                <button type="button" onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={set("password")}
+                  required
+                  placeholder="Min 8 characters"
+                  className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] transition-all pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                     <circle cx="12" cy="12" r="3" />
                   </svg>
@@ -94,10 +143,14 @@ export default function RegisterPage() {
               {form.password && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {PASSWORD_RULES.map((rule) => (
-                    <span key={rule.label}
+                    <span
+                      key={rule.label}
                       className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${
-                        rule.test(form.password) ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
-                      }`}>
+                        rule.test(form.password)
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-400"
+                      }`}
+                    >
                       {rule.test(form.password) ? "✓" : "○"} {rule.label}
                     </span>
                   ))}
@@ -125,7 +178,12 @@ export default function RegisterPage() {
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="text-[#146eb4] hover:underline font-medium">Sign in</Link>
+              <Link
+                href="/login"
+                className="text-[#146eb4] hover:underline font-medium"
+              >
+                Sign in
+              </Link>
             </p>
           </div>
         </div>

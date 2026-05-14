@@ -50,7 +50,11 @@ export default function UserDashboard() {
       <Navbar />
       <main className="pt-6 pb-20 px-4 max-w-5xl mx-auto">
         {/* Greeting */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 pt-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 pt-4"
+        >
           <p className="text-gray-500 text-sm mb-1">Welcome back,</p>
           <h1 className="text-3xl font-bold text-[#232f3e]">{user.name}</h1>
         </motion.div>
@@ -58,16 +62,43 @@ export default function UserDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Total Orders", value: stats.orders, icon: "📦", link: "/user/orders" },
-            { label: "Wishlist", value: stats.wishlist, icon: "♡", link: "/user/wishlist" },
-            { label: "Library", value: stats.orders, icon: "📚", link: "/user/library" },
-            { label: "Reviews", value: user._count?.orders || 0, icon: "★", link: "#" },
+            {
+              label: "Total Orders",
+              value: stats.orders,
+              icon: "📦",
+              link: "/user/orders",
+            },
+            {
+              label: "Wishlist",
+              value: stats.wishlist,
+              icon: "♡",
+              link: "/user/wishlist",
+            },
+            {
+              label: "Library",
+              value: stats.orders,
+              icon: "📚",
+              link: "/user/library",
+            },
+            {
+              label: "Reviews",
+              value: user._count?.orders || 0,
+              icon: "★",
+              link: "#",
+            },
           ].map((stat, i) => (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+            >
               <Link href={stat.link}>
                 <div className="bg-white border border-gray-200 rounded-md p-5 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="text-2xl mb-3">{stat.icon}</div>
-                  <div className="text-3xl font-bold text-[#e47911] mb-1">{stat.value}</div>
+                  <div className="text-3xl font-bold text-[#e47911] mb-1">
+                    {stat.value}
+                  </div>
                   <div className="text-xs text-gray-500">{stat.label}</div>
                 </div>
               </Link>
@@ -78,18 +109,55 @@ export default function UserDashboard() {
         {/* Quick Links */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           {[
-            { label: "Browse Books", link: "/books", icon: "🔍", desc: "Explore new titles" },
-            { label: "My Library", link: "/user/library", icon: "📖", desc: "Your purchased books" },
-            { label: "Wishlist", link: "/user/wishlist", icon: "💝", desc: "Saved for later" },
-            { label: "My Orders", link: "/user/orders", icon: "🛍️", desc: "Track your orders" },
-            { label: "Profile", link: "/user/profile", icon: "👤", desc: "Update your info" },
-            { label: "Settings", link: "/user/profile#password", icon: "⚙️", desc: "Password & security" },
+            {
+              label: "Browse Books",
+              link: "/books",
+              icon: "🔍",
+              desc: "Explore new titles",
+            },
+            {
+              label: "My Library",
+              link: "/user/library",
+              icon: "📖",
+              desc: "Your purchased books",
+            },
+            {
+              label: "Wishlist",
+              link: "/user/wishlist",
+              icon: "💝",
+              desc: "Saved for later",
+            },
+            {
+              label: "My Orders",
+              link: "/user/orders",
+              icon: "🛍️",
+              desc: "Track your orders",
+            },
+            {
+              label: "Profile",
+              link: "/user/profile",
+              icon: "👤",
+              desc: "Update your info",
+            },
+            {
+              label: "Settings",
+              link: "/user/profile#password",
+              icon: "⚙️",
+              desc: "Password & security",
+            },
           ].map((link, i) => (
-            <motion.div key={link.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.06 }}>
+            <motion.div
+              key={link.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.06 }}
+            >
               <Link href={link.link}>
                 <div className="bg-white border border-gray-200 rounded-md p-4 hover:shadow-md hover:border-[#e47911] transition-all cursor-pointer">
                   <div className="text-xl mb-2">{link.icon}</div>
-                  <div className="text-sm font-semibold text-[#232f3e] mb-0.5">{link.label}</div>
+                  <div className="text-sm font-semibold text-[#232f3e] mb-0.5">
+                    {link.label}
+                  </div>
                   <div className="text-xs text-gray-500">{link.desc}</div>
                 </div>
               </Link>
@@ -101,11 +169,18 @@ export default function UserDashboard() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-[#232f3e]">Recent Orders</h2>
-            <Link href="/user/orders" className="text-sm text-[#146eb4] hover:underline">View all</Link>
+            <Link
+              href="/user/orders"
+              className="text-sm text-[#146eb4] hover:underline"
+            >
+              View all
+            </Link>
           </div>
           <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
             {loadingOrders ? (
-              <div className="p-8 text-center text-gray-500">Loading orders...</div>
+              <div className="p-8 text-center text-gray-500">
+                Loading orders...
+              </div>
             ) : orders.length === 0 ? (
               <div className="p-10 text-center">
                 <div className="text-4xl mb-3">🛍️</div>
@@ -119,19 +194,32 @@ export default function UserDashboard() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {orders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-[#232f3e]">#{order.id.slice(-8).toUpperCase()}</p>
-                      <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-[#232f3e]">
+                        #{order.id.slice(-8).toUpperCase()}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-gray-500">{order.items?.length || 0} item(s)</p>
+                      <p className="text-xs text-gray-500">
+                        {order.items?.length || 0} item(s)
+                      </p>
                     </div>
                     <div className="text-right flex items-center gap-3">
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${STATUS_COLORS[order.status] || ""}`}>
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${STATUS_COLORS[order.status] || ""}`}
+                      >
                         {order.status}
                       </span>
-                      <span className="text-sm font-bold text-[#232f3e]">Rs. {Number(order.total).toFixed(0)}</span>
+                      <span className="text-sm font-bold text-[#232f3e]">
+                        Rs. {Number(order.total).toFixed(0)}
+                      </span>
                     </div>
                   </div>
                 ))}

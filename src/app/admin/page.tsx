@@ -149,7 +149,9 @@ export default function AdminPanel() {
     }
   };
 
-  const handleModalCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleModalCoverImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     try {
@@ -157,7 +159,7 @@ export default function AdminPanel() {
       const uploadData = new FormData();
       uploadData.append("image", file);
       const uploadRes: any = await api.upload.image(uploadData);
-      
+
       setBookForm((prev: any) => ({ ...prev, coverImage: uploadRes.url }));
       toast("Cover image uploaded", "success");
     } catch (err: any) {
@@ -194,11 +196,17 @@ export default function AdminPanel() {
         {/* Sidebar */}
         <aside className="hidden md:flex flex-col w-64 min-h-screen border-r border-gray-200 px-4 py-6 bg-white">
           <div className="mb-8 pt-4">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Admin Panel</span>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+              Admin Panel
+            </span>
             <div className="mt-3 flex items-center gap-2">
-              <div className="w-8 h-8 rounded bg-[#e47911] flex items-center justify-center text-white text-xs font-bold">A</div>
+              <div className="w-8 h-8 rounded bg-[#e47911] flex items-center justify-center text-white text-xs font-bold">
+                A
+              </div>
               <div>
-                <p className="text-sm font-medium text-[#232f3e]">{user.name}</p>
+                <p className="text-sm font-medium text-[#232f3e]">
+                  {user.name}
+                </p>
                 <p className="text-[10px] text-gray-400">Administrator</p>
               </div>
             </div>
@@ -210,16 +218,22 @@ export default function AdminPanel() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium transition-all text-left ${
-                  tab === t.id ? "bg-[#232f3e] text-white" : "text-gray-600 hover:text-[#232f3e] hover:bg-gray-100"
+                  tab === t.id
+                    ? "bg-[#232f3e] text-white"
+                    : "text-gray-600 hover:text-[#232f3e] hover:bg-gray-100"
                 }`}
               >
-                <span>{t.icon}</span>{t.label}
+                <span>{t.icon}</span>
+                {t.label}
               </button>
             ))}
           </nav>
 
           <div className="mt-auto pt-6 border-t border-gray-200">
-            <Link href="/" className="flex items-center gap-2 text-xs text-gray-500 hover:text-[#232f3e] transition-colors">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-xs text-gray-500 hover:text-[#232f3e] transition-colors"
+            >
               ← Back to Site
             </Link>
           </div>
@@ -234,7 +248,9 @@ export default function AdminPanel() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`px-4 py-2 rounded text-xs font-medium whitespace-nowrap border ${
-                  tab === t.id ? "bg-[#232f3e] text-white border-[#232f3e]" : "text-gray-600 bg-white border-gray-200"
+                  tab === t.id
+                    ? "bg-[#232f3e] text-white border-[#232f3e]"
+                    : "text-gray-600 bg-white border-gray-200"
                 }`}
               >
                 {t.icon} {t.label}
@@ -250,18 +266,48 @@ export default function AdminPanel() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h1 className="text-2xl font-bold text-[#232f3e] mb-6">Dashboard Overview</h1>
-                <div ref={statsRef} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <h1 className="text-2xl font-bold text-[#232f3e] mb-6">
+                  Dashboard Overview
+                </h1>
+                <div
+                  ref={statsRef}
+                  className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+                >
                   {[
-                    { label: "Total Books", value: stats?.totalBooks ?? "—", icon: "📚" },
-                    { label: "Total Users", value: stats?.totalUsers ?? "—", icon: "👥" },
-                    { label: "Total Orders", value: stats?.totalOrders ?? "—", icon: "📦" },
-                    { label: "Revenue", value: stats ? `Rs. ${Number(stats.revenue).toLocaleString("en-IN")}` : "—", icon: "💰" },
+                    {
+                      label: "Total Books",
+                      value: stats?.totalBooks ?? "—",
+                      icon: "📚",
+                    },
+                    {
+                      label: "Total Users",
+                      value: stats?.totalUsers ?? "—",
+                      icon: "👥",
+                    },
+                    {
+                      label: "Total Orders",
+                      value: stats?.totalOrders ?? "—",
+                      icon: "📦",
+                    },
+                    {
+                      label: "Revenue",
+                      value: stats
+                        ? `Rs. ${Number(stats.revenue).toLocaleString("en-IN")}`
+                        : "—",
+                      icon: "💰",
+                    },
                   ].map((s) => (
-                    <div key={s.label} className="stat-card bg-white border border-gray-200 rounded-md p-5">
+                    <div
+                      key={s.label}
+                      className="stat-card bg-white border border-gray-200 rounded-md p-5"
+                    >
                       <div className="text-2xl mb-3">{s.icon}</div>
-                      <div className="text-2xl font-bold text-[#e47911]">{s.value}</div>
-                      <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+                      <div className="text-2xl font-bold text-[#e47911]">
+                        {s.value}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {s.label}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -270,8 +316,15 @@ export default function AdminPanel() {
                   {/* Recent Orders */}
                   <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                     <div className="p-5 border-b border-gray-100 flex justify-between">
-                      <h3 className="font-semibold text-[#232f3e] text-sm">Recent Orders</h3>
-                      <button onClick={() => setTab("orders")} className="text-xs text-[#146eb4] hover:underline">View all</button>
+                      <h3 className="font-semibold text-[#232f3e] text-sm">
+                        Recent Orders
+                      </h3>
+                      <button
+                        onClick={() => setTab("orders")}
+                        className="text-xs text-[#146eb4] hover:underline"
+                      >
+                        View all
+                      </button>
                     </div>
                     <div className="divide-y divide-gray-100">
                       {recentOrders.slice(0, 5).map((o: any) => (
@@ -280,12 +333,22 @@ export default function AdminPanel() {
                             {o.user?.name?.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-[#232f3e] truncate">{o.user?.name}</p>
-                            <p className="text-[10px] text-gray-400">{o.items?.length || 0} book(s)</p>
+                            <p className="text-xs font-medium text-[#232f3e] truncate">
+                              {o.user?.name}
+                            </p>
+                            <p className="text-[10px] text-gray-400">
+                              {o.items?.length || 0} book(s)
+                            </p>
                           </div>
                           <div className="text-right">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[o.status]}`}>{o.status}</span>
-                            <p className="text-xs font-bold text-[#232f3e] mt-0.5">Rs. {Number(o.total).toFixed(0)}</p>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[o.status]}`}
+                            >
+                              {o.status}
+                            </span>
+                            <p className="text-xs font-bold text-[#232f3e] mt-0.5">
+                              Rs. {Number(o.total).toFixed(0)}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -295,21 +358,40 @@ export default function AdminPanel() {
                   {/* Top Books */}
                   <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                     <div className="p-5 border-b border-gray-100 flex justify-between">
-                      <h3 className="font-semibold text-[#232f3e] text-sm">Top Selling Books</h3>
-                      <button onClick={() => setTab("books")} className="text-xs text-[#146eb4] hover:underline">Manage</button>
+                      <h3 className="font-semibold text-[#232f3e] text-sm">
+                        Top Selling Books
+                      </h3>
+                      <button
+                        onClick={() => setTab("books")}
+                        className="text-xs text-[#146eb4] hover:underline"
+                      >
+                        Manage
+                      </button>
                     </div>
                     <div className="divide-y divide-gray-100">
                       {topBooks.map((b: any, i: number) => (
                         <div key={b.id} className="flex items-center gap-3 p-4">
-                          <span className="text-xs font-bold text-gray-400 w-4">#{i + 1}</span>
+                          <span className="text-xs font-bold text-gray-400 w-4">
+                            #{i + 1}
+                          </span>
                           {b.coverImage && (
-                            <img src={b.coverImage} alt={b.title} className="w-8 h-11 object-cover rounded" />
+                            <img
+                              src={b.coverImage}
+                              alt={b.title}
+                              className="w-8 h-11 object-cover rounded"
+                            />
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-[#232f3e] truncate">{b.title}</p>
-                            <p className="text-[10px] text-gray-400">{b.sold} sold</p>
+                            <p className="text-xs font-medium text-[#232f3e] truncate">
+                              {b.title}
+                            </p>
+                            <p className="text-[10px] text-gray-400">
+                              {b.sold} sold
+                            </p>
                           </div>
-                          <p className="text-xs font-bold text-[#232f3e]">Rs. {Number(b.price).toFixed(0)}</p>
+                          <p className="text-xs font-bold text-[#232f3e]">
+                            Rs. {Number(b.price).toFixed(0)}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -326,7 +408,9 @@ export default function AdminPanel() {
                 exit={{ opacity: 0 }}
               >
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-[#232f3e]">Manage Books</h2>
+                  <h2 className="text-2xl font-bold text-[#232f3e]">
+                    Manage Books
+                  </h2>
                   <div className="flex gap-4">
                     <Link href="/admin/categories">
                       <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
@@ -345,39 +429,78 @@ export default function AdminPanel() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Book</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Rating</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Book
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Price
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Stock
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Rating
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {books.map((b: any) => (
-                          <tr key={b.id} className="hover:bg-gray-50 transition-colors">
+                          <tr
+                            key={b.id}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
                                 {b.coverImage && (
-                                  <img src={b.coverImage} alt={b.title} className="w-8 h-11 object-cover rounded" />
+                                  <img
+                                    src={b.coverImage}
+                                    alt={b.title}
+                                    className="w-8 h-11 object-cover rounded"
+                                  />
                                 )}
                                 <div>
-                                  <p className="text-sm font-medium text-[#232f3e]">{b.title}</p>
-                                  <p className="text-[10px] text-gray-400">{b.author}</p>
+                                  <p className="text-sm font-medium text-[#232f3e]">
+                                    {b.title}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">
+                                    {b.author}
+                                  </p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-[#232f3e]">Rs. {Number(b.price).toFixed(0)}</td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className={`font-medium ${b.stock === 0 ? "text-red-500" : b.stock < 10 ? "text-yellow-600" : "text-green-600"}`}>{b.stock}</span>
+                            <td className="px-4 py-3 text-sm text-[#232f3e]">
+                              Rs. {Number(b.price).toFixed(0)}
                             </td>
-                            <td className="px-4 py-3 text-sm text-yellow-500">★ {Number(b.rating).toFixed(1)}</td>
+                            <td className="px-4 py-3 text-sm">
+                              <span
+                                className={`font-medium ${b.stock === 0 ? "text-red-500" : b.stock < 10 ? "text-yellow-600" : "text-green-600"}`}
+                              >
+                                {b.stock}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-yellow-500">
+                              ★ {Number(b.rating).toFixed(1)}
+                            </td>
                             <td className="px-4 py-3">
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => { setBookForm(b); setBookModal({ open: true, book: b }); }}
+                                  onClick={() => {
+                                    setBookForm(b);
+                                    setBookModal({ open: true, book: b });
+                                  }}
                                   className="text-xs text-[#146eb4] hover:underline"
-                                >Edit</button>
-                                <button onClick={() => handleDeleteBook(b.id)} className="text-xs text-red-500 hover:underline">Delete</button>
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBook(b.id)}
+                                  className="text-xs text-red-500 hover:underline"
+                                >
+                                  Delete
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -396,49 +519,92 @@ export default function AdminPanel() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h2 className="text-2xl font-bold text-[#232f3e] mb-6">Manage Users</h2>
+                <h2 className="text-2xl font-bold text-[#232f3e] mb-6">
+                  Manage Users
+                </h2>
                 <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            User
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Role
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Orders
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Joined
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {users.map((u: any) => (
-                          <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                          <tr
+                            key={u.id}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded bg-[#232f3e] flex items-center justify-center text-white text-xs font-bold">{u.name.charAt(0)}</div>
+                                <div className="w-8 h-8 rounded bg-[#232f3e] flex items-center justify-center text-white text-xs font-bold">
+                                  {u.name.charAt(0)}
+                                </div>
                                 <div>
-                                  <p className="text-sm font-medium text-[#232f3e]">{u.name}</p>
-                                  <p className="text-[10px] text-gray-400">{u.email}</p>
+                                  <p className="text-sm font-medium text-[#232f3e]">
+                                    {u.name}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">
+                                    {u.email}
+                                  </p>
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${
-                                u.role === "ADMIN" ? "bg-[#e47911]/15 text-[#e47911]" : "bg-blue-100 text-blue-700"
-                              }`}>{u.role}</span>
+                              <span
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${
+                                  u.role === "ADMIN"
+                                    ? "bg-[#e47911]/15 text-[#e47911]"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                {u.role}
+                              </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-500">{u._count?.orders || 0}</td>
-                            <td className="px-4 py-3 text-xs text-gray-400">{new Date(u.createdAt).toLocaleDateString()}</td>
+                            <td className="px-4 py-3 text-sm text-gray-500">
+                              {u._count?.orders || 0}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-400">
+                              {new Date(u.createdAt).toLocaleDateString()}
+                            </td>
                             <td className="px-4 py-3">
-                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                                u.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                              }`}>{u.isActive ? "Active" : "Banned"}</span>
+                              <span
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                                  u.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-600"
+                                }`}
+                              >
+                                {u.isActive ? "Active" : "Banned"}
+                              </span>
                             </td>
                             <td className="px-4 py-3">
                               <button
-                                onClick={() => handleToggleUserStatus(u.id, u.isActive)}
+                                onClick={() =>
+                                  handleToggleUserStatus(u.id, u.isActive)
+                                }
                                 className={`text-xs hover:underline ${u.isActive ? "text-red-500" : "text-green-600"}`}
-                              >{u.isActive ? "Deactivate" : "Activate"}</button>
+                              >
+                                {u.isActive ? "Deactivate" : "Activate"}
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -456,43 +622,82 @@ export default function AdminPanel() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h2 className="text-2xl font-bold text-[#232f3e] mb-6">Manage Orders</h2>
+                <h2 className="text-2xl font-bold text-[#232f3e] mb-6">
+                  Manage Orders
+                </h2>
                 <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50">
-                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Order</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Update</th>
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Order
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Customer
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Total
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Date
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Update
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {orders.map((o: any) => (
-                          <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                          <tr
+                            key={o.id}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
                             <td className="px-5 py-3">
-                              <p className="text-sm font-mono text-[#232f3e]">#{o.id.slice(-8).toUpperCase()}</p>
-                              <p className="text-[10px] text-gray-400">{o.items?.length || 0} item(s)</p>
+                              <p className="text-sm font-mono text-[#232f3e]">
+                                #{o.id.slice(-8).toUpperCase()}
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                {o.items?.length || 0} item(s)
+                              </p>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-sm text-[#232f3e]">{o.user?.name}</p>
-                              <p className="text-[10px] text-gray-400">{o.user?.email}</p>
+                              <p className="text-sm text-[#232f3e]">
+                                {o.user?.name}
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                {o.user?.email}
+                              </p>
                             </td>
-                            <td className="px-4 py-3 text-sm font-bold text-[#232f3e]">Rs. {Number(o.total).toFixed(0)}</td>
-                            <td className="px-4 py-3 text-xs text-gray-400">{new Date(o.createdAt).toLocaleDateString()}</td>
+                            <td className="px-4 py-3 text-sm font-bold text-[#232f3e]">
+                              Rs. {Number(o.total).toFixed(0)}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-400">
+                              {new Date(o.createdAt).toLocaleDateString()}
+                            </td>
                             <td className="px-4 py-3">
-                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${STATUS_COLORS[o.status]}`}>{o.status}</span>
+                              <span
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${STATUS_COLORS[o.status]}`}
+                              >
+                                {o.status}
+                              </span>
                             </td>
                             <td className="px-4 py-3">
                               <select
                                 defaultValue={o.status}
-                                onChange={(e) => handleOrderStatus(o.id, e.target.value)}
+                                onChange={(e) =>
+                                  handleOrderStatus(o.id, e.target.value)
+                                }
                                 className="bg-white border border-gray-300 rounded px-2 py-1 text-gray-700 text-xs focus:outline-none focus:border-[#e47911]"
                               >
-                                {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                                {ORDER_STATUSES.map((s) => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
                               </select>
                             </td>
                           </tr>
@@ -532,7 +737,9 @@ export default function AdminPanel() {
                 <button
                   onClick={() => setBookModal({ open: false })}
                   className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-[#232f3e]"
-                >✕</button>
+                >
+                  ✕
+                </button>
               </div>
               <form
                 onSubmit={handleBookFormSubmit}
@@ -575,43 +782,61 @@ export default function AdminPanel() {
                     />
                   </div>
                 ))}
-                
+
                 <div className="col-span-2">
-                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Cover Image</label>
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                    Cover Image
+                  </label>
                   <div className="flex gap-4 items-end">
                     <div className="flex-1">
                       <input
                         type="text"
                         value={bookForm.coverImage || ""}
-                        onChange={(e) => setBookForm((prev: any) => ({ ...prev, coverImage: e.target.value }))}
+                        onChange={(e) =>
+                          setBookForm((prev: any) => ({
+                            ...prev,
+                            coverImage: e.target.value,
+                          }))
+                        }
                         placeholder="Image URL or upload..."
                         className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911]"
                       />
                     </div>
                     <div className="flex-shrink-0">
-                       <div className="relative overflow-hidden inline-block border border-gray-300 bg-white hover:bg-gray-50 rounded px-4 py-2.5 text-sm text-gray-700 font-medium cursor-pointer transition-colors">
-                         {isUploadingCover ? "Uploading..." : "Upload File"}
-                         <input
-                           type="file"
-                           accept="image/*"
-                           disabled={isUploadingCover}
-                           onChange={handleModalCoverImageUpload}
-                           className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                         />
-                       </div>
+                      <div className="relative overflow-hidden inline-block border border-gray-300 bg-white hover:bg-gray-50 rounded px-4 py-2.5 text-sm text-gray-700 font-medium cursor-pointer transition-colors">
+                        {isUploadingCover ? "Uploading..." : "Upload File"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploadingCover}
+                          onChange={handleModalCoverImageUpload}
+                          className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                        />
+                      </div>
                     </div>
                   </div>
                   {bookForm.coverImage && (
                     <div className="mt-4 p-2 border border-gray-200 rounded inline-block">
-                      <img src={bookForm.coverImage} className="h-32 object-contain rounded" alt="Cover Preview" />
+                      <img
+                        src={bookForm.coverImage}
+                        className="h-32 object-contain rounded"
+                        alt="Cover Preview"
+                      />
                     </div>
                   )}
                 </div>
                 <div className="col-span-2">
-                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Description</label>
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                    Description
+                  </label>
                   <textarea
                     value={bookForm.description || ""}
-                    onChange={(e) => setBookForm((prev: any) => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setBookForm((prev: any) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     rows={4}
                     className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] resize-none"
                   />
@@ -637,11 +862,15 @@ export default function AdminPanel() {
                     type="button"
                     onClick={() => setBookModal({ open: false })}
                     className="px-6 py-2.5 rounded border border-gray-300 text-gray-600 hover:border-[#232f3e] text-sm transition-colors"
-                  >Cancel</button>
+                  >
+                    Cancel
+                  </button>
                   <button
                     type="submit"
                     className="px-6 py-2.5 rounded bg-[#e47911] hover:bg-[#c45500] text-white text-sm font-semibold transition-colors"
-                  >{bookModal.book ? "Update Book" : "Create Book"}</button>
+                  >
+                    {bookModal.book ? "Update Book" : "Create Book"}
+                  </button>
                 </div>
               </form>
             </motion.div>

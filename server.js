@@ -27,10 +27,22 @@ async function main() {
     const childProcess = require("child_process");
     console.log("⏳ Running prisma db push...");
     const path = require("path");
-    const schemaPath = path.join(process.cwd(), "server", "prisma", "schema.prisma");
+    const schemaPath = path.join(
+      process.cwd(),
+      "server",
+      "prisma",
+      "schema.prisma",
+    );
+    // Use local prisma binary instead of npx as Hostinger may not have npx globally
+    const prismaBin = path.join(
+      process.cwd(),
+      "node_modules",
+      ".bin",
+      "prisma",
+    );
     const out = childProcess.execSync(
-      `npx prisma db push --accept-data-loss --schema="${schemaPath}"`,
-      { env: { ...process.env }, encoding: "utf8" }
+      `${prismaBin} db push --accept-data-loss --schema="${schemaPath}"`,
+      { env: { ...process.env }, encoding: "utf8" },
     );
     console.log("✅ Prisma db push complete:\n", out);
   } catch (pushErr) {

@@ -7,11 +7,40 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { DEFAULT_SITE_SETTINGS, type SiteSettings } from "@/lib/site-settings";
+import {
+  DEFAULT_SITE_SETTINGS,
+  type CategoryTile,
+  type HeroSlide,
+  type SiteLink,
+  type SiteSettings,
+} from "@/lib/site-settings";
 
-const toJson = (value: unknown) => JSON.stringify(value, null, 2);
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
+
+const SOCIAL_FIELDS = [
+  { key: "facebook", label: "Facebook URL" },
+  { key: "instagram", label: "Instagram URL" },
+  { key: "twitter", label: "Twitter / X URL" },
+  { key: "linkedin", label: "LinkedIn URL" },
+  { key: "youtube", label: "YouTube URL" },
+  { key: "whatsapp", label: "WhatsApp URL" },
+] as const;
+
+const CATEGORY_ICON_OPTIONS = [
+  "📗",
+  "⚡",
+  "📘",
+  "🔬",
+  "🏥",
+  "📋",
+  "🦷",
+  "📄",
+  "📚",
+  "🩺",
+];
+
+type FooterSocialKey = keyof SiteSettings["footer"]["socialLinks"];
 
 export default function AdminSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -20,16 +49,11 @@ export default function AdminSettingsPage() {
   const router = useRouter();
 
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
-  const [jsonFields, setJsonFields] = useState({
-    headerLinks: toJson(DEFAULT_SITE_SETTINGS.header.infoBarLinks),
-    footerLinks: toJson(DEFAULT_SITE_SETTINGS.footer.quickLinks),
-    policies: toJson(DEFAULT_SITE_SETTINGS.footer.policies),
-    socials: toJson(DEFAULT_SITE_SETTINGS.footer.socialLinks),
-    heroSlides: toJson(DEFAULT_SITE_SETTINGS.homepage.heroSlides),
-    categoryTiles: toJson(DEFAULT_SITE_SETTINGS.homepage.categoryTiles),
-  });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingSlideIndex, setUploadingSlideIndex] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) {
@@ -43,14 +67,6 @@ export default function AdminSettingsPage() {
         const res = await api.settings.adminGet();
         const next = res.settings || DEFAULT_SITE_SETTINGS;
         setSettings(next);
-        setJsonFields({
-          headerLinks: toJson(next.header.infoBarLinks),
-          footerLinks: toJson(next.footer.quickLinks),
-          policies: toJson(next.footer.policies),
-          socials: toJson(next.footer.socialLinks),
-          heroSlides: toJson(next.homepage.heroSlides),
-          categoryTiles: toJson(next.homepage.categoryTiles),
-        });
       } catch (err: unknown) {
         toast(getErrorMessage(err, "Failed to load settings"), "error");
       } finally {
@@ -73,37 +89,161 @@ export default function AdminSettingsPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      const payload: SiteSettings = {
-        ...settings,
-        header: {
-          ...settings.header,
-          infoBarLinks: JSON.parse(jsonFields.headerLinks),
-        },
-        footer: {
-          ...settings.footer,
-          quickLinks: JSON.parse(jsonFields.footerLinks),
-          policies: JSON.parse(jsonFields.policies),
-          socialLinks: JSON.parse(jsonFields.socials),
-        },
-        homepage: {
-          ...settings.homepage,
-          heroSlides: JSON.parse(jsonFields.heroSlides),
-          categoryTiles: JSON.parse(jsonFields.categoryTiles),
-        },
-      };
-
-      const res = await api.settings.adminUpdate(payload);
+      const res = await api.settings.adminUpdate(settings);
       setSettings(res.settings);
       await refreshSettings();
       toast("Settings updated", "success");
     } catch (err: unknown) {
-      toast(
-        getErrorMessage(err, "Invalid JSON or failed to save settings"),
-        "error",
-      );
+      toast(getErrorMessage(err, "Failed to save settings"), "error");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const updateLinkList = (
+    section: "header" | "footer",
+    key: "infoBarLinks" | "quickLinks" | "policies",
+    index: number,
+    field: keyof SiteLink,
+    value: string,
+  ) => {
+    const current = settings[section][key] as SiteLink[];
+    const next = current.map((item, itemIndex) =>
+      itemIndex === index ? { ...item, [field]: value } : item,
+    );
+
+    updateSection(section, {
+      ...settings[section],
+      [key]: next,
+    } as SiteSettings[typeof section]);
+  };
+
+  const addLinkItem = (
+    section: "header" | "footer",
+    key: "infoBarLinks" | "quickLinks" | "policies",
+  ) => {
+    const current = settings[section][key] as SiteLink[];
+    updateSection(section, {
+      ...settings[section],
+      [key]: [...current, { label: "", href: "" }],
+    } as SiteSettings[typeof section]);
+  };
+
+  const removeLinkItem = (
+    section: "header" | "footer",
+    key: "infoBarLinks" | "quickLinks" | "policies",
+    index: number,
+  ) => {
+    const current = settings[section][key] as SiteLink[];
+    updateSection(section, {
+      ...settings[section],
+      [key]: current.filter((_, itemIndex) => itemIndex !== index),
+    } as SiteSettings[typeof section]);
+  };
+
+  const updateHeroSlide = (
+    index: number,
+    field: keyof HeroSlide,
+    value: string,
+  ) => {
+    const heroSlides = settings.homepage.heroSlides.map((slide, slideIndex) =>
+      slideIndex === index ? { ...slide, [field]: value } : slide,
+    );
+
+    updateSection("homepage", {
+      ...settings.homepage,
+      heroSlides,
+    });
+  };
+
+  const addHeroSlide = () => {
+    updateSection("homepage", {
+      ...settings.homepage,
+      heroSlides: [
+        ...settings.homepage.heroSlides,
+        {
+          title: "",
+          subtitle: "",
+          bg: "linear-gradient(135deg, #232f3e 0%, #37475a 100%)",
+          accent: "#e47911",
+          cta: "Shop Now",
+          href: "/books",
+          badge: "FEATURED",
+          image: "",
+        },
+      ],
+    });
+  };
+
+  const removeHeroSlide = (index: number) => {
+    updateSection("homepage", {
+      ...settings.homepage,
+      heroSlides: settings.homepage.heroSlides.filter(
+        (_, slideIndex) => slideIndex !== index,
+      ),
+    });
+  };
+
+  const uploadHeroImage = async (index: number, file: File) => {
+    try {
+      setUploadingSlideIndex(index);
+      const uploadData = new FormData();
+      uploadData.append("image", file);
+      const res = await api.upload.image(uploadData);
+      updateHeroSlide(index, "image", res.url);
+      toast("Slide image uploaded", "success");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Image upload failed"), "error");
+    } finally {
+      setUploadingSlideIndex(null);
+    }
+  };
+
+  const updateCategoryTile = (
+    index: number,
+    field: keyof CategoryTile,
+    value: string,
+  ) => {
+    updateSection("homepage", {
+      ...settings.homepage,
+      categoryTiles: settings.homepage.categoryTiles.map((tile, tileIndex) =>
+        tileIndex === index ? { ...tile, [field]: value } : tile,
+      ),
+    });
+  };
+
+  const addCategoryTile = () => {
+    updateSection("homepage", {
+      ...settings.homepage,
+      categoryTiles: [
+        ...settings.homepage.categoryTiles,
+        {
+          name: "",
+          icon: CATEGORY_ICON_OPTIONS[0],
+          href: "/books",
+          color: "#e8f5e9",
+        },
+      ],
+    });
+  };
+
+  const removeCategoryTile = (index: number) => {
+    updateSection("homepage", {
+      ...settings.homepage,
+      categoryTiles: settings.homepage.categoryTiles.filter(
+        (_, tileIndex) => tileIndex !== index,
+      ),
+    });
+  };
+
+  const updateSocialField = (field: FooterSocialKey, value: string) => {
+    updateSection("footer", {
+      ...settings.footer,
+      socialLinks: {
+        ...settings.footer.socialLinks,
+        [field]: value,
+      },
+    });
   };
 
   if (authLoading || !user || user.role !== "ADMIN") {
@@ -499,57 +639,359 @@ export default function AdminSettingsPage() {
               />
             </section>
 
-            <section className="bg-white border border-gray-200 rounded-md p-6 grid gap-4">
-              <h2 className="text-lg font-semibold text-[#232f3e]">
-                Advanced JSON Blocks
-              </h2>
-              <JsonArea
-                label="Header Links"
-                value={jsonFields.headerLinks}
-                onChange={(value) =>
-                  setJsonFields((prev) => ({ ...prev, headerLinks: value }))
+            <section className="bg-white border border-gray-200 rounded-md p-6 grid gap-6">
+              <div>
+                <h2 className="text-lg font-semibold text-[#232f3e]">
+                  Easy Content Blocks
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Add links, handles, homepage slides and category cards without
+                  editing JSON.
+                </p>
+              </div>
+
+              <EditableLinksCard
+                title="Header Links"
+                description="These show in the top bar next to the email link."
+                items={settings.header.infoBarLinks}
+                onAdd={() => addLinkItem("header", "infoBarLinks")}
+                onChange={(index, field, value) =>
+                  updateLinkList("header", "infoBarLinks", index, field, value)
+                }
+                onRemove={(index) =>
+                  removeLinkItem("header", "infoBarLinks", index)
                 }
               />
-              <JsonArea
-                label="Footer Quick Links"
-                value={jsonFields.footerLinks}
-                onChange={(value) =>
-                  setJsonFields((prev) => ({ ...prev, footerLinks: value }))
+
+              <EditableLinksCard
+                title="Footer Quick Links"
+                description="Add common pages for users to click from the footer."
+                items={settings.footer.quickLinks}
+                onAdd={() => addLinkItem("footer", "quickLinks")}
+                onChange={(index, field, value) =>
+                  updateLinkList("footer", "quickLinks", index, field, value)
+                }
+                onRemove={(index) =>
+                  removeLinkItem("footer", "quickLinks", index)
                 }
               />
-              <JsonArea
-                label="Policy Links"
-                value={jsonFields.policies}
-                onChange={(value) =>
-                  setJsonFields((prev) => ({ ...prev, policies: value }))
+
+              <EditableLinksCard
+                title="Footer Policy Links"
+                description="Add policy pages or external links for legal and support info."
+                items={settings.footer.policies}
+                onAdd={() => addLinkItem("footer", "policies")}
+                onChange={(index, field, value) =>
+                  updateLinkList("footer", "policies", index, field, value)
+                }
+                onRemove={(index) =>
+                  removeLinkItem("footer", "policies", index)
                 }
               />
-              <JsonArea
-                label="Social Links / Handles"
-                value={jsonFields.socials}
-                onChange={(value) =>
-                  setJsonFields((prev) => ({ ...prev, socials: value }))
-                }
-              />
-              <JsonArea
-                label="Hero Slides"
-                value={jsonFields.heroSlides}
-                onChange={(value) =>
-                  setJsonFields((prev) => ({ ...prev, heroSlides: value }))
-                }
-              />
-              <JsonArea
-                label="Homepage Category Tiles"
-                value={jsonFields.categoryTiles}
-                onChange={(value) =>
-                  setJsonFields((prev) => ({ ...prev, categoryTiles: value }))
-                }
-              />
+
+              <section className="rounded-xl border border-gray-200 p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-[#232f3e]">
+                    Social Links
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Paste each platform link. Only filled links appear on the
+                    site.
+                  </p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {SOCIAL_FIELDS.map((field) => (
+                    <LabeledInput
+                      key={field.key}
+                      label={field.label}
+                      value={settings.footer.socialLinks[field.key] || ""}
+                      onChange={(value) => updateSocialField(field.key, value)}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-gray-200 p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#232f3e]">
+                      Homepage Hero Slides
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Edit banners one by one. You can upload an image instead
+                      of pasting raw JSON.
+                    </p>
+                  </div>
+                  <ActionButton label="Add Slide" onClick={addHeroSlide} />
+                </div>
+                <div className="space-y-4">
+                  {settings.homepage.heroSlides.map((slide, index) => (
+                    <div
+                      key={`${slide.title}-${index}`}
+                      className="rounded-lg border border-gray-200 p-4 bg-gray-50/60"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                          <p className="text-sm font-semibold text-[#232f3e]">
+                            Slide {index + 1}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Main homepage banner
+                          </p>
+                        </div>
+                        {settings.homepage.heroSlides.length > 1 && (
+                          <GhostButton
+                            label="Remove"
+                            onClick={() => removeHeroSlide(index)}
+                          />
+                        )}
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <LabeledInput
+                          label="Title"
+                          value={slide.title}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "title", value)
+                          }
+                        />
+                        <LabeledInput
+                          label="Badge"
+                          value={slide.badge}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "badge", value)
+                          }
+                        />
+                        <TextArea
+                          label="Subtitle"
+                          value={slide.subtitle}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "subtitle", value)
+                          }
+                        />
+                        <LabeledInput
+                          label="Button Text"
+                          value={slide.cta}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "cta", value)
+                          }
+                        />
+                        <LabeledInput
+                          label="Button Link"
+                          value={slide.href}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "href", value)
+                          }
+                        />
+                        <LabeledInput
+                          label="Accent Color"
+                          value={slide.accent}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "accent", value)
+                          }
+                        />
+                        <TextArea
+                          label="Background Gradient"
+                          value={slide.bg}
+                          onChange={(value) =>
+                            updateHeroSlide(index, "bg", value)
+                          }
+                        />
+                        <div className="space-y-3">
+                          <LabeledInput
+                            label="Image URL"
+                            value={slide.image || ""}
+                            onChange={(value) =>
+                              updateHeroSlide(index, "image", value)
+                            }
+                          />
+                          <label className="inline-flex items-center gap-3 rounded border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  uploadHeroImage(index, file);
+                                }
+                              }}
+                            />
+                            {uploadingSlideIndex === index
+                              ? "Uploading..."
+                              : "Upload Slide Image"}
+                          </label>
+                          {slide.image && (
+                            <img
+                              src={slide.image}
+                              alt={slide.title || `Slide ${index + 1}`}
+                              className="h-24 w-full rounded object-cover border border-gray-200"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-gray-200 p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#232f3e]">
+                      Homepage Category Tiles
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Manage the clickable category cards shown below the hero
+                      section.
+                    </p>
+                  </div>
+                  <ActionButton label="Add Tile" onClick={addCategoryTile} />
+                </div>
+                <div className="space-y-4">
+                  {settings.homepage.categoryTiles.map((tile, index) => (
+                    <div
+                      key={`${tile.name}-${index}`}
+                      className="rounded-lg border border-gray-200 p-4 bg-gray-50/60"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                          <p className="text-sm font-semibold text-[#232f3e]">
+                            Tile {index + 1}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Category card on homepage
+                          </p>
+                        </div>
+                        {settings.homepage.categoryTiles.length > 1 && (
+                          <GhostButton
+                            label="Remove"
+                            onClick={() => removeCategoryTile(index)}
+                          />
+                        )}
+                      </div>
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <LabeledInput
+                          label="Card Title"
+                          value={tile.name}
+                          onChange={(value) =>
+                            updateCategoryTile(index, "name", value)
+                          }
+                        />
+                        <label className="block text-sm font-medium text-[#232f3e]">
+                          <span className="block mb-2">Icon</span>
+                          <select
+                            value={tile.icon}
+                            onChange={(e) =>
+                              updateCategoryTile(index, "icon", e.target.value)
+                            }
+                            className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800 bg-white"
+                          >
+                            {CATEGORY_ICON_OPTIONS.map((icon) => (
+                              <option key={icon} value={icon}>
+                                {icon}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <LabeledInput
+                          label="Card Link"
+                          value={tile.href}
+                          onChange={(value) =>
+                            updateCategoryTile(index, "href", value)
+                          }
+                        />
+                        <div className="block text-sm font-medium text-[#232f3e]">
+                          <span className="block mb-2">Card Color</span>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="color"
+                              value={tile.color}
+                              onChange={(e) =>
+                                updateCategoryTile(
+                                  index,
+                                  "color",
+                                  e.target.value,
+                                )
+                              }
+                              className="h-11 w-14 rounded border border-gray-300 bg-white"
+                            />
+                            <input
+                              type="text"
+                              value={tile.color}
+                              onChange={(e) =>
+                                updateCategoryTile(
+                                  index,
+                                  "color",
+                                  e.target.value,
+                                )
+                              }
+                              className="flex-1 rounded border border-gray-300 px-4 py-3 text-sm text-gray-800 bg-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </section>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function EditableLinksCard({
+  title,
+  description,
+  items,
+  onAdd,
+  onChange,
+  onRemove,
+}: {
+  title: string;
+  description: string;
+  items: SiteLink[];
+  onAdd: () => void;
+  onChange: (index: number, field: keyof SiteLink, value: string) => void;
+  onRemove: (index: number) => void;
+}) {
+  return (
+    <section className="rounded-xl border border-gray-200 p-5">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-base font-semibold text-[#232f3e]">{title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{description}</p>
+        </div>
+        <ActionButton label="Add Link" onClick={onAdd} />
+      </div>
+
+      <div className="space-y-3">
+        {items.map((item, index) => (
+          <div
+            key={`${item.label}-${index}`}
+            className="grid md:grid-cols-[1fr_1.4fr_auto] gap-3 items-end"
+          >
+            <LabeledInput
+              label="Label"
+              value={item.label}
+              onChange={(value) => onChange(index, "label", value)}
+            />
+            <LabeledInput
+              label="Link"
+              value={item.href}
+              onChange={(value) => onChange(index, "href", value)}
+            />
+            {items.length > 1 ? (
+              <GhostButton label="Remove" onClick={() => onRemove(index)} />
+            ) : (
+              <div />
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -599,24 +1041,38 @@ function TextArea({
   );
 }
 
-function JsonArea({
+function ActionButton({
   label,
-  value,
-  onChange,
+  onClick,
 }: {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
+  onClick: () => void;
 }) {
   return (
-    <label className="block text-sm font-medium text-[#232f3e]">
-      <span className="block mb-2">{label}</span>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={10}
-        className="w-full rounded border border-gray-300 px-4 py-3 text-sm font-mono text-gray-800"
-      />
-    </label>
+    <button
+      type="button"
+      onClick={onClick}
+      className="px-4 py-2 rounded bg-[#e47911] text-white text-sm font-medium hover:bg-[#c45500]"
+    >
+      {label}
+    </button>
+  );
+}
+
+function GhostButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="px-4 py-2 rounded border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50"
+    >
+      {label}
+    </button>
   );
 }

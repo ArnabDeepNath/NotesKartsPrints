@@ -122,11 +122,11 @@ export function Toaster() {
 }
 
 export function useToast() {
-  return {
-    toast: (message: string, type: Toast["type"] = "info") => {
-      if (typeof window !== "undefined" && (window as any).__basakToast) {
-        (window as any).__basakToast(message, type);
-      }
-    },
-  };
+  const toast = useCallback((message: string, type: Toast["type"] = "info") => {
+    if (typeof window !== "undefined" && (window as any).__basakToast) {
+      (window as any).__basakToast(message, type);
+    }
+  }, []);
+
+  return { toast };
 }

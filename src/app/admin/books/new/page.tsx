@@ -32,6 +32,14 @@ interface VariationDraft {
   _file: File | null;
 }
 
+type VariationField =
+  | "attrType"
+  | "attrValue"
+  | "price"
+  | "comparePrice"
+  | "stock"
+  | "sku";
+
 export default function NewBookPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -117,15 +125,25 @@ export default function NewBookPage() {
     setVariations((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleVariationChange = (idx: number, field: string, value: string) => {
+  const handleVariationChange = (
+    idx: number,
+    field: VariationField,
+    value: string,
+  ) => {
     setVariations((prev) => {
       const next = [...prev];
       if (field === "attrType") {
         next[idx].attributes.type = value;
       } else if (field === "attrValue") {
         next[idx].attributes.value = value;
+      } else if (field === "price") {
+        next[idx].price = value;
+      } else if (field === "comparePrice") {
+        next[idx].comparePrice = value;
+      } else if (field === "stock") {
+        next[idx].stock = value;
       } else {
-        next[idx][field] = value;
+        next[idx].sku = value;
       }
       return next;
     });

@@ -17,6 +17,7 @@ const wishlistRoutes = require("./routes/wishlist");
 const printRoutes = require("./routes/print");
 const categoryRoutes = require("./routes/categories");
 const uploadRoutes = require("./routes/upload");
+const settingsRoutes = require("./routes/settings");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -25,15 +26,17 @@ const app = express();
 app.set("trust proxy", 1);
 
 // ─── Security ────────────────────────────────────────────────────────────────
-app.use(helmet({ 
-  contentSecurityPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" } 
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-const allowedOrigins = (
-  process.env.ALLOWED_ORIGINS || "http://localhost:3000"
-).split(",").map(o => o.trim());
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim());
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -42,7 +45,9 @@ app.use(
       // Allow listed origins
       if (allowedOrigins.includes(origin)) return cb(null, true);
       // In production behind a proxy, the origin may be the same domain — allow it
-      console.warn(`[CORS] Blocked origin: ${origin}  (allowed: ${allowedOrigins.join(", ")})`);
+      console.warn(
+        `[CORS] Blocked origin: ${origin}  (allowed: ${allowedOrigins.join(", ")})`,
+      );
       cb(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -101,6 +106,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/print", printRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_, res) => {
@@ -126,7 +132,14 @@ app.get("/api/debug-books", async (_, res) => {
   // Step 2: Can we fetch a single book with no includes?
   try {
     const raw = await prisma.book.findFirst({ where: { isActive: true } });
-    results.rawBook = raw ? { id: raw.id, title: raw.title, priceType: typeof raw.price, price: String(raw.price) } : null;
+    results.rawBook = raw
+      ? {
+          id: raw.id,
+          title: raw.title,
+          priceType: typeof raw.price,
+          price: String(raw.price),
+        }
+      : null;
   } catch (e) {
     results.rawBookError = { message: e.message, code: e.code };
   }
@@ -166,7 +179,7 @@ app.get("/api/debug-books", async (_, res) => {
   // Step 5: Check database columns
   try {
     const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books`;
-    results.columns = columns.map(c => c.Field || c.field);
+    results.columns = columns.map((c) => c.Field || c.field);
   } catch (e) {
     results.columnsError = { message: e.message };
   }

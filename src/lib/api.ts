@@ -1,3 +1,5 @@
+import type { SiteSettings } from "@/lib/site-settings";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 let accessToken: string | null = null;
@@ -11,6 +13,8 @@ export const getAccessToken = () => accessToken;
 interface FetchOptions extends RequestInit {
     auth?: boolean;
 }
+
+type EntityPayload = Record<string, unknown>;
 
 async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
     const { auth = true, ...rest } = options;
@@ -87,9 +91,9 @@ export const api = {
         },
         get: (id: string) => apiFetch<{ book: Book }>(`/books/${id}`, { auth: false }),
         genres: () => apiFetch<{ genres: Genre[] }>('/books/genres', { auth: false }),
-        create: (data: any) =>
+        create: (data: EntityPayload) =>
             apiFetch('/books', { method: 'POST', body: JSON.stringify(data) }),
-        update: (id: string, data: any) =>
+        update: (id: string, data: EntityPayload) =>
             apiFetch(`/books/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         delete: (id: string) => apiFetch(`/books/${id}`, { method: 'DELETE' }),
         review: (id: string, data: { rating: number; title?: string; comment?: string }) =>
@@ -114,7 +118,7 @@ export const api = {
     },
 
     orders: {
-        create: (data: { items: CartItem[]; printJobs?: string[]; shippingAddress?: ShippingAddress }) =>
+        create: (data: { items: CartItem[]; printJobs?: string[]; shippingAddress?: ShippingAddress; paymentMethod?: string }) =>
             apiFetch<{ order: Order }>('/orders', { method: 'POST', body: JSON.stringify(data) }),
         get: (id: string) => apiFetch<{ order: Order }>(`/orders/${id}`),
     },
@@ -152,8 +156,8 @@ export const api = {
     categories: {
         getAll: () => apiFetch('/categories'),
         getOne: (id: string) => apiFetch(`/categories/${id}`),
-        create: (data: any) => apiFetch('/categories', { method: 'POST', body: JSON.stringify(data) }),
-        update: (id: string, data: any) => apiFetch(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        create: (data: EntityPayload) => apiFetch('/categories', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: EntityPayload) => apiFetch(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         delete: (id: string) => apiFetch(`/categories/${id}`, { method: 'DELETE' }),
     },
 
@@ -168,7 +172,7 @@ export const api = {
             }).then(async res => {
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || 'Upload failed');
-                return data;
+                return data as { url: string };
             });
         }
     },
@@ -184,13 +188,20 @@ export const api = {
             }).then(async res => {
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || 'Upload failed');
-                return data;
+                return data as { fileUrl: string; fileName: string; pages: number };
             });
         },
         calculatePrice: (data: { pages: number; copies: number; colorMode: string; binding: string; printType: string; paperType: string; }) =>
             apiFetch<{ price: number }>('/print/calculate-price', { method: 'POST', body: JSON.stringify(data), auth: false }),
-        createJob: (data: any) =>
+        createJob: (data: EntityPayload) =>
             apiFetch<{ job: PrintJob }>('/print/job', { method: 'POST', body: JSON.stringify(data) }),
+    },
+
+    settings: {
+        public: () => apiFetch<{ settings: SiteSettings }>('/settings/public', { auth: false }),
+        adminGet: () => apiFetch<{ settings: SiteSettings }>('/settings/admin'),
+        adminUpdate: (data: Partial<SiteSettings>) =>
+            apiFetch<{ message: string; settings: SiteSettings }>('/settings/admin', { method: 'PUT', body: JSON.stringify(data) }),
     }
 };
 

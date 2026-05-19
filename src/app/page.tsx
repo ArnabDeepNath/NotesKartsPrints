@@ -46,6 +46,8 @@ interface ApiBook {
   shortDesc?: string;
   coverImage?: string;
   author?: string;
+  price?: number;
+  comparePrice?: number;
   genre?: { name: string };
   publisher?: string;
   sold?: number;
@@ -61,8 +63,11 @@ interface BooksResponse {
 
 function toComponentBook(b: ApiBook): Book {
   return {
+    ...b,
     id: b.id,
     title: b.title,
+    price: b.price as any,
+    originalPrice: b.comparePrice as any,
     date: b.createdAt || new Date().toISOString(),
     excerpt: b.description || b.shortDesc || "",
     slug: b.id,

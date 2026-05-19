@@ -405,7 +405,9 @@ function BookCard({
           </div>
         )}
 
-        <p className="text-[10px] text-green-600 font-medium mb-2">FREE Delivery</p>
+        <p className="text-[10px] text-green-600 font-medium mb-2">
+          FREE Delivery
+        </p>
 
         <div className="flex items-center justify-between">
           <div>

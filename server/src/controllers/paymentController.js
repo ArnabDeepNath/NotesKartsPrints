@@ -34,12 +34,21 @@ const createRazorpayOrder = async (req, res, next) => {
         order = await prisma.order.findUnique({
           where: { id: orderId },
           select: {
-            id: true, userId: true, status: true, total: true,
+            id: true,
+            userId: true,
+            status: true,
+            total: true,
             items: {
-              select: { id: true, orderId: true, bookId: true, quantity: true, price: true }
+              select: {
+                id: true,
+                orderId: true,
+                bookId: true,
+                quantity: true,
+                price: true,
+              },
             },
             user: { select: { id: true, name: true, email: true } },
-          }
+          },
         });
       } else throw err;
     }
@@ -48,6 +57,9 @@ const createRazorpayOrder = async (req, res, next) => {
     if (order.userId !== req.user.id) throw new AppError("Access denied", 403);
     if (order.status !== "PENDING")
       throw new AppError("Order already processed", 400);
+    if (String(order.paymentMethod || "").toLowerCase() === "cod") {
+      throw new AppError("This order is marked for cash on delivery", 400);
+    }
 
     const amountInPaise = Math.round(Number(order.total) * 100);
 
@@ -68,7 +80,9 @@ const createRazorpayOrder = async (req, res, next) => {
       });
     } catch (err) {
       if (err.code === "P2022") {
-        console.warn("[createRazorpayOrder] Schema missing, skipping razorpayOrderId update");
+        console.warn(
+          "[createRazorpayOrder] Schema missing, skipping razorpayOrderId update",
+        );
       } else throw err;
     }
 
@@ -88,7 +102,8 @@ const createRazorpayOrder = async (req, res, next) => {
 // POST /api/payment/verify
 const verifyPayment = async (req, res, next) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
 
     let order;
     try {
@@ -97,9 +112,12 @@ const verifyPayment = async (req, res, next) => {
       });
     } catch (err) {
       if (err.code === "P2022") {
-        console.warn("[verifyPayment] Schema missing, fetching order from Razorpay API...");
+        console.warn(
+          "[verifyPayment] Schema missing, fetching order from Razorpay API...",
+        );
         const rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
-        if (!rzpOrder || !rzpOrder.receipt) throw new AppError("Invalid Razorpay Order", 400);
+        if (!rzpOrder || !rzpOrder.receipt)
+          throw new AppError("Invalid Razorpay Order", 400);
         order = await prisma.order.findUnique({
           where: { id: rzpOrder.receipt },
         });
@@ -135,11 +153,13 @@ const verifyPayment = async (req, res, next) => {
       });
     } catch (err) {
       if (err.code === "P2022") {
-         console.warn("[verifyPayment] Schema missing, saving stripped payment payload");
-         await prisma.order.update({
-            where: { id: order.id },
-            data: { status: "PAID" },
-         });
+        console.warn(
+          "[verifyPayment] Schema missing, saving stripped payment payload",
+        );
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: "PAID" },
+        });
       } else throw err;
     }
 
@@ -171,7 +191,7 @@ const razorpayWebhook = async (req, res, next) => {
     if (event === "payment.captured") {
       const paymentEntity = payload.payment.entity;
       const rzpOrderId = paymentEntity.order_id;
-      
+
       if (rzpOrderId) {
         try {
           await prisma.order.updateMany({
@@ -185,13 +205,15 @@ const razorpayWebhook = async (req, res, next) => {
           });
         } catch (err) {
           if (err.code === "P2022") {
-             const receipt = payload.payment.entity.notes?.receipt || payload.order?.entity?.receipt;
-             if (receipt) {
-               await prisma.order.updateMany({
-                 where: { id: receipt, status: "PENDING" },
-                 data: { status: "PAID" },
-               });
-             }
+            const receipt =
+              payload.payment.entity.notes?.receipt ||
+              payload.order?.entity?.receipt;
+            if (receipt) {
+              await prisma.order.updateMany({
+                where: { id: receipt, status: "PENDING" },
+                data: { status: "PAID" },
+              });
+            }
           } else throw err;
         }
       }

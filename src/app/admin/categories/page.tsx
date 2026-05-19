@@ -6,6 +6,9 @@ import { api } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Link from "next/link";
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 type Category = {
   id: string;
   name: string;
@@ -14,7 +17,7 @@ type Category = {
   image: string | null;
   parentId: string | null;
   children?: Category[];
-  books?: any[];
+  books?: Array<{ id: string }>;
 };
 
 export default function CategoriesPage() {
@@ -37,10 +40,10 @@ export default function CategoriesPage() {
 
   const fetchCategories = async () => {
     try {
-      const data: any = await api.categories.getAll();
+      const data = (await api.categories.getAll()) as Category[];
       setCategories(data);
-    } catch (err: any) {
-      toast(err.message || "Failed to load categories", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to load categories"), "error");
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,7 @@ export default function CategoriesPage() {
       if (imageFile) {
         const uploadData = new FormData();
         uploadData.append("image", imageFile);
-        const uploadRes: any = await api.upload.image(uploadData);
+        const uploadRes = await api.upload.image(uploadData);
         imageUrl = uploadRes.url;
       }
 
@@ -102,8 +105,8 @@ export default function CategoriesPage() {
 
       setIsModalOpen(false);
       fetchCategories();
-    } catch (err: any) {
-      toast(err.message || "Failed to save category", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to save category"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,8 +118,8 @@ export default function CategoriesPage() {
       await api.categories.delete(id);
       toast("Category deleted", "success");
       fetchCategories();
-    } catch (err: any) {
-      toast(err.message || "Failed to delete category", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to delete category"), "error");
     }
   };
 
@@ -150,7 +153,7 @@ export default function CategoriesPage() {
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            Add Category
+            Add Primary Category
           </button>
         </div>
 
@@ -299,7 +302,7 @@ export default function CategoriesPage() {
                       }
                       className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#e47911]"
                     >
-                      <option value="">None (Top Level)</option>
+                      <option value="">None (Primary Category)</option>
                       {topLevels
                         .filter((c) => c.id !== editingCat?.id)
                         .map((c) => (

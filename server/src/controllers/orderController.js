@@ -2,11 +2,13 @@ const getStripe = () => require("stripe")(process.env.STRIPE_SECRET_KEY);
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 const { sendOrderConfirmation } = require("../utils/emailService");
+const { getSiteSettings } = require("../utils/siteSettings");
+const { mergeOrderNotes } = require("../utils/orderNotes");
 
 // POST /api/orders  — create a pending order from cart
 const createOrder = async (req, res, next) => {
   try {
-    const { items, printJobs, shippingAddress } = req.body;
+    const { items, printJobs, shippingAddress, paymentMethod } = req.body;
     // items: [{ bookId, quantity }]
     // printJobs: [ "uuid-1", "uuid-2" ]
 
@@ -17,24 +19,40 @@ const createOrder = async (req, res, next) => {
       throw new AppError("Order must have at least one item or print job", 400);
     }
 
+    const settings = await getSiteSettings();
+    const requestedPaymentMethod = String(
+      paymentMethod || "ONLINE",
+    ).toUpperCase();
+
+    if (!["ONLINE", "COD", "RAZORPAY"].includes(requestedPaymentMethod)) {
+      throw new AppError("Unsupported payment method", 400);
+    }
+
+    if (requestedPaymentMethod === "COD" && !settings.pricing.codEnabled) {
+      throw new AppError("Cash on delivery is currently unavailable", 400);
+    }
+
     const bookIds = items?.map((i) => i.bookId) || [];
     let books = [];
     try {
       books = await prisma.book.findMany({
         where: { id: { in: bookIds }, isActive: true },
-        include: { variations: true }
+        include: { variations: true },
       });
     } catch (err) {
       if (err.code === "P2022" || err.code === "P2021") {
-        console.warn("[createOrder] Schema missing, falling back to safe select...");
+        console.warn(
+          "[createOrder] Schema missing, falling back to safe select...",
+        );
         let hasVariations = false;
         try {
-          const res = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+          const res =
+            await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
           if (res && res.length > 0) hasVariations = true;
         } catch {
           hasVariations = false;
         }
-        
+
         const safeSelect = {
           id: true,
           title: true,
@@ -42,9 +60,9 @@ const createOrder = async (req, res, next) => {
           price: true,
           coverImage: true,
         };
-        
+
         if (hasVariations) {
-           safeSelect.variations = true;
+          safeSelect.variations = true;
         }
 
         books = await prisma.book.findMany({
@@ -61,12 +79,13 @@ const createOrder = async (req, res, next) => {
     }
 
     // Validate stock and pricing
-    for (const item of (items || [])) {
+    for (const item of items || []) {
       const book = books.find((b) => b.id === item.bookId);
       let variant = null;
       if (item.variationId) {
-         variant = book.variations.find(v => v.id === item.variationId);
-         if (!variant) throw new AppError(`Variation not found for "${book.title}"`, 404);
+        variant = book.variations.find((v) => v.id === item.variationId);
+        if (!variant)
+          throw new AppError(`Variation not found for "${book.title}"`, 404);
       }
 
       const availableStock = variant ? variant.stock : book.stock;
@@ -79,10 +98,13 @@ const createOrder = async (req, res, next) => {
     let printJobRecords = [];
     if (hasPrintJobs) {
       printJobRecords = await prisma.printJob.findMany({
-        where: { id: { in: printJobs }, userId: req.user.id }
+        where: { id: { in: printJobs }, userId: req.user.id },
       });
       if (printJobRecords.length !== printJobs.length) {
-        throw new AppError("One or more print jobs not found or unauthorized", 404);
+        throw new AppError(
+          "One or more print jobs not found or unauthorized",
+          404,
+        );
       }
     }
 
@@ -92,9 +114,9 @@ const createOrder = async (req, res, next) => {
       const book = books.find((b) => b.id === item.bookId);
       let variant = null;
       if (item.variationId) {
-        variant = book.variations.find(v => v.id === item.variationId);
+        variant = book.variations.find((v) => v.id === item.variationId);
       }
-      
+
       const itemPrice = variant ? Number(variant.price) : Number(book.price);
       const lineTotal = itemPrice * item.quantity;
       subtotal += lineTotal;
@@ -110,8 +132,28 @@ const createOrder = async (req, res, next) => {
       subtotal += Number(pj.price);
     }
 
-    const tax = +(subtotal * 0.18).toFixed(2); // 18% GST
-    const total = +(subtotal + tax).toFixed(2);
+    const shippingCharge =
+      subtotal >= Number(settings.pricing.freeShippingThreshold || 0)
+        ? 0
+        : Number(settings.pricing.shippingCost || 0);
+    const taxRate = Number(settings.pricing.taxRate || 0) / 100;
+    const tax = +(subtotal * taxRate).toFixed(2);
+    const total = +(subtotal + tax + shippingCharge).toFixed(2);
+    const normalizedPaymentMethod =
+      requestedPaymentMethod === "RAZORPAY" ? "ONLINE" : requestedPaymentMethod;
+    const notes = mergeOrderNotes(null, {
+      pricing: {
+        shippingCharge,
+        taxRate: Number(settings.pricing.taxRate || 0),
+        freeShippingThreshold: Number(
+          settings.pricing.freeShippingThreshold || 0,
+        ),
+      },
+      logistics: {
+        provider: settings.logistics.provider,
+        shiprocketEnabled: settings.logistics.shiprocketEnabled,
+      },
+    });
 
     let order;
     try {
@@ -121,6 +163,9 @@ const createOrder = async (req, res, next) => {
           subtotal,
           tax,
           total,
+          paymentMethod:
+            normalizedPaymentMethod === "COD" ? "cod" : "pending-online",
+          notes,
           shippingName: shippingAddress?.name,
           shippingEmail: shippingAddress?.email || req.user.email,
           shippingPhone: shippingAddress?.phone,
@@ -129,7 +174,10 @@ const createOrder = async (req, res, next) => {
           shippingCountry: shippingAddress?.country,
           shippingZip: shippingAddress?.zip,
           items: items?.length > 0 ? { create: orderItems } : undefined,
-          printJobs: printJobs?.length > 0 ? { connect: printJobs.map(id => ({ id })) } : undefined,
+          printJobs:
+            printJobs?.length > 0
+              ? { connect: printJobs.map((id) => ({ id })) }
+              : undefined,
         },
         include: {
           items: {
@@ -140,8 +188,12 @@ const createOrder = async (req, res, next) => {
       });
     } catch (createErr) {
       if (createErr.code === "P2022" || createErr.code === "P2021") {
-        console.warn("[createOrder] Schema missing inside order create, falling back...");
-        const safeOrderItems = orderItems.map(({ variationId, ...rest }) => rest);
+        console.warn(
+          "[createOrder] Schema missing inside order create, falling back...",
+        );
+        const safeOrderItems = orderItems.map(
+          ({ variationId, ...rest }) => rest,
+        );
         let hasPrintJobsTable = false;
         try {
           const pRes = await prisma.$queryRaw`SHOW TABLES LIKE 'print_jobs'`;
@@ -151,22 +203,40 @@ const createOrder = async (req, res, next) => {
         }
 
         const safeOrderSelect = {
-          id: true, userId: true, status: true, subtotal: true,
-          discount: true, tax: true, total: true, currency: true,
-          paymentMethod: true, paymentId: true, notes: true,
-          shippingName: true, shippingEmail: true, shippingPhone: true,
-          shippingAddress: true, shippingCity: true, shippingCountry: true,
-          shippingZip: true, createdAt: true, updatedAt: true,
+          id: true,
+          userId: true,
+          status: true,
+          subtotal: true,
+          discount: true,
+          tax: true,
+          total: true,
+          currency: true,
+          paymentMethod: true,
+          paymentId: true,
+          notes: true,
+          shippingName: true,
+          shippingEmail: true,
+          shippingPhone: true,
+          shippingAddress: true,
+          shippingCity: true,
+          shippingCountry: true,
+          shippingZip: true,
+          createdAt: true,
+          updatedAt: true,
           items: {
             select: {
-              id: true, orderId: true, bookId: true, quantity: true, price: true,
-              book: { select: { title: true, coverImage: true } }
-            }
-          }
+              id: true,
+              orderId: true,
+              bookId: true,
+              quantity: true,
+              price: true,
+              book: { select: { title: true, coverImage: true } },
+            },
+          },
         };
 
         if (hasPrintJobsTable) {
-           safeOrderSelect.printJobs = true;
+          safeOrderSelect.printJobs = true;
         }
 
         order = await prisma.order.create({
@@ -175,6 +245,9 @@ const createOrder = async (req, res, next) => {
             subtotal,
             tax,
             total,
+            paymentMethod:
+              normalizedPaymentMethod === "COD" ? "cod" : "pending-online",
+            notes,
             shippingName: shippingAddress?.name,
             shippingEmail: shippingAddress?.email || req.user.email,
             shippingPhone: shippingAddress?.phone,
@@ -183,7 +256,9 @@ const createOrder = async (req, res, next) => {
             shippingCountry: shippingAddress?.country,
             shippingZip: shippingAddress?.zip,
             items: items?.length > 0 ? { create: safeOrderItems } : undefined,
-            ...(hasPrintJobsTable && printJobs?.length > 0 ? { printJobs: { connect: printJobs.map(id => ({ id })) } } : {}),
+            ...(hasPrintJobsTable && printJobs?.length > 0
+              ? { printJobs: { connect: printJobs.map((id) => ({ id })) } }
+              : {}),
           },
           select: safeOrderSelect,
         });
@@ -195,9 +270,9 @@ const createOrder = async (req, res, next) => {
     // Attempt to send email but don't fail order if it fails
     try {
       await sendOrderConfirmation(
-        shippingAddress?.email || req.user.email, 
-        order, 
-        order.printJobs
+        shippingAddress?.email || req.user.email,
+        order,
+        order.printJobs,
       );
     } catch (emailErr) {
       console.error("Failed to send order confirmation email:", emailErr);
@@ -219,7 +294,14 @@ const getOrder = async (req, res, next) => {
         include: {
           items: {
             include: {
-              book: { select: { id: true, title: true, coverImage: true, author: true } },
+              book: {
+                select: {
+                  id: true,
+                  title: true,
+                  coverImage: true,
+                  author: true,
+                },
+              },
               variation: true,
             },
           },
@@ -238,26 +320,51 @@ const getOrder = async (req, res, next) => {
         }
 
         const safeGetSelect = {
-            id: true, userId: true, status: true, subtotal: true, discount: true,
-            tax: true, total: true, currency: true, paymentMethod: true, paymentId: true,
-            shippingName: true, shippingEmail: true, shippingPhone: true, shippingAddress: true,
-            shippingCity: true, shippingCountry: true, shippingZip: true, createdAt: true,
-            items: {
-              select: {
-                id: true, orderId: true, bookId: true, quantity: true, price: true,
-                book: { select: { id: true, title: true, coverImage: true, author: true } }
-              }
+          id: true,
+          userId: true,
+          status: true,
+          subtotal: true,
+          discount: true,
+          tax: true,
+          total: true,
+          currency: true,
+          paymentMethod: true,
+          paymentId: true,
+          shippingName: true,
+          shippingEmail: true,
+          shippingPhone: true,
+          shippingAddress: true,
+          shippingCity: true,
+          shippingCountry: true,
+          shippingZip: true,
+          createdAt: true,
+          items: {
+            select: {
+              id: true,
+              orderId: true,
+              bookId: true,
+              quantity: true,
+              price: true,
+              book: {
+                select: {
+                  id: true,
+                  title: true,
+                  coverImage: true,
+                  author: true,
+                },
+              },
             },
-            user: { select: { id: true, name: true, email: true } },
+          },
+          user: { select: { id: true, name: true, email: true } },
         };
-        
+
         if (hasPrintJobsTable) {
-            safeGetSelect.printJobs = true;
+          safeGetSelect.printJobs = true;
         }
 
         order = await prisma.order.findUnique({
           where: { id: req.params.id },
-          select: safeGetSelect
+          select: safeGetSelect,
         });
       } else throw err;
     }

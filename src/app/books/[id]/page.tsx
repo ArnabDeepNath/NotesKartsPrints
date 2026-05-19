@@ -36,7 +36,11 @@ function StarRating({
   );
 }
 
-export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BookDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const unwrappedParams = React.use(params);
   const { user } = useAuth();
   const { addToCart } = useAuth();
@@ -73,10 +77,14 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
     addToCart({
       bookId: book.id,
       variationId: selectedVariation?.id,
-      variationString: selectedVariation ? `${selectedVariation.attributes?.type}: ${selectedVariation.attributes?.value}` : undefined,
+      variationString: selectedVariation
+        ? `${selectedVariation.attributes?.type}: ${selectedVariation.attributes?.value}`
+        : undefined,
       title: book.title,
       author: book.author ?? "",
-      price: selectedVariation ? Number(selectedVariation.price) : Number(book.price),
+      price: selectedVariation
+        ? Number(selectedVariation.price)
+        : Number(book.price),
       coverImage: selectedVariation?.image || book.coverImage,
       quantity: 1,
     });
@@ -152,7 +160,9 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
       <div className="min-h-screen bg-[#f7f8fa] flex items-center justify-center">
         <div className="text-center">
           <p className="text-5xl mb-4">📚</p>
-          <h2 className="text-xl font-bold text-[#232f3e] mb-2">Book not found</h2>
+          <h2 className="text-xl font-bold text-[#232f3e] mb-2">
+            Book not found
+          </h2>
           <Link href="/books" className="text-[#146eb4] hover:underline">
             ← Browse books
           </Link>
@@ -230,7 +240,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               <p className="text-lg text-gray-500 mt-1">{book.subtitle}</p>
             )}
             <p className="text-base text-gray-500 mt-2">
-              by <span className="text-[#232f3e] font-medium">{book.author}</span>
+              by{" "}
+              <span className="text-[#232f3e] font-medium">{book.author}</span>
             </p>
 
             {/* Rating */}
@@ -245,11 +256,21 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             {/* Price */}
             <div className="flex items-baseline gap-3 mt-6">
               <span className="text-3xl font-bold text-[#232f3e]">
-                Rs. {Number(selectedVariation ? selectedVariation.price : book.price).toLocaleString("en-IN")}
+                Rs.{" "}
+                {Number(
+                  selectedVariation ? selectedVariation.price : book.price,
+                ).toLocaleString("en-IN")}
               </span>
-              {(selectedVariation ? selectedVariation.comparePrice : book.comparePrice) && (
+              {(selectedVariation
+                ? selectedVariation.comparePrice
+                : book.comparePrice) && (
                 <span className="text-lg text-gray-400 line-through">
-                  Rs. {Number(selectedVariation ? selectedVariation.comparePrice : book.comparePrice).toLocaleString("en-IN")}
+                  Rs.{" "}
+                  {Number(
+                    selectedVariation
+                      ? selectedVariation.comparePrice
+                      : book.comparePrice,
+                  ).toLocaleString("en-IN")}
                 </span>
               )}
               {discount > 0 && (
@@ -258,12 +279,16 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 </span>
               )}
             </div>
-            <p className="text-sm text-green-600 font-medium mt-1">FREE Delivery</p>
+            <p className="text-sm text-green-600 font-medium mt-1">
+              FREE Delivery
+            </p>
 
             {/* Variations Selector */}
             {book.variations && book.variations.length > 0 && (
               <div className="mt-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Options</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  Options
+                </p>
                 <div className="flex flex-wrap gap-3">
                   {book.variations.map((v: any) => (
                     <button
@@ -275,7 +300,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                           : "border-gray-300 text-gray-600 hover:border-[#e47911] hover:text-[#e47911]"
                       }`}
                     >
-                      {v.attributes?.value || 'Option'}
+                      {v.attributes?.value || "Option"}
                     </button>
                   ))}
                 </div>
@@ -285,13 +310,19 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             {/* Stock */}
             <p
               className={`text-sm mt-4 font-medium ${
-                (selectedVariation ? selectedVariation.stock : book.stock) === 0 ? "text-red-500" : (selectedVariation ? selectedVariation.stock : book.stock) < 10 ? "text-[#e47911]" : "text-green-600"
+                (selectedVariation ? selectedVariation.stock : book.stock) === 0
+                  ? "text-red-500"
+                  : (selectedVariation ? selectedVariation.stock : book.stock) <
+                      10
+                    ? "text-[#e47911]"
+                    : "text-green-600"
               }`}
             >
               {(selectedVariation ? selectedVariation.stock : book.stock) === 0
                 ? "Out of stock"
-                : (selectedVariation ? selectedVariation.stock : book.stock) < 10
-                  ? `Only ${(selectedVariation ? selectedVariation.stock : book.stock)} left`
+                : (selectedVariation ? selectedVariation.stock : book.stock) <
+                    10
+                  ? `Only ${selectedVariation ? selectedVariation.stock : book.stock} left`
                   : "In stock"}
             </p>
 
@@ -300,9 +331,13 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={handleAddToCart}
-                disabled={(selectedVariation ? selectedVariation.stock : book.stock) === 0}
+                disabled={
+                  (selectedVariation ? selectedVariation.stock : book.stock) ===
+                  0
+                }
                 className={`flex-1 py-3 rounded font-semibold text-sm transition-all ${
-                  (selectedVariation ? selectedVariation.stock : book.stock) === 0
+                  (selectedVariation ? selectedVariation.stock : book.stock) ===
+                  0
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : added
                       ? "bg-green-600 text-white"
@@ -311,7 +346,9 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               >
                 {added
                   ? "✓ Added to Cart"
-                  : (selectedVariation ? selectedVariation.stock : book.stock) === 0
+                  : (selectedVariation
+                        ? selectedVariation.stock
+                        : book.stock) === 0
                     ? "Out of Stock"
                     : "Add to Cart"}
               </motion.button>

@@ -1,13 +1,33 @@
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
-const { sendPrintJobUpdate, sendOrderUpdate } = require("../utils/emailService");
+const {
+  sendPrintJobUpdate,
+  sendOrderUpdate,
+} = require("../utils/emailService");
+const { mergeOrderNotes, parseOrderNotes } = require("../utils/orderNotes");
+const { createShiprocketOrder } = require("../utils/shiprocketService");
 
 const SAFE_ORDER_SELECT = {
-  id: true, userId: true, status: true, subtotal: true, discount: true,
-  tax: true, total: true, currency: true, paymentMethod: true, paymentId: true,
-  notes: true, shippingName: true, shippingEmail: true, shippingPhone: true,
-  shippingAddress: true, shippingCity: true, shippingCountry: true, shippingZip: true,
-  createdAt: true, updatedAt: true,
+  id: true,
+  userId: true,
+  status: true,
+  subtotal: true,
+  discount: true,
+  tax: true,
+  total: true,
+  currency: true,
+  paymentMethod: true,
+  paymentId: true,
+  notes: true,
+  shippingName: true,
+  shippingEmail: true,
+  shippingPhone: true,
+  shippingAddress: true,
+  shippingCity: true,
+  shippingCountry: true,
+  shippingZip: true,
+  createdAt: true,
+  updatedAt: true,
 };
 
 // GET /api/admin/stats
@@ -254,7 +274,9 @@ const getOrders = async (req, res, next) => {
           take: Number(limit),
           orderBy: { createdAt: "desc" },
           include: {
-            user: { select: { id: true, name: true, email: true, avatar: true } },
+            user: {
+              select: { id: true, name: true, email: true, avatar: true },
+            },
             items: {
               include: { book: { select: { title: true, coverImage: true } } },
             },
@@ -264,7 +286,9 @@ const getOrders = async (req, res, next) => {
       ]);
     } catch (queryErr) {
       if (queryErr.code === "P2022") {
-        console.warn("[getOrdersAdmin] Schema missing, falling back to safe select...");
+        console.warn(
+          "[getOrdersAdmin] Schema missing, falling back to safe select...",
+        );
         [orders, total] = await Promise.all([
           prisma.order.findMany({
             where,
@@ -273,13 +297,19 @@ const getOrders = async (req, res, next) => {
             orderBy: { createdAt: "desc" },
             select: {
               ...SAFE_ORDER_SELECT,
-              user: { select: { id: true, name: true, email: true, avatar: true } },
+              user: {
+                select: { id: true, name: true, email: true, avatar: true },
+              },
               items: {
                 select: {
-                  id: true, orderId: true, bookId: true, quantity: true, price: true,
-                  book: { select: { title: true, coverImage: true } }
-                }
-              }
+                  id: true,
+                  orderId: true,
+                  bookId: true,
+                  quantity: true,
+                  price: true,
+                  book: { select: { title: true, coverImage: true } },
+                },
+              },
             },
           }),
           prisma.order.count({ where }),
@@ -321,8 +351,70 @@ const updateOrderStatus = async (req, res, next) => {
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data: { status },
-      select: { id: true, status: true, userId: true, user: { select: { email: true } } },
+      select: {
+        id: true,
+        status: true,
+        userId: true,
+        subtotal: true,
+        discount: true,
+        total: true,
+        createdAt: true,
+        paymentMethod: true,
+        notes: true,
+        shippingName: true,
+        shippingEmail: true,
+        shippingPhone: true,
+        shippingAddress: true,
+        shippingCity: true,
+        shippingCountry: true,
+        shippingZip: true,
+        user: { select: { email: true, name: true } },
+        items: {
+          select: {
+            bookId: true,
+            quantity: true,
+            price: true,
+            book: { select: { title: true } },
+          },
+        },
+        printJobs: {
+          select: {
+            id: true,
+            fileName: true,
+            copies: true,
+            price: true,
+          },
+        },
+      },
     });
+
+    if (["PROCESSING", "SHIPPED"].includes(status)) {
+      const meta = parseOrderNotes(order.notes);
+      if (!meta.shiprocket?.orderId) {
+        try {
+          const shiprocket = await createShiprocketOrder(order);
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              notes: mergeOrderNotes(order.notes, {
+                shiprocket: {
+                  orderId: shiprocket.order_id || shiprocket.orderId || null,
+                  shipmentId:
+                    shiprocket.shipment_id || shiprocket.shipmentId || null,
+                  status: shiprocket.status || status,
+                  raw: shiprocket,
+                },
+              }),
+            },
+          });
+        } catch (shiprocketErr) {
+          console.error(
+            "[Shiprocket] Failed to create shipment:",
+            shiprocketErr.message,
+          );
+        }
+      }
+    }
 
     if (order.user?.email) {
       // Send email out async without awaiting so we don't hold the request
@@ -369,7 +461,14 @@ const getPrintJobs = async (req, res, next) => {
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
-          order: { select: { id: true, shippingAddress: true, shippingName: true, status: true } }
+          order: {
+            select: {
+              id: true,
+              shippingAddress: true,
+              shippingName: true,
+              status: true,
+            },
+          },
         },
       }),
       prisma.printJob.count({ where }),
@@ -392,14 +491,14 @@ const getPrintJobs = async (req, res, next) => {
 const updatePrintJob = async (req, res, next) => {
   try {
     const { status, trackingUrl } = req.body;
-    
+
     const validStatuses = [
       "PENDING",
       "PRINTING",
       "QUALITY_CHECK",
       "SHIPPED",
       "DELIVERED",
-      "CANCELLED"
+      "CANCELLED",
     ];
 
     if (status && !validStatuses.includes(status)) {
@@ -408,17 +507,22 @@ const updatePrintJob = async (req, res, next) => {
 
     const printJob = await prisma.printJob.update({
       where: { id: req.params.id },
-      data: { 
+      data: {
         ...(status && { status }),
       },
       include: {
-        user: { select: { email: true } }
-      }
+        user: { select: { email: true } },
+      },
     });
 
     if (status && printJob.user?.email) {
       // Trigger email update
-      await sendPrintJobUpdate(printJob.user.email, printJob, status, trackingUrl);
+      await sendPrintJobUpdate(
+        printJob.user.email,
+        printJob,
+        status,
+        trackingUrl,
+      );
     }
 
     res.json({ message: "Print job updated", printJob });

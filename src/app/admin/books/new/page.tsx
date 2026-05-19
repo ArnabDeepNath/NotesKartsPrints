@@ -8,14 +8,38 @@ import { useToast } from "@/app/components/ui/Toaster";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
+interface CategoryOption {
+  id: string;
+  name: string;
+  parentId: string | null;
+  children?: CategoryOption[];
+}
+
+interface VariationDraft {
+  id: number;
+  attributes: {
+    type: string;
+    value: string;
+  };
+  price: string;
+  comparePrice: string;
+  stock: string;
+  sku: string;
+  image: string | null;
+  _file: File | null;
+}
+
 export default function NewBookPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [variations, setVariations] = useState<any[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [variations, setVariations] = useState<VariationDraft[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
@@ -52,8 +76,8 @@ export default function NewBookPage() {
       }
     });
     // Fetch Categories
-    api.categories.getAll().then((res: any) => {
-      setCategories(res || []);
+    api.categories.getAll().then((res) => {
+      setCategories((res as CategoryOption[]) || []);
     });
   }, []);
 
@@ -93,7 +117,7 @@ export default function NewBookPage() {
     setVariations((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleVariationChange = (idx: number, field: string, value: any) => {
+  const handleVariationChange = (idx: number, field: string, value: string) => {
     setVariations((prev) => {
       const next = [...prev];
       if (field === "attrType") {
@@ -111,7 +135,7 @@ export default function NewBookPage() {
     try {
       const uploadData = new FormData();
       uploadData.append("image", file);
-      const uploadRes: any = await api.upload.image(uploadData);
+      const uploadRes = await api.upload.image(uploadData);
 
       setVariations((prev) => {
         const next = [...prev];
@@ -119,8 +143,8 @@ export default function NewBookPage() {
         return next;
       });
       toast("Variation image uploaded", "success");
-    } catch (err: any) {
-      toast("Image upload failed", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Image upload failed"), "error");
     }
   };
 
@@ -133,12 +157,12 @@ export default function NewBookPage() {
       setIsUploadingCover(true);
       const uploadData = new FormData();
       uploadData.append("image", file);
-      const uploadRes: any = await api.upload.image(uploadData);
+      const uploadRes = await api.upload.image(uploadData);
 
       setFormData((prev) => ({ ...prev, coverImage: uploadRes.url }));
       toast("Cover image uploaded", "success");
-    } catch (err: any) {
-      toast("Image upload failed", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Image upload failed"), "error");
     } finally {
       setIsUploadingCover(false);
     }
@@ -171,8 +195,8 @@ export default function NewBookPage() {
 
       toast("Book added successfully!", "success");
       router.push("/admin");
-    } catch (err: any) {
-      toast(err.message || "Failed to create book", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to create book"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -288,7 +312,7 @@ export default function NewBookPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                    Category
+                    Primary Category
                   </label>
                   <select
                     name="categoryId"
@@ -326,7 +350,7 @@ export default function NewBookPage() {
                       <option value="">None</option>
                       {categories
                         .find((c) => c.id === formData.categoryId)
-                        ?.children?.map((sub: any) => (
+                        ?.children?.map((sub) => (
                           <option key={sub.id} value={sub.id}>
                             {sub.name}
                           </option>

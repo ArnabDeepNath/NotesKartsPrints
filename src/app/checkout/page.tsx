@@ -4,11 +4,40 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { api } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 
 type Step = "cart" | "shipping" | "payment";
+
+type ShippingField =
+  | "name"
+  | "email"
+  | "phone"
+  | "address"
+  | "city"
+  | "state"
+  | "pincode"
+  | "country";
+
+interface PaymentVerificationResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayInstance {
+  on: (event: string, handler: () => void) => void;
+  open: () => void;
+}
+
+interface RazorpayConstructor {
+  new (options: Record<string, unknown>): RazorpayInstance;
+}
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 const loadScript = (src: string) => {
   return new Promise((resolve) => {
@@ -41,8 +70,12 @@ export default function CheckoutPage() {
   } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
   const [step, setStep] = useState<Step>("cart");
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"ONLINE" | "COD">(
+    "ONLINE",
+  );
 
   const [shipping, setShipping] = useState({
     name: "",
@@ -54,28 +87,41 @@ export default function CheckoutPage() {
     pincode: "",
     country: "India",
   });
+  const [shippingHydratedFor, setShippingHydratedFor] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login?redirect=/checkout");
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
-      setShipping((prev) => ({
-        ...prev,
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        city: user.city || "",
-        country: user.country || "India",
-      }));
+    if (user && shippingHydratedFor !== user.id) {
+      const timer = window.setTimeout(() => {
+        setShipping((prev) => ({
+          ...prev,
+          name: prev.name || user.name || "",
+          email: prev.email || user.email || "",
+          phone: prev.phone || user.phone || "",
+          address: prev.address || user.address || "",
+          city: prev.city || user.city || "",
+          country: prev.country || user.country || "India",
+        }));
+        setShippingHydratedFor(user.id);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, shippingHydratedFor]);
 
   const subtotal = cartTotal;
-  const gst = Math.round(subtotal * 0.18 * 100) / 100;
-  const total = subtotal + gst;
+  const gst =
+    Math.round(subtotal * (settings.pricing.taxRate / 100) * 100) / 100;
+  const shippingCost =
+    subtotal >= settings.pricing.freeShippingThreshold
+      ? 0
+      : settings.pricing.shippingCost;
+  const total = subtotal + gst + shippingCost;
 
   const handlePlaceOrder = async () => {
     if (cart.length === 0 && printCart.length === 0) {
@@ -84,6 +130,29 @@ export default function CheckoutPage() {
     }
     setIsLoading(true);
     try {
+      if (paymentMethod === "COD") {
+        const orderRes = await api.orders.create({
+          items: cart,
+          printJobs: printCart.map((job) => job.id),
+          paymentMethod: "COD",
+          shippingAddress: {
+            name: shipping.name,
+            email: shipping.email,
+            phone: shipping.phone,
+            address: `${shipping.address}, ${shipping.state} ${shipping.pincode}`,
+            city: shipping.city,
+            country: shipping.country,
+          },
+        });
+
+        clearCart();
+        clearPrintCart();
+        toast("COD order placed successfully", "success");
+        router.push(`/user/orders?orderId=${orderRes.order.id}`);
+        setIsLoading(false);
+        return;
+      }
+
       const res = await loadScript(
         "https://checkout.razorpay.com/v1/checkout.js",
       );
@@ -94,9 +163,10 @@ export default function CheckoutPage() {
       }
 
       // 1. Create order in our DB
-      const orderRes: any = await api.orders.create({
+      const orderRes = await api.orders.create({
         items: cart,
         printJobs: printCart.map((job) => job.id),
+        paymentMethod: "ONLINE",
         shippingAddress: {
           name: shipping.name,
           email: shipping.email,
@@ -121,7 +191,7 @@ export default function CheckoutPage() {
         description: "Test Transaction",
         // image: "/logo.png",
         order_id: paymentRes.orderId,
-        handler: async function (response: any) {
+        handler: async function (response: PaymentVerificationResponse) {
           try {
             // 4. Verify payment
             const verifyRes = await api.payment.verify({
@@ -133,10 +203,12 @@ export default function CheckoutPage() {
               toast("Payment successful!", "success");
               clearCart();
               clearPrintCart();
-              router.push(`/user/orders/${verifyRes.orderId}?payment=success`);
+              router.push(
+                `/user/orders?payment=success&orderId=${verifyRes.orderId}`,
+              );
             }
-          } catch (err: any) {
-            toast(err.message || "Payment verification failed", "error");
+          } catch (err: unknown) {
+            toast(getErrorMessage(err, "Payment verification failed"), "error");
           }
         },
         prefill: {
@@ -149,15 +221,17 @@ export default function CheckoutPage() {
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on("payment.failed", function (response: any) {
+      const razorpayWindow = window as Window &
+        typeof globalThis & { Razorpay: RazorpayConstructor };
+      const rzp = new razorpayWindow.Razorpay(options);
+      rzp.on("payment.failed", function () {
         toast("Payment failed. Please try again.", "error");
       });
       rzp.open();
 
       setIsLoading(false);
-    } catch (err: any) {
-      toast(err.message || "Failed to create order", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to create order"), "error");
       setIsLoading(false);
     }
   };
@@ -379,28 +453,36 @@ export default function CheckoutPage() {
                       <div className="grid grid-cols-2 gap-4">
                         {[
                           {
-                            key: "name",
+                            key: "name" as ShippingField,
                             label: "Full Name",
                             span: 2,
                             required: true,
                           },
                           {
-                            key: "email",
+                            key: "email" as ShippingField,
                             label: "Email",
                             type: "email",
                             required: true,
                           },
-                          { key: "phone", label: "Phone" },
+                          { key: "phone" as ShippingField, label: "Phone" },
                           {
-                            key: "address",
+                            key: "address" as ShippingField,
                             label: "Street Address",
                             span: 2,
                             required: true,
                           },
-                          { key: "city", label: "City", required: true },
-                          { key: "state", label: "State" },
-                          { key: "pincode", label: "Pincode" },
-                          { key: "country", label: "Country", required: true },
+                          {
+                            key: "city" as ShippingField,
+                            label: "City",
+                            required: true,
+                          },
+                          { key: "state" as ShippingField, label: "State" },
+                          { key: "pincode" as ShippingField, label: "Pincode" },
+                          {
+                            key: "country" as ShippingField,
+                            label: "Country",
+                            required: true,
+                          },
                         ].map((f) => (
                           <div
                             key={f.key}
@@ -413,7 +495,7 @@ export default function CheckoutPage() {
                             <input
                               type={f.type || "text"}
                               required={f.required}
-                              value={(shipping as any)[f.key]}
+                              value={shipping[f.key]}
                               onChange={(e) =>
                                 setShipping((prev) => ({
                                   ...prev,
@@ -470,47 +552,75 @@ export default function CheckoutPage() {
                       <h2 className="font-semibold text-[#232f3e] mb-4">
                         Payment
                       </h2>
-                      <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded p-4">
-                        <div className="w-10 h-10 rounded bg-[#e47911] flex items-center justify-center">
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod("ONLINE")}
+                          className={`w-full flex items-center gap-3 border rounded p-4 text-left ${paymentMethod === "ONLINE" ? "border-[#e47911] bg-[#fff7ef]" : "border-gray-200 bg-gray-50"}`}
+                        >
+                          <div className="w-10 h-10 rounded bg-[#e47911] flex items-center justify-center">
+                            <svg
+                              className="w-5 h-5 text-white"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-[#232f3e]">
+                              Razorpay Secure Checkout
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Complete your payment securely via Razorpay
+                            </p>
+                          </div>
+                        </button>
+                        {settings.pricing.codEnabled && (
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("COD")}
+                            className={`w-full flex items-center gap-3 border rounded p-4 text-left ${paymentMethod === "COD" ? "border-[#e47911] bg-[#fff7ef]" : "border-gray-200 bg-gray-50"}`}
+                          >
+                            <div className="w-10 h-10 rounded bg-[#232f3e] flex items-center justify-center text-white font-bold">
+                              ₹
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[#232f3e]">
+                                Cash on Delivery
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Admin can disable COD anytime. Current advance
+                                note: {settings.pricing.codAdvancePercent}%.
+                              </p>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+                      {paymentMethod === "ONLINE" && (
+                        <div className="mt-4 flex items-center gap-2 text-gray-500 text-xs">
                           <svg
-                            className="w-5 h-5 text-white"
-                            viewBox="0 0 24 24"
+                            className="w-4 h-4 text-green-500"
                             fill="none"
+                            viewBox="0 0 24 24"
                             stroke="currentColor"
                             strokeWidth={2}
                           >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                             />
                           </svg>
+                          256-bit SSL Encryption · Powered by Razorpay
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#232f3e]">
-                            Razorpay Secure Checkout
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Complete your payment securely via Razorpay
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center gap-2 text-gray-500 text-xs">
-                        <svg
-                          className="w-4 h-4 text-green-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                          />
-                        </svg>
-                        256-bit SSL Encryption · Powered by Razorpay
-                      </div>
+                      )}
                     </div>
 
                     <div className="bg-white border border-gray-200 rounded-md p-5 mb-4">
@@ -548,7 +658,9 @@ export default function CheckoutPage() {
                         )}
                         {isLoading
                           ? "Processing..."
-                          : `Pay Rs. ${total.toLocaleString("en-IN")}`}
+                          : paymentMethod === "COD"
+                            ? `Place COD Order - Rs. ${total.toLocaleString("en-IN")}`
+                            : `Pay Rs. ${total.toLocaleString("en-IN")}`}
                       </button>
                     </div>
                   </motion.div>
@@ -619,8 +731,16 @@ export default function CheckoutPage() {
                     <span>Rs. {subtotal.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>GST (18%)</span>
+                    <span>GST ({settings.pricing.taxRate}%)</span>
                     <span>Rs. {gst.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-500">
+                    <span>Shipping</span>
+                    <span>
+                      {shippingCost === 0
+                        ? "Free"
+                        : `Rs. ${shippingCost.toLocaleString("en-IN")}`}
+                    </span>
                   </div>
                   <div className="flex justify-between font-bold text-[#232f3e] border-t border-gray-100 pt-2 mt-2">
                     <span>Total</span>

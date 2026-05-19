@@ -4,12 +4,25 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { api, PrintJob } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
+type PrintOptionKey =
+  | "colorMode"
+  | "binding"
+  | "paperSize"
+  | "printType"
+  | "paperType"
+  | "copies";
+
 export default function PrintSaaSPage() {
   const { user, addToPrintCart } = useAuth();
+  const { settings } = useSiteSettings();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -46,8 +59,11 @@ export default function PrintSaaSPage() {
         paperType: currOptions.paperType,
       });
       setPrice(res.price);
-    } catch (err: any) {
-      console.error(err);
+    } catch (err: unknown) {
+      toast(
+        getErrorMessage(err, "Unable to calculate price right now"),
+        "error",
+      );
     } finally {
       setIsCalculating(false);
     }
@@ -55,19 +71,6 @@ export default function PrintSaaSPage() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const selectedFile = e.target.files[0];
-
-    if (selectedFile.type !== "application/pdf") {
-      toast("Only PDF files are supported currently.", "error");
-      return;
-    }
-
-    setFile(selectedFile);
-    setIsUploading(true);
-
-    const formData = new FormData();
-    formData.append("document", selectedFile);
-
     try {
       if (!user) {
         toast("Please log in to upload documents", "error");
@@ -75,22 +78,35 @@ export default function PrintSaaSPage() {
         return;
       }
 
-      const res: any = await api.print.upload(formData);
+      const selectedFile = e.target.files[0];
+
+      if (selectedFile.type !== "application/pdf") {
+        toast("Only PDF files are supported currently.", "error");
+        return;
+      }
+
+      setFile(selectedFile);
+      setIsUploading(true);
+
+      const formData = new FormData();
+      formData.append("document", selectedFile);
+
+      const res = await api.print.upload(formData);
       setFileData({ fileUrl: res.fileUrl, pages: res.pages });
       calculatePrice(options, res.pages);
       toast(
         "File uploaded successfully! Detected " + res.pages + " pages.",
         "success",
       );
-    } catch (err: any) {
-      toast(err.message || "Failed to upload document", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to upload document"), "error");
       setFile(null);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleOptionChange = (key: string, value: any) => {
+  const handleOptionChange = (key: PrintOptionKey, value: string | number) => {
     const newOptions = { ...options, [key]: value };
     setOptions(newOptions);
     calculatePrice(newOptions);
@@ -130,8 +146,8 @@ export default function PrintSaaSPage() {
         copies: 1,
       });
       setPrice(0);
-    } catch (err: any) {
-      toast(err.message || "Failed to add to cart", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Failed to add to cart"), "error");
     } finally {
       setIsAdding(false);
     }
@@ -394,6 +410,11 @@ export default function PrintSaaSPage() {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-gray-200">
+                  <div className="mb-4 rounded border border-[#f5a623]/30 bg-[#fff7ef] px-4 py-3 text-xs text-gray-600">
+                    Live pricing: BW laser Rs. {settings.printing.bwLazerPrice}
+                    /page, color laser Rs. {settings.printing.colorLazerPrice}
+                    /page. Admin can change these from site settings.
+                  </div>
                   <div className="flex items-end justify-between mb-6">
                     <div>
                       <p className="text-gray-500 text-sm font-medium mb-1">

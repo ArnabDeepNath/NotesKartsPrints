@@ -15,9 +15,6 @@ import {
   type SiteSettings,
 } from "@/lib/site-settings";
 
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof Error ? error.message : fallback;
-
 const SOCIAL_FIELDS = [
   { key: "facebook", label: "Facebook URL" },
   { key: "instagram", label: "Instagram URL" },
@@ -40,7 +37,11 @@ const CATEGORY_ICON_OPTIONS = [
   "🩺",
 ];
 
+type FooterLinkKey = "quickLinks" | "policies";
 type FooterSocialKey = keyof SiteSettings["footer"]["socialLinks"];
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function AdminSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -65,8 +66,7 @@ export default function AdminSettingsPage() {
     const loadSettings = async () => {
       try {
         const res = await api.settings.adminGet();
-        const next = res.settings || DEFAULT_SITE_SETTINGS;
-        setSettings(next);
+        setSettings(res.settings || DEFAULT_SITE_SETTINGS);
       } catch (err: unknown) {
         toast(getErrorMessage(err, "Failed to load settings"), "error");
       } finally {
@@ -100,45 +100,65 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const updateLinkList = (
-    section: "header" | "footer",
-    key: "infoBarLinks" | "quickLinks" | "policies",
+  const updateHeaderLinkList = (
     index: number,
     field: keyof SiteLink,
     value: string,
   ) => {
-    const current = settings[section][key] as SiteLink[];
-    const next = current.map((item, itemIndex) =>
+    const next = settings.header.infoBarLinks.map((item, itemIndex) =>
       itemIndex === index ? { ...item, [field]: value } : item,
     );
 
-    updateSection(section, {
-      ...settings[section],
-      [key]: next,
-    } as SiteSettings[typeof section]);
+    updateSection("header", {
+      ...settings.header,
+      infoBarLinks: next,
+    });
   };
 
-  const addLinkItem = (
-    section: "header" | "footer",
-    key: "infoBarLinks" | "quickLinks" | "policies",
-  ) => {
-    const current = settings[section][key] as SiteLink[];
-    updateSection(section, {
-      ...settings[section],
-      [key]: [...current, { label: "", href: "" }],
-    } as SiteSettings[typeof section]);
+  const addHeaderLinkItem = () => {
+    updateSection("header", {
+      ...settings.header,
+      infoBarLinks: [...settings.header.infoBarLinks, { label: "", href: "" }],
+    });
   };
 
-  const removeLinkItem = (
-    section: "header" | "footer",
-    key: "infoBarLinks" | "quickLinks" | "policies",
+  const removeHeaderLinkItem = (index: number) => {
+    updateSection("header", {
+      ...settings.header,
+      infoBarLinks: settings.header.infoBarLinks.filter(
+        (_, itemIndex) => itemIndex !== index,
+      ),
+    });
+  };
+
+  const updateFooterLinkList = (
+    key: FooterLinkKey,
     index: number,
+    field: keyof SiteLink,
+    value: string,
   ) => {
-    const current = settings[section][key] as SiteLink[];
-    updateSection(section, {
-      ...settings[section],
-      [key]: current.filter((_, itemIndex) => itemIndex !== index),
-    } as SiteSettings[typeof section]);
+    const next = settings.footer[key].map((item, itemIndex) =>
+      itemIndex === index ? { ...item, [field]: value } : item,
+    );
+
+    updateSection("footer", {
+      ...settings.footer,
+      [key]: next,
+    });
+  };
+
+  const addFooterLinkItem = (key: FooterLinkKey) => {
+    updateSection("footer", {
+      ...settings.footer,
+      [key]: [...settings.footer[key], { label: "", href: "" }],
+    });
+  };
+
+  const removeFooterLinkItem = (key: FooterLinkKey, index: number) => {
+    updateSection("footer", {
+      ...settings.footer,
+      [key]: settings.footer[key].filter((_, itemIndex) => itemIndex !== index),
+    });
   };
 
   const updateHeroSlide = (
@@ -146,13 +166,11 @@ export default function AdminSettingsPage() {
     field: keyof HeroSlide,
     value: string,
   ) => {
-    const heroSlides = settings.homepage.heroSlides.map((slide, slideIndex) =>
-      slideIndex === index ? { ...slide, [field]: value } : slide,
-    );
-
     updateSection("homepage", {
       ...settings.homepage,
-      heroSlides,
+      heroSlides: settings.homepage.heroSlides.map((slide, slideIndex) =>
+        slideIndex === index ? { ...slide, [field]: value } : slide,
+      ),
     });
   };
 
@@ -654,39 +672,31 @@ export default function AdminSettingsPage() {
                 title="Header Links"
                 description="These show in the top bar next to the email link."
                 items={settings.header.infoBarLinks}
-                onAdd={() => addLinkItem("header", "infoBarLinks")}
-                onChange={(index, field, value) =>
-                  updateLinkList("header", "infoBarLinks", index, field, value)
-                }
-                onRemove={(index) =>
-                  removeLinkItem("header", "infoBarLinks", index)
-                }
+                onAdd={addHeaderLinkItem}
+                onChange={updateHeaderLinkList}
+                onRemove={removeHeaderLinkItem}
               />
 
               <EditableLinksCard
                 title="Footer Quick Links"
                 description="Add common pages for users to click from the footer."
                 items={settings.footer.quickLinks}
-                onAdd={() => addLinkItem("footer", "quickLinks")}
+                onAdd={() => addFooterLinkItem("quickLinks")}
                 onChange={(index, field, value) =>
-                  updateLinkList("footer", "quickLinks", index, field, value)
+                  updateFooterLinkList("quickLinks", index, field, value)
                 }
-                onRemove={(index) =>
-                  removeLinkItem("footer", "quickLinks", index)
-                }
+                onRemove={(index) => removeFooterLinkItem("quickLinks", index)}
               />
 
               <EditableLinksCard
                 title="Footer Policy Links"
                 description="Add policy pages or external links for legal and support info."
                 items={settings.footer.policies}
-                onAdd={() => addLinkItem("footer", "policies")}
+                onAdd={() => addFooterLinkItem("policies")}
                 onChange={(index, field, value) =>
-                  updateLinkList("footer", "policies", index, field, value)
+                  updateFooterLinkList("policies", index, field, value)
                 }
-                onRemove={(index) =>
-                  removeLinkItem("footer", "policies", index)
-                }
+                onRemove={(index) => removeFooterLinkItem("policies", index)}
               />
 
               <section className="rounded-xl border border-gray-200 p-5">

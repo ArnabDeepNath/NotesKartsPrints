@@ -7,6 +7,8 @@ const BACKEND_BASE =
     "",
   );
 
+const shouldProxyUploads = process.env.NODE_ENV !== "production";
+
 const nextConfig: NextConfig = {
   // No "standalone" output — we use a custom server (server.js)
   images: {
@@ -17,6 +19,10 @@ const nextConfig: NextConfig = {
   },
   // Proxy /uploads/* to the backend so relative cover-image paths work in dev
   async rewrites() {
+    if (!shouldProxyUploads) {
+      return [];
+    }
+
     return [
       {
         source: "/uploads/:path*",

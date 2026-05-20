@@ -62,65 +62,33 @@ export default function HeroSection({ bookCount, metrics }: Props) {
             exit={{ opacity: 0, x: -60 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="absolute inset-0 flex items-center"
-            style={{ background: slide.bg }}
+            style={{
+              background:
+                "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
+            }}
           >
             <div className="max-w-7xl mx-auto px-8 md:px-12 w-full">
-              <div className="grid md:grid-cols-[1.4fr_0.9fr] gap-8 items-center">
+              <div
+                className={`grid gap-8 items-center ${
+                  slide.image ? "md:grid-cols-[1.4fr_0.9fr]" : "md:grid-cols-1"
+                }`}
+              >
                 <div className="max-w-2xl">
-                  <span
-                    className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-widest"
-                    style={{ background: slide.accent, color: "#fff" }}
-                  >
-                    {slide.badge}
-                  </span>
                   <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-3">
                     {slide.title}
                   </h1>
                   <p className="text-base md:text-lg text-white/80 mb-6">
                     {slide.subtitle}
                   </p>
-                  <div className="flex items-center gap-3">
-                    <Link href={slide.href}>
-                      <button
-                        className="px-8 py-3 font-bold text-sm rounded-md transition-all hover:scale-105"
-                        style={{ background: slide.accent, color: "#fff" }}
-                      >
-                        {slide.cta}
-                      </button>
-                    </Link>
-                    <Link href="/print">
-                      <button className="px-8 py-3 font-bold text-sm rounded-md border-2 border-white/40 text-white hover:bg-white/10 transition-all">
-                        Print Now
-                      </button>
-                    </Link>
-                  </div>
-                  <div className="mt-5 flex items-center gap-5 text-white/60 text-xs">
-                    <span>✓ {metrics.totalTitles}+ Titles</span>
-                    <span>✓ Same-day dispatch</span>
-                    <span>✓ Premium binding</span>
-                  </div>
                 </div>
                 <div className="hidden md:flex justify-end">
                   {slide.image ? (
-                    <Link href={slide.href} className="block max-w-sm w-full">
-                      <img
-                        src={slide.image}
-                        alt={slide.title}
-                        className="w-full max-h-[260px] object-contain drop-shadow-2xl"
-                      />
-                    </Link>
-                  ) : (
-                    <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                      <p className="text-white text-sm font-semibold mb-3">
-                        Featured Product
-                      </p>
-                      <p className="text-white/70 text-sm leading-relaxed">
-                        Add a product or banner image URL from admin settings to
-                        make this panel clickable to any product or landing
-                        page.
-                      </p>
-                    </div>
-                  )}
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className="w-full max-h-[260px] object-contain drop-shadow-2xl"
+                    />
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -216,9 +184,9 @@ const DEFAULT_FALLBACK = {
       subtitle: "Delivered right to your doorstep!",
       bg: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
       accent: "#e47911",
-      cta: "Shop Now",
+      cta: "",
       href: "/books",
-      badge: "NEW ARRIVALS",
+      badge: "",
       image: "",
     },
   ],

@@ -300,9 +300,9 @@ export default function AdminSettingsPage() {
           subtitle: "",
           bg: "linear-gradient(135deg, #232f3e 0%, #37475a 100%)",
           accent: "#e47911",
-          cta: "Shop Now",
+          cta: "",
           href: "/books",
-          badge: "FEATURED",
+          badge: "",
           image: "",
         },
       ],
@@ -848,8 +848,8 @@ export default function AdminSettingsPage() {
                       Homepage Hero Slides
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      Edit banners one by one. You can upload an image instead
-                      of pasting raw JSON.
+                      Keep each slide simple: top text, bottom text, and an
+                      optional image.
                     </p>
                   </div>
                   <ActionButton label="Add Slide" onClick={addHeroSlide} />
@@ -878,53 +878,17 @@ export default function AdminSettingsPage() {
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <LabeledInput
-                          label="Title"
+                          label="Header Text"
                           value={slide.title}
                           onChange={(value) =>
                             updateHeroSlide(index, "title", value)
                           }
                         />
-                        <LabeledInput
-                          label="Badge"
-                          value={slide.badge}
-                          onChange={(value) =>
-                            updateHeroSlide(index, "badge", value)
-                          }
-                        />
                         <TextArea
-                          label="Subtitle"
+                          label="Footer Text"
                           value={slide.subtitle}
                           onChange={(value) =>
                             updateHeroSlide(index, "subtitle", value)
-                          }
-                        />
-                        <LabeledInput
-                          label="Button Text"
-                          value={slide.cta}
-                          onChange={(value) =>
-                            updateHeroSlide(index, "cta", value)
-                          }
-                        />
-                        <LinkTargetField
-                          label="Button Link"
-                          value={slide.href}
-                          onChange={(value) =>
-                            updateHeroSlide(index, "href", value)
-                          }
-                          options={linkOptionGroups}
-                        />
-                        <LabeledInput
-                          label="Accent Color"
-                          value={slide.accent}
-                          onChange={(value) =>
-                            updateHeroSlide(index, "accent", value)
-                          }
-                        />
-                        <TextArea
-                          label="Background Gradient"
-                          value={slide.bg}
-                          onChange={(value) =>
-                            updateHeroSlide(index, "bg", value)
                           }
                         />
                         <div className="space-y-3">

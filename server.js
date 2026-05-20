@@ -9,10 +9,10 @@
 
 require("dotenv").config(); // loads .env from project root
 
-const { execSync } = require("child_process");
 const express = require("express");
 const next = require("next");
 const { parse } = require("url");
+const path = require("path");
 
 const dev = process.env.NODE_ENV !== "production";
 const port = parseInt(process.env.PORT || "3000", 10);
@@ -21,19 +21,37 @@ const hostname = "0.0.0.0";
 const nextApp = next({ dev, hostname, port });
 const handle = nextApp.getRequestHandler();
 
-async function main() {
-  // 0 ─ Push Prisma schema to the database (ensures tables are up-to-date)
+const STARTUP_DB_TIMEOUT_MS = Number(
+  process.env.STARTUP_DB_TIMEOUT_MS || "8000",
+);
+
+const withTimeout = (promise, timeoutMs, label) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    }),
+  ]);
+
+async function maybePushPrismaSchema() {
+  if (process.env.PRISMA_DB_PUSH_ON_BOOT !== "true") {
+    console.log(
+      "ℹ️ Skipping prisma db push on boot. Set PRISMA_DB_PUSH_ON_BOOT=true to enable it.",
+    );
+    return;
+  }
+
   try {
     const childProcess = require("child_process");
     console.log("⏳ Running prisma db push...");
-    const path = require("path");
     const schemaPath = path.join(
       process.cwd(),
       "server",
       "prisma",
       "schema.prisma",
     );
-    // Use local prisma binary instead of npx as Hostinger may not have npx globally
     const prismaBin = path.join(
       process.cwd(),
       "node_modules",
@@ -46,25 +64,34 @@ async function main() {
     );
     console.log("✅ Prisma db push complete:\n", out);
   } catch (pushErr) {
-    console.error("⚠️  Prisma db push failed:", pushErr.message);
+    console.error("⚠️ Prisma db push failed:", pushErr.message);
     if (pushErr.stdout) console.error("--- STDOUT ---\n", pushErr.stdout);
     if (pushErr.stderr) console.error("--- STDERR ---\n", pushErr.stderr);
   }
+}
+
+function connectDatabaseInBackground(prisma) {
+  withTimeout(prisma.$connect(), STARTUP_DB_TIMEOUT_MS, "Database connection")
+    .then(() => {
+      console.log("✅ Database connected");
+    })
+    .catch((dbErr) => {
+      console.error(
+        "⚠️ Database connection unavailable during startup:",
+        dbErr.message,
+      );
+    });
+}
+
+async function main() {
+  // 0 ─ Optional schema sync for managed environments
+  await maybePushPrismaSchema();
 
   // 1 ─ Prepare Next.js
   await nextApp.prepare();
 
-  // 2 ─ Connect Database (non-fatal — server starts even if DB is temporarily unavailable)
+  // 2 ─ Create Prisma client but do not block server startup on connectivity
   const prisma = require("./server/src/config/prisma");
-  try {
-    await prisma.$connect();
-    console.log("✅ Database connected");
-  } catch (dbErr) {
-    console.error(
-      "⚠️  Database connection failed (server will still start):",
-      dbErr.message,
-    );
-  }
 
   // 3 ─ Load Express API app (all /api/* middleware + routes)
   const apiApp = require("./server/src/app");
@@ -87,6 +114,8 @@ async function main() {
     console.log(`🚀 Basak Library running on http://${hostname}:${port}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
   });
+
+  connectDatabaseInBackground(prisma);
 
   // 6 ─ Graceful shutdown
   const shutdown = async () => {

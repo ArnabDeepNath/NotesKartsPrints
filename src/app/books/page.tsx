@@ -35,6 +35,10 @@ function BooksPageInner() {
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [genre, setGenre] = useState(searchParams.get("genre") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [subcategory, setSubcategory] = useState(
+    searchParams.get("subcategory") || "",
+  );
   const [sort, setSort] = useState("createdAt:desc");
   const [page, setPage] = useState(1);
   const [featured, setFeatured] = useState(
@@ -50,6 +54,14 @@ function BooksPageInner() {
     api.books.genres().then(({ genres: g }) => setGenres(g));
   }, []);
 
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setGenre(searchParams.get("genre") || "");
+    setCategory(searchParams.get("category") || "");
+    setSubcategory(searchParams.get("subcategory") || "");
+    setFeatured(searchParams.get("featured") === "true");
+  }, [searchParams]);
+
   const fetchBooks = useCallback(async () => {
     setLoading(true);
     try {
@@ -62,6 +74,8 @@ function BooksPageInner() {
       };
       if (search) params.search = search;
       if (genre) params.genre = genre;
+      if (category) params.category = category;
+      if (subcategory) params.subcategory = subcategory;
       if (featured) params.featured = "true";
 
       const { books: b, pagination } = await api.books.list(params);
@@ -73,7 +87,7 @@ function BooksPageInner() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, genre, sort, featured]);
+  }, [page, search, genre, category, subcategory, sort, featured]);
 
   useEffect(() => {
     fetchBooks();
@@ -245,6 +259,8 @@ function BooksPageInner() {
               onClick={() => {
                 setSearch("");
                 setGenre("");
+                setCategory("");
+                setSubcategory("");
                 setFeatured(false);
               }}
               className="mt-6 text-[#146eb4] text-sm hover:underline"

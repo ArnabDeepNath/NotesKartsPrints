@@ -40,8 +40,107 @@ const CATEGORY_ICON_OPTIONS = [
 type FooterLinkKey = "quickLinks" | "policies";
 type FooterSocialKey = keyof SiteSettings["footer"]["socialLinks"];
 
+type ManagedCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+};
+
+type LinkOption = {
+  label: string;
+  value: string;
+};
+
+type LinkOptionGroup = {
+  label: string;
+  options: LinkOption[];
+};
+
+const CUSTOM_LINK_VALUE = "__custom__";
+
+const STATIC_LINK_OPTION_GROUPS: LinkOptionGroup[] = [
+  {
+    label: "Main Pages",
+    options: [
+      { label: "Home", value: "/" },
+      { label: "Shop Books", value: "/books" },
+      { label: "Print Documents", value: "/print" },
+      { label: "Checkout", value: "/checkout" },
+      { label: "Login", value: "/login" },
+      { label: "Register", value: "/register" },
+      { label: "Install", value: "/install" },
+    ],
+  },
+  {
+    label: "User Pages",
+    options: [
+      { label: "User Dashboard", value: "/user/dashboard" },
+      { label: "Track My Order", value: "/user/orders" },
+      { label: "My Library", value: "/user/library" },
+      { label: "My Profile", value: "/user/profile" },
+      { label: "My Wishlist", value: "/user/wishlist" },
+    ],
+  },
+  {
+    label: "Homepage Sections",
+    options: [
+      { label: "How It Works", value: "/#how-it-works" },
+      { label: "FAQs", value: "/#faqs" },
+    ],
+  },
+  {
+    label: "Promotions",
+    options: [
+      { label: "Offers", value: "/books?offers=true" },
+      { label: "Featured Books", value: "/books?featured=true" },
+    ],
+  },
+  {
+    label: "Admin Pages",
+    options: [
+      { label: "Admin Dashboard", value: "/admin" },
+      { label: "Add Book", value: "/admin/books/new" },
+      { label: "Manage Categories", value: "/admin/categories" },
+      { label: "Site Settings", value: "/admin/settings" },
+    ],
+  },
+];
+
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
+
+const buildLinkOptionGroups = (
+  categories: ManagedCategory[],
+): LinkOptionGroup[] => {
+  const categoryNameById = new Map(
+    categories.map((category) => [category.id, category.name]),
+  );
+
+  const topLevelCategories = categories
+    .filter((category) => !category.parentId)
+    .map((category) => ({
+      label: category.name,
+      value: `/books?category=${category.slug}`,
+    }));
+
+  const subcategories = categories
+    .filter((category) => Boolean(category.parentId))
+    .map((category) => ({
+      label: `${categoryNameById.get(category.parentId || "") || "Category"} / ${category.name}`,
+      value: `/books?subcategory=${category.slug}`,
+    }));
+
+  return [
+    ...STATIC_LINK_OPTION_GROUPS,
+    ...(topLevelCategories.length
+      ? [{ label: "Categories", options: topLevelCategories }]
+      : []),
+    ...(subcategories.length
+      ? [{ label: "Subcategories", options: subcategories }]
+      : []),
+  ];
+};
 
 export default function AdminSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -50,11 +149,13 @@ export default function AdminSettingsPage() {
   const router = useRouter();
 
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
+  const [categories, setCategories] = useState<ManagedCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingSlideIndex, setUploadingSlideIndex] = useState<number | null>(
     null,
   );
+  const linkOptionGroups = buildLinkOptionGroups(categories);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) {
@@ -76,6 +177,21 @@ export default function AdminSettingsPage() {
 
     if (user?.role === "ADMIN") {
       loadSettings();
+    }
+  }, [toast, user]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await api.categories.getAll();
+        setCategories(Array.isArray(res) ? (res as ManagedCategory[]) : []);
+      } catch (err: unknown) {
+        toast(getErrorMessage(err, "Failed to load categories"), "error");
+      }
+    };
+
+    if (user?.role === "ADMIN") {
+      loadCategories();
     }
   }, [toast, user]);
 
@@ -575,8 +691,8 @@ export default function AdminSettingsPage() {
                   })
                 }
               />
-              <LabeledInput
-                label="Announcement Link Href"
+              <LinkTargetField
+                label="Announcement Link"
                 value={settings.homepage.announcementLinkHref}
                 onChange={(value) =>
                   updateSection("homepage", {
@@ -584,6 +700,7 @@ export default function AdminSettingsPage() {
                     announcementLinkHref: value,
                   })
                 }
+                options={linkOptionGroups}
               />
             </section>
 
@@ -675,6 +792,7 @@ export default function AdminSettingsPage() {
                 onAdd={addHeaderLinkItem}
                 onChange={updateHeaderLinkList}
                 onRemove={removeHeaderLinkItem}
+                linkOptions={linkOptionGroups}
               />
 
               <EditableLinksCard
@@ -686,6 +804,7 @@ export default function AdminSettingsPage() {
                   updateFooterLinkList("quickLinks", index, field, value)
                 }
                 onRemove={(index) => removeFooterLinkItem("quickLinks", index)}
+                linkOptions={linkOptionGroups}
               />
 
               <EditableLinksCard
@@ -697,6 +816,7 @@ export default function AdminSettingsPage() {
                   updateFooterLinkList("policies", index, field, value)
                 }
                 onRemove={(index) => removeFooterLinkItem("policies", index)}
+                linkOptions={linkOptionGroups}
               />
 
               <section className="rounded-xl border border-gray-200 p-5">
@@ -737,7 +857,7 @@ export default function AdminSettingsPage() {
                 <div className="space-y-4">
                   {settings.homepage.heroSlides.map((slide, index) => (
                     <div
-                      key={`${slide.title}-${index}`}
+                      key={index}
                       className="rounded-lg border border-gray-200 p-4 bg-gray-50/60"
                     >
                       <div className="flex items-start justify-between gap-3 mb-4">
@@ -785,12 +905,13 @@ export default function AdminSettingsPage() {
                             updateHeroSlide(index, "cta", value)
                           }
                         />
-                        <LabeledInput
+                        <LinkTargetField
                           label="Button Link"
                           value={slide.href}
                           onChange={(value) =>
                             updateHeroSlide(index, "href", value)
                           }
+                          options={linkOptionGroups}
                         />
                         <LabeledInput
                           label="Accent Color"
@@ -860,7 +981,7 @@ export default function AdminSettingsPage() {
                 <div className="space-y-4">
                   {settings.homepage.categoryTiles.map((tile, index) => (
                     <div
-                      key={`${tile.name}-${index}`}
+                      key={index}
                       className="rounded-lg border border-gray-200 p-4 bg-gray-50/60"
                     >
                       <div className="flex items-start justify-between gap-3 mb-4">
@@ -903,12 +1024,13 @@ export default function AdminSettingsPage() {
                             ))}
                           </select>
                         </label>
-                        <LabeledInput
+                        <LinkTargetField
                           label="Card Link"
                           value={tile.href}
                           onChange={(value) =>
                             updateCategoryTile(index, "href", value)
                           }
+                          options={linkOptionGroups}
                         />
                         <div className="block text-sm font-medium text-[#232f3e]">
                           <span className="block mb-2">Card Color</span>
@@ -959,6 +1081,7 @@ function EditableLinksCard({
   onAdd,
   onChange,
   onRemove,
+  linkOptions,
 }: {
   title: string;
   description: string;
@@ -966,6 +1089,7 @@ function EditableLinksCard({
   onAdd: () => void;
   onChange: (index: number, field: keyof SiteLink, value: string) => void;
   onRemove: (index: number) => void;
+  linkOptions: LinkOptionGroup[];
 }) {
   return (
     <section className="rounded-xl border border-gray-200 p-5">
@@ -980,7 +1104,7 @@ function EditableLinksCard({
       <div className="space-y-3">
         {items.map((item, index) => (
           <div
-            key={`${item.label}-${index}`}
+            key={index}
             className="grid md:grid-cols-[1fr_1.4fr_auto] gap-3 items-end"
           >
             <LabeledInput
@@ -988,10 +1112,11 @@ function EditableLinksCard({
               value={item.label}
               onChange={(value) => onChange(index, "label", value)}
             />
-            <LabeledInput
+            <LinkTargetField
               label="Link"
               value={item.href}
               onChange={(value) => onChange(index, "href", value)}
+              options={linkOptions}
             />
             {items.length > 1 ? (
               <GhostButton label="Remove" onClick={() => onRemove(index)} />
@@ -1025,6 +1150,61 @@ function LabeledInput({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800"
       />
+    </label>
+  );
+}
+
+function LinkTargetField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: LinkOptionGroup[];
+}) {
+  const selectedValue = options.some((group) =>
+    group.options.some((option) => option.value === value),
+  )
+    ? value
+    : CUSTOM_LINK_VALUE;
+
+  return (
+    <label className="block text-sm font-medium text-[#232f3e]">
+      <span className="block mb-2">{label}</span>
+      <div className="space-y-2">
+        <select
+          value={selectedValue}
+          onChange={(e) => {
+            if (e.target.value !== CUSTOM_LINK_VALUE) {
+              onChange(e.target.value);
+            }
+          }}
+          className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800 bg-white"
+        >
+          <option value={CUSTOM_LINK_VALUE}>Custom URL or anchor</option>
+          {options.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.options.map((option) => (
+                <option
+                  key={`${group.label}-${option.value}`}
+                  value={option.value}
+                >
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800"
+        />
+      </div>
     </label>
   );
 }

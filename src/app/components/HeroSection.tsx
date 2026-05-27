@@ -36,6 +36,23 @@ export default function HeroSection({ bookCount, metrics }: Props) {
   }, [slides.length]);
 
   const slide = slides[currentSlide] || slides[0];
+  const printHighlights = [
+    {
+      label: "Doorstep Delivery",
+      value: "48-72 hrs",
+      detail: "Fast turnaround for notes, manuals, and project files.",
+    },
+    {
+      label: "Printed Copies Delivered",
+      value: `${Math.max(metrics.copiesSold, 10000).toLocaleString("en-IN")}+`,
+      detail: "Students already trust the workflow for urgent print runs.",
+    },
+    {
+      label: "Print-Ready Formats",
+      value: "PDF First",
+      detail: "Upload clean PDFs and choose binding, paper, and copies.",
+    },
+  ];
 
   return (
     <div className="bg-[#f7f8fa]">
@@ -142,6 +159,107 @@ export default function HeroSection({ bookCount, metrics }: Props) {
           </svg>
         </button>
       </div>
+
+      <section className="border-b border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] items-stretch">
+            <div className="rounded-[28px] bg-[#17233b] px-6 py-7 md:px-8 md:py-8 text-white shadow-[0_24px_70px_rgba(23,35,59,0.18)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f5a623]">
+                Print On Demand
+              </div>
+              <h2 className="mt-4 max-w-2xl text-2xl font-black leading-tight md:text-4xl">
+                Upload your notes once. We print, bind, and deliver them without the bookstore wait.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72 md:text-base">
+                The catalog supports discovery, but the core service is fast academic printing. Students can upload files, set print options, and get doorstep delivery from one checkout flow.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href="/print"
+                  className="inline-flex items-center justify-center rounded-full bg-[#e47911] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#c45500]"
+                >
+                  Start Printing
+                </Link>
+                <Link
+                  href="#how-it-works"
+                  className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8"
+                >
+                  See How It Works
+                </Link>
+              </div>
+
+              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                {printHighlights.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4"
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-white/55">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-xl font-black text-[#f5a623]">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-white/65">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="rounded-[28px] border border-[#f1d1ac] bg-[linear-gradient(145deg,#fff7ef_0%,#ffffff_65%)] p-6 shadow-[0_18px_50px_rgba(228,121,17,0.08)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e47911]">
+                  Why Students Choose It
+                </p>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="text-sm font-bold text-[#232f3e]">
+                      Configure before checkout
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-gray-600">
+                      Paper size, binding, print type, paper type, and copies are all selectable inside the print flow.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#232f3e]">
+                      Separate from the book catalog
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-gray-600">
+                      Books stay browsable, but the landing page now makes the document-printing workflow impossible to miss.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      Live Catalog Reach
+                    </p>
+                    <p className="mt-2 text-3xl font-black text-[#232f3e]">
+                      {Math.max(metrics.totalTitles, bookCount).toLocaleString("en-IN")}+
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      titles paired with on-demand print support.
+                    </p>
+                  </div>
+                  <div className="h-14 w-14 rounded-2xl bg-[#17233b] text-white flex items-center justify-center text-2xl shadow-sm">
+                    🖨️
+                  </div>
+                </div>
+                <div className="mt-5 flex items-center gap-2 text-sm text-gray-600">
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#e47911]" />
+                  Print workflow and catalog shopping now sit in the same first-screen narrative.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Category Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">

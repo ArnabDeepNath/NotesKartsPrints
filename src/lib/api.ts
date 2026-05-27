@@ -129,7 +129,7 @@ export const api = {
                 method: 'POST',
                 body: JSON.stringify({ orderId }),
             }),
-        verify: (data: { razorpay_order_id: string, razorpay_payment_id: string, razorpay_signature: string }) => 
+        verify: (data: { razorpay_order_id: string, razorpay_payment_id: string, razorpay_signature: string }) =>
             apiFetch<{ success: boolean; orderId: string; status: string }>('/payment/verify', {
                 method: 'POST',
                 body: JSON.stringify(data),
@@ -138,6 +138,12 @@ export const api = {
 
     admin: {
         stats: () => apiFetch('/admin/stats'),
+        loginLogs: (params?: Record<string, string>) => {
+            const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+            return apiFetch(`/admin/login-logs${qs}`);
+        },
+        updateLoginLogLocation: (id: string, data: { latitude: number; longitude: number; accuracyMeters?: number }) =>
+            apiFetch(`/admin/login-logs/${id}/location`, { method: 'PUT', body: JSON.stringify(data) }),
         users: (params?: Record<string, string>) => {
             const qs = params ? '?' + new URLSearchParams(params).toString() : '';
             return apiFetch(`/admin/users${qs}`);
@@ -220,6 +226,22 @@ export interface User {
     emailVerified?: boolean;
     createdAt?: string;
     _count?: { orders: number; wishlist: number };
+}
+
+export interface AdminLoginLog {
+    id: string;
+    ipAddress?: string;
+    forwardedFor?: string;
+    userAgent?: string;
+    city?: string;
+    region?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    accuracyMeters?: number;
+    createdAt: string;
+    updatedAt?: string;
+    user?: Pick<User, 'id' | 'name' | 'email'>;
 }
 
 export interface Book {

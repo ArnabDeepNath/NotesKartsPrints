@@ -8,6 +8,65 @@ const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
 const REFRESH_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
+const cleanHeaderValue = (value) => {
+  if (!value) return null;
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return String(normalized).trim() || null;
+};
+
+const normalizeIp = (value) => {
+  const normalized = cleanHeaderValue(value);
+  if (!normalized) return null;
+  return normalized.replace(/^::ffff:/, "");
+};
+
+const getRequestIp = (req) => {
+  const forwardedFor = cleanHeaderValue(req.headers["x-forwarded-for"]);
+  if (forwardedFor) {
+    return normalizeIp(forwardedFor.split(",")[0]);
+  }
+
+  return normalizeIp(
+    req.headers["x-real-ip"] || req.ip || req.socket?.remoteAddress,
+  );
+};
+
+const getHeaderLocation = (req) => ({
+  city: cleanHeaderValue(req.headers["x-vercel-ip-city"]),
+  region: cleanHeaderValue(req.headers["x-vercel-ip-country-region"]),
+  country:
+    cleanHeaderValue(req.headers["x-vercel-ip-country"]) ||
+    cleanHeaderValue(req.headers["cf-ipcountry"]),
+});
+
+const captureAdminLogin = async (req, userId) => {
+  try {
+    const location = getHeaderLocation(req);
+    const log = await prisma.adminLoginLog.create({
+      data: {
+        userId,
+        ipAddress: getRequestIp(req),
+        forwardedFor: cleanHeaderValue(req.headers["x-forwarded-for"]),
+        userAgent: cleanHeaderValue(req.headers["user-agent"]),
+        city: location.city,
+        region: location.region,
+        country: location.country,
+      },
+      select: { id: true },
+    });
+
+    return log.id;
+  } catch (error) {
+    if (error.code === "P2021" || error.code === "P2022") {
+      console.warn("[auth.login] admin_login_logs table not ready yet.");
+      return null;
+    }
+
+    console.error("[auth.login] Failed to capture admin login:", error.message);
+    return null;
+  }
+};
+
 const generateTokens = (userId) => {
   const accessToken = jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
@@ -115,11 +174,14 @@ const login = async (req, res, next) => {
     setRefreshCookie(res, refreshToken);
 
     const { password: _, ...safeUser } = user;
+    const adminLoginLogId =
+      safeUser.role === "ADMIN" ? await captureAdminLogin(req, user.id) : null;
 
     res.json({
       message: "Logged in successfully",
       user: safeUser,
       accessToken,
+      ...(adminLoginLogId && { adminLoginLogId }),
     });
   } catch (err) {
     next(err);

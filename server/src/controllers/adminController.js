@@ -30,6 +30,18 @@ const SAFE_ORDER_SELECT = {
   updatedAt: true,
 };
 
+const safeAdminLoginLogsQuery = async (operation, fallback) => {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error.code === "P2021" || error.code === "P2022") {
+      console.warn("[Admin Login Logs] Schema not ready yet.");
+      return fallback;
+    }
+    throw error;
+  }
+};
+
 // GET /api/admin/stats
 const getStats = async (req, res, next) => {
   const safe = async (label, fn, fallback) => {
@@ -51,6 +63,7 @@ const getStats = async (req, res, next) => {
       topBooks,
       recentUsers,
       ordersByStatus,
+      recentAdminLogins,
     ] = await Promise.all([
       safe(
         "book.count",
@@ -146,6 +159,22 @@ const getStats = async (req, res, next) => {
           }),
         [],
       ),
+      safe(
+        "adminLoginLog.findMany recentAdminLogins",
+        () =>
+          safeAdminLoginLogsQuery(
+            () =>
+              prisma.adminLoginLog.findMany({
+                take: 6,
+                orderBy: { createdAt: "desc" },
+                include: {
+                  user: { select: { id: true, name: true, email: true } },
+                },
+              }),
+            [],
+          ),
+        [],
+      ),
     ]);
 
     res.json({
@@ -159,7 +188,87 @@ const getStats = async (req, res, next) => {
       topBooks,
       recentUsers,
       ordersByStatus,
+      recentAdminLogins,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/admin/login-logs
+const getAdminLoginLogs = async (req, res, next) => {
+  try {
+    const { limit = 50 } = req.query;
+    const logs = await safeAdminLoginLogsQuery(
+      () =>
+        prisma.adminLoginLog.findMany({
+          take: Math.min(Number(limit) || 50, 100),
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        }),
+      [],
+    );
+
+    res.json({ logs });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /api/admin/login-logs/:id/location
+const updateAdminLoginLogLocation = async (req, res, next) => {
+  try {
+    const { latitude, longitude, accuracyMeters } = req.body;
+
+    if (
+      typeof latitude !== "number" ||
+      Number.isNaN(latitude) ||
+      typeof longitude !== "number" ||
+      Number.isNaN(longitude)
+    ) {
+      throw new AppError("Valid latitude and longitude are required", 400);
+    }
+
+    const existingLog = await safeAdminLoginLogsQuery(
+      () =>
+        prisma.adminLoginLog.findFirst({
+          where: { id: req.params.id, userId: req.user.id },
+          select: { id: true },
+        }),
+      null,
+    );
+
+    if (!existingLog) {
+      throw new AppError("Login log not found", 404);
+    }
+
+    const log = await safeAdminLoginLogsQuery(
+      () =>
+        prisma.adminLoginLog.update({
+          where: { id: existingLog.id },
+          data: {
+            latitude,
+            longitude,
+            accuracyMeters:
+              typeof accuracyMeters === "number" &&
+              !Number.isNaN(accuracyMeters)
+                ? accuracyMeters
+                : null,
+          },
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        }),
+      null,
+    );
+
+    if (!log) {
+      throw new AppError("Login log not found", 404);
+    }
+
+    res.json({ message: "Location captured", log });
   } catch (err) {
     next(err);
   }
@@ -533,6 +642,7 @@ const updatePrintJob = async (req, res, next) => {
 
 module.exports = {
   getStats,
+  getAdminLoginLogs,
   getUsers,
   updateUser,
   deleteUser,
@@ -540,4 +650,5 @@ module.exports = {
   updateOrderStatus,
   getPrintJobs,
   updatePrintJob,
+  updateAdminLoginLogLocation,
 };

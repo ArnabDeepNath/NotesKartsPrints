@@ -10,6 +10,35 @@ import React, {
 } from "react";
 import { api, setAccessToken, User, PrintJob } from "@/lib/api";
 
+function requestCurrentPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      reject(new Error("Geolocation unavailable"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000,
+    });
+  });
+}
+
+async function captureAdminLoginLocation(logId: string) {
+  try {
+    const position = await requestCurrentPosition();
+
+    await api.admin.updateLoginLogLocation(logId, {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      accuracyMeters: position.coords.accuracy,
+    });
+  } catch {
+    // Admin logins should not fail if geolocation is denied or unavailable.
+  }
+}
+
 interface CartItem {
   bookId: string;
   variationId?: string;
@@ -31,7 +60,11 @@ interface AuthContextType {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (bookId: string, variationId?: string) => void;
-  updateCartQty: (bookId: string, variationId: string | undefined, qty: number) => void;
+  updateCartQty: (
+    bookId: string,
+    variationId: string | undefined,
+    qty: number,
+  ) => void;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
@@ -101,6 +134,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data: any = await api.auth.login({ email, password });
     setAccessToken(data.accessToken);
     setUser(data.user);
+
+    if (data.user?.role === "ADMIN" && data.adminLoginLogId) {
+      void captureAdminLoginLocation(data.adminLoginLogId);
+    }
   }, []);
 
   const register = useCallback(
@@ -129,7 +166,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ─── Cart ─────────────────────────────────────────────────────────────────
   const addToCart = useCallback((item: CartItem) => {
     setCart((prev) => {
-      const existingIndex = prev.findIndex((i) => i.bookId === item.bookId && i.variationId === item.variationId);
+      const existingIndex = prev.findIndex(
+        (i) => i.bookId === item.bookId && i.variationId === item.variationId,
+      );
       if (existingIndex >= 0) {
         return prev.map((i, idx) =>
           idx === existingIndex
@@ -142,18 +181,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeFromCart = useCallback((bookId: string, variationId?: string) => {
-    setCart((prev) => prev.filter((i) => !(i.bookId === bookId && i.variationId === variationId)));
+    setCart((prev) =>
+      prev.filter(
+        (i) => !(i.bookId === bookId && i.variationId === variationId),
+      ),
+    );
   }, []);
 
-  const updateCartQty = useCallback((bookId: string, variationId: string | undefined, qty: number) => {
-    if (qty <= 0) {
-      setCart((prev) => prev.filter((i) => !(i.bookId === bookId && i.variationId === variationId)));
-    } else {
-      setCart((prev) =>
-        prev.map((i) => (i.bookId === bookId && i.variationId === variationId ? { ...i, quantity: qty } : i)),
-      );
-    }
-  }, []);
+  const updateCartQty = useCallback(
+    (bookId: string, variationId: string | undefined, qty: number) => {
+      if (qty <= 0) {
+        setCart((prev) =>
+          prev.filter(
+            (i) => !(i.bookId === bookId && i.variationId === variationId),
+          ),
+        );
+      } else {
+        setCart((prev) =>
+          prev.map((i) =>
+            i.bookId === bookId && i.variationId === variationId
+              ? { ...i, quantity: qty }
+              : i,
+          ),
+        );
+      }
+    },
+    [],
+  );
 
   const clearCart = useCallback(() => setCart([]), []);
 
@@ -167,8 +221,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearPrintCart = useCallback(() => setPrintCart([]), []);
 
-  const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0) + printCart.reduce((sum, i) => sum + Number(i.price), 0);
-  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0) + printCart.reduce((sum, i) => sum + i.copies, 0);
+  const cartTotal =
+    cart.reduce((sum, i) => sum + i.price * i.quantity, 0) +
+    printCart.reduce((sum, i) => sum + Number(i.price), 0);
+  const cartCount =
+    cart.reduce((sum, i) => sum + i.quantity, 0) +
+    printCart.reduce((sum, i) => sum + i.copies, 0);
 
   return (
     <AuthContext.Provider

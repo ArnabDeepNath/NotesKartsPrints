@@ -57,8 +57,30 @@ model User {
   reviews       Review[]
   refreshTokens RefreshToken[]
   printJobs     PrintJob[]
+  adminLoginLogs AdminLoginLog[]
 
   @@map("users")
+}
+
+model AdminLoginLog {
+  id             String   @id @default(uuid())
+  userId         String
+  ipAddress      String?  @db.VarChar(191)
+  forwardedFor   String?  @db.VarChar(512)
+  userAgent      String?  @db.VarChar(512)
+  city           String?  @db.VarChar(191)
+  region         String?  @db.VarChar(191)
+  country        String?  @db.VarChar(191)
+  latitude       Float?
+  longitude      Float?
+  accuracyMeters Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("admin_login_logs")
 }
 
 model RefreshToken {

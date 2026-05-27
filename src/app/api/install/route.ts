@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@basaklibrary.com";
+
+function requireAdminPassword() {
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword) {
+        throw new Error("ADMIN_PASSWORD is required before running installation.");
+    }
+
+    return adminPassword;
+}
+
 // Raw SQL statements to create all tables (MySQL / MariaDB)
 const CREATE_TABLE_STATEMENTS = [
     `CREATE TABLE IF NOT EXISTS \`genres\` (
@@ -43,6 +55,25 @@ const CREATE_TABLE_STATEMENTS = [
         PRIMARY KEY (\`id\`),
         UNIQUE KEY \`refresh_tokens_token_key\` (\`token\`),
         CONSTRAINT \`refresh_tokens_userId_fkey\` FOREIGN KEY (\`userId\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+    `CREATE TABLE IF NOT EXISTS \`admin_login_logs\` (
+        \`id\`             VARCHAR(36)  NOT NULL,
+        \`userId\`         VARCHAR(36)  NOT NULL,
+        \`ipAddress\`      VARCHAR(191) DEFAULT NULL,
+        \`forwardedFor\`   VARCHAR(512) DEFAULT NULL,
+        \`userAgent\`      VARCHAR(512) DEFAULT NULL,
+        \`city\`           VARCHAR(191) DEFAULT NULL,
+        \`region\`         VARCHAR(191) DEFAULT NULL,
+        \`country\`        VARCHAR(191) DEFAULT NULL,
+        \`latitude\`       DOUBLE       DEFAULT NULL,
+        \`longitude\`      DOUBLE       DEFAULT NULL,
+        \`accuracyMeters\` DOUBLE       DEFAULT NULL,
+        \`createdAt\`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        KEY \`admin_login_logs_userId_createdAt_idx\` (\`userId\`, \`createdAt\`),
+        CONSTRAINT \`admin_login_logs_userId_fkey\` FOREIGN KEY (\`userId\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
     `CREATE TABLE IF NOT EXISTS \`books\` (
@@ -198,12 +229,16 @@ export async function GET(req: NextRequest) {
 
         // Step 3: Create admin user
         log.push("Creating admin user...");
-        const adminPassword = await bcrypt.hash("Admin@123456", 12);
+        const adminPassword = await bcrypt.hash(requireAdminPassword(), 12);
         const admin = await prisma.user.upsert({
-            where: { email: "admin@basaklibrary.com" },
-            update: {},
+            where: { email: ADMIN_EMAIL },
+            update: {
+                password: adminPassword,
+                role: "ADMIN",
+                emailVerified: true,
+            },
             create: {
-                email: "admin@basaklibrary.com",
+                email: ADMIN_EMAIL,
                 password: adminPassword,
                 name: "Basak Admin",
                 role: "ADMIN",
@@ -264,11 +299,10 @@ export async function GET(req: NextRequest) {
             success: true,
             log,
             credentials: {
-                email: "admin@basaklibrary.com",
-                password: "Admin@123456",
+                email: admin.email,
                 loginUrl: "/login",
                 adminUrl: "/admin",
-                warning: "Change your password after first login!",
+                warning: "Admin password is managed through ADMIN_PASSWORD and is not returned by this endpoint.",
             },
         });
     } catch (error: any) {

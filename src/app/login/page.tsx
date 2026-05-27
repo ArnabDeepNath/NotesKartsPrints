@@ -159,18 +159,6 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-
-        {/* Demo hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 p-3 bg-[#e47911]/10 border border-[#e47911]/30 rounded text-center"
-        >
-          <p className="text-xs text-[#e47911] font-medium">
-            Admin demo: admin@basaklibrary.com / Admin@123456
-          </p>
-        </motion.div>
       </motion.div>
     </div>
   );

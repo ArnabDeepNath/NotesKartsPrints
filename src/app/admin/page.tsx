@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import type { AdminLoginLog } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import gsap from "gsap";
-import { useRef } from "react";
 
 interface Stats {
   totalBooks: number;
@@ -23,6 +23,7 @@ const ADMIN_TABS = [
   { id: "books", label: "Books", icon: "📚" },
   { id: "users", label: "Users", icon: "👥" },
   { id: "orders", label: "Orders", icon: "📦" },
+  { id: "loginLogs", label: "Login Logs", icon: "📍" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -55,12 +56,11 @@ export default function AdminPanel() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [topBooks, setTopBooks] = useState<any[]>([]);
-  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [loginLogs, setLoginLogs] = useState<AdminLoginLog[]>([]);
 
   const [books, setBooks] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [bookModal, setBookModal] = useState<{ open: boolean; book?: any }>({
@@ -74,21 +74,46 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (user?.role === "ADMIN") fetchDashboard();
-  }, [user]);
+  }, [user, fetchDashboard]);
 
   useEffect(() => {
     if (tab === "books") fetchBooks();
     if (tab === "users") fetchUsers();
     if (tab === "orders") fetchOrders();
-  }, [tab]);
+    if (tab === "loginLogs") fetchLoginLogs();
+  }, [tab, fetchBooks, fetchUsers, fetchOrders, fetchLoginLogs]);
 
-  const fetchDashboard = async () => {
+  const formatLocation = (log: AdminLoginLog) => {
+    const namedLocation = [log.city, log.region, log.country]
+      .filter(Boolean)
+      .join(", ");
+
+    if (namedLocation) {
+      return namedLocation;
+    }
+
+    if (typeof log.latitude === "number" && typeof log.longitude === "number") {
+      return `${log.latitude.toFixed(5)}, ${log.longitude.toFixed(5)}`;
+    }
+
+    return "Location unavailable";
+  };
+
+  const formatAccuracy = (log: AdminLoginLog) => {
+    if (typeof log.accuracyMeters !== "number") {
+      return null;
+    }
+
+    return `±${Math.round(log.accuracyMeters)} m`;
+  };
+
+  const fetchDashboard = useCallback(async () => {
     try {
       const data: any = await api.admin.stats();
       setStats(data.stats);
       setRecentOrders(data.recentOrders || []);
       setTopBooks(data.topBooks || []);
-      setRecentUsers(data.recentUsers || []);
+      setLoginLogs(data.recentAdminLogins || []);
       if (statsRef.current) {
         const cards = statsRef.current.querySelectorAll(".stat-card");
         gsap.fromTo(
@@ -99,31 +124,38 @@ export default function AdminPanel() {
       }
     } catch {
       toast("Failed to load stats", "error");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     try {
       const { books: b } = (await api.books.list({ limit: 50 })) as any;
       setBooks(b);
     } catch {}
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const data: any = await api.admin.users();
       setUsers(data.users || []);
     } catch {}
-  };
+  }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const data: any = await api.admin.orders();
       setOrders(data.orders || []);
     } catch {}
-  };
+  }, []);
+
+  const fetchLoginLogs = useCallback(async () => {
+    try {
+      const data: any = await api.admin.loginLogs({ limit: "50" });
+      setLoginLogs(data.logs || []);
+    } catch {
+      toast("Failed to load admin login logs", "error");
+    }
+  }, [toast]);
 
   const handleDeleteBook = async (id: string) => {
     if (!confirm("Delete this book?")) return;
@@ -407,6 +439,56 @@ export default function AdminPanel() {
                           </p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex justify-between">
+                      <h3 className="font-semibold text-[#232f3e] text-sm">
+                        Recent Admin Sign-ins
+                      </h3>
+                      <button
+                        onClick={() => setTab("loginLogs")}
+                        className="text-xs text-[#146eb4] hover:underline"
+                      >
+                        View logs
+                      </button>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {loginLogs.slice(0, 5).map((log) => (
+                        <div
+                          key={log.id}
+                          className="p-4 flex items-start gap-3"
+                        >
+                          <div className="w-8 h-8 rounded bg-[#e47911]/15 text-[#e47911] flex items-center justify-center text-xs font-bold shrink-0">
+                            {log.user?.name?.charAt(0) || "A"}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-[#232f3e] truncate">
+                              {log.user?.name ||
+                                log.user?.email ||
+                                "Administrator"}
+                            </p>
+                            <p className="text-[10px] text-gray-500 truncate">
+                              IP: {log.ipAddress || "Unavailable"}
+                            </p>
+                            <p className="text-[10px] text-gray-400 truncate">
+                              {formatLocation(log)}
+                              {formatAccuracy(log)
+                                ? ` • ${formatAccuracy(log)}`
+                                : ""}
+                            </p>
+                          </div>
+                          <p className="text-[10px] text-gray-400 shrink-0">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                      {loginLogs.length === 0 && (
+                        <div className="p-4 text-xs text-gray-400">
+                          No admin login logs captured yet.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -715,6 +797,109 @@ export default function AdminPanel() {
                             </td>
                           </tr>
                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {tab === "loginLogs" && (
+              <motion.div
+                key="loginLogs"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#232f3e]">
+                      Admin Login Logs
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      IP address is captured server-side on admin login. Browser
+                      location is added when permission is granted.
+                    </p>
+                  </div>
+                  <button
+                    onClick={fetchLoginLogs}
+                    className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-4 py-2 rounded transition-colors"
+                  >
+                    Refresh Logs
+                  </button>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="text-left px-5 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Admin
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            IP Address
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Location
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Browser
+                          </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Logged At
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {loginLogs.map((log) => (
+                          <tr
+                            key={log.id}
+                            className="hover:bg-gray-50 transition-colors align-top"
+                          >
+                            <td className="px-5 py-3">
+                              <p className="text-sm font-medium text-[#232f3e]">
+                                {log.user?.name || "Administrator"}
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                {log.user?.email || ""}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-[#232f3e]">
+                              <p>{log.ipAddress || "Unavailable"}</p>
+                              {log.forwardedFor &&
+                                log.forwardedFor !== log.ipAddress && (
+                                  <p className="text-[10px] text-gray-400 break-all">
+                                    Forwarded: {log.forwardedFor}
+                                  </p>
+                                )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-[#232f3e]">
+                              <p>{formatLocation(log)}</p>
+                              {formatAccuracy(log) && (
+                                <p className="text-[10px] text-gray-400">
+                                  Accuracy {formatAccuracy(log)}
+                                </p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-500 max-w-xs break-words">
+                              {log.userAgent || "Unavailable"}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                        {loginLogs.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="px-5 py-8 text-center text-sm text-gray-400"
+                            >
+                              No admin login logs yet.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>

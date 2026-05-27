@@ -20,6 +20,18 @@ const uploadRoutes = require("./routes/upload");
 const settingsRoutes = require("./routes/settings");
 const { errorHandler } = require("./middleware/errorHandler");
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@basaklibrary.com";
+
+function requireAdminPassword() {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    throw new Error("ADMIN_PASSWORD is required before running installation.");
+  }
+
+  return adminPassword;
+}
+
 const app = express();
 
 // ─── Trust Proxy (required behind Hostinger / reverse proxy) ─────────────────
@@ -275,12 +287,16 @@ app.get("/api/install", async (req, res) => {
 
     // Create admin user
     log.push("Creating admin user...");
-    const adminPassword = await bcrypt.hash("Admin@123456", 12);
+    const adminPassword = await bcrypt.hash(requireAdminPassword(), 12);
     const admin = await installPrisma.user.upsert({
-      where: { email: "admin@basaklibrary.com" },
-      update: {},
+      where: { email: ADMIN_EMAIL },
+      update: {
+        password: adminPassword,
+        role: "ADMIN",
+        emailVerified: true,
+      },
       create: {
-        email: "admin@basaklibrary.com",
+        email: ADMIN_EMAIL,
         password: adminPassword,
         name: "Basak Admin",
         role: "ADMIN",
@@ -375,11 +391,11 @@ app.get("/api/install", async (req, res) => {
       success: true,
       log,
       credentials: {
-        email: "admin@basaklibrary.com",
-        password: "Admin@123456",
+        email: admin.email,
         loginUrl: "/login",
         adminUrl: "/admin",
-        warning: "Change your password after first login!",
+        warning:
+          "Admin password is managed through ADMIN_PASSWORD and is not returned by this endpoint.",
       },
     });
   } catch (error) {

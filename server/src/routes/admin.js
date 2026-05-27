@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const {
   getStats,
+  getAdminLoginLogs,
   getUsers,
   updateUser,
   deleteUser,
@@ -8,6 +9,7 @@ const {
   updateOrderStatus,
   getPrintJobs,
   updatePrintJob,
+  updateAdminLoginLogLocation,
 } = require("../controllers/adminController");
 const { authenticate } = require("../middleware/auth");
 const { requireAdmin } = require("../middleware/rbac");
@@ -15,6 +17,8 @@ const { requireAdmin } = require("../middleware/rbac");
 router.use(authenticate, requireAdmin);
 
 router.get("/stats", getStats);
+router.get("/login-logs", getAdminLoginLogs);
+router.put("/login-logs/:id/location", updateAdminLoginLogLocation);
 
 // User management
 router.get("/users", getUsers);

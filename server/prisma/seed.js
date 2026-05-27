@@ -2,6 +2,23 @@
 const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@basaklibrary.com";
+
+function getAdminSeedPassword(existingAdmin) {
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+
+  if (configuredPassword) {
+    return configuredPassword;
+  }
+
+  if (existingAdmin) {
+    return null;
+  }
+
+  throw new Error(
+    "ADMIN_PASSWORD is required to create the bootstrap admin account.",
+  );
+}
 
 async function cleanBooks() {
   console.log("ðŸ§¹ Cleaning existing books and related data...");
@@ -69,19 +86,38 @@ async function seed() {
     }),
   ]);
 
-  // â”€â”€ Step 3: Upsert admin user (preserved across re-seeds) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const adminPassword = await bcrypt.hash("Admin@123456", 12);
-  await prisma.user.upsert({
-    where: { email: "admin@basaklibrary.com" },
-    update: {},
-    create: {
-      email: "admin@basaklibrary.com",
-      password: adminPassword,
-      name: "Basak Admin",
+  // â”€â”€ Step 3: Ensure admin user exists without restoring a leaked password â”€â”€â”€â”€â”€â”€
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: ADMIN_EMAIL },
+  });
+  const nextAdminPassword = getAdminSeedPassword(existingAdmin);
+
+  if (existingAdmin) {
+    const updateData = {
+      name: existingAdmin.name || "Basak Admin",
       role: "ADMIN",
       emailVerified: true,
-    },
-  });
+    };
+
+    if (nextAdminPassword) {
+      updateData.password = await bcrypt.hash(nextAdminPassword, 12);
+    }
+
+    await prisma.user.update({
+      where: { email: ADMIN_EMAIL },
+      data: updateData,
+    });
+  } else {
+    await prisma.user.create({
+      data: {
+        email: ADMIN_EMAIL,
+        password: await bcrypt.hash(nextAdminPassword, 12),
+        name: "Basak Admin",
+        role: "ADMIN",
+        emailVerified: true,
+      },
+    });
+  }
 
   // â”€â”€ Step 4: Seed books (all fields match current Prisma schema) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const books = [
@@ -454,7 +490,12 @@ async function seed() {
   const bookCount = await prisma.book.count();
 
   console.log(`âœ… Seed complete! Created ${bookCount} books.`);
-  console.log(`ðŸ‘¤ Admin: admin@basaklibrary.com | Password: Admin@123456`);
+  console.log(`ðŸ‘¤ Admin: ${ADMIN_EMAIL}`);
+  if (process.env.ADMIN_PASSWORD) {
+    console.log("ðŸ”’ Admin password was loaded from ADMIN_PASSWORD.");
+  } else {
+    console.log("ðŸ”’ Existing admin password preserved.");
+  }
 }
 
 seed()

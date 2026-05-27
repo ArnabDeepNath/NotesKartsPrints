@@ -21,9 +21,24 @@ interface Props {
 export default function HeroSection({ bookCount, metrics }: Props) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { settings } = useSiteSettings();
-  const slides = settings.homepage.heroSlides.length
+  const baseSlides = settings.homepage.heroSlides.length
     ? settings.homepage.heroSlides
     : DEFAULT_FALLBACK.heroSlides;
+  const slides = baseSlides.map((item, index) =>
+    index === 0
+      ? {
+          ...item,
+          title: "Print Notes On Demand, Without Store Delays",
+          subtitle:
+            "Upload your PDF, choose print settings, and get doorstep delivery in 48-72 hours.",
+          cta: "Start Printing",
+          href: "/print",
+          badge: "PRINT ON DEMAND",
+          bg: "linear-gradient(135deg, #111b31 0%, #17233b 45%, #1f4b7a 100%)",
+          accent: "#f5a623",
+        }
+      : item,
+  );
   const categories = settings.homepage.categoryTiles.length
     ? settings.homepage.categoryTiles
     : DEFAULT_FALLBACK.categoryTiles;
@@ -91,12 +106,30 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                 }`}
               >
                 <div className="max-w-2xl">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f5a623] mb-4">
+                    {slide.badge || "FEATURED"}
+                  </div>
                   <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-3">
                     {slide.title}
                   </h1>
                   <p className="text-base md:text-lg text-white/80 mb-6">
                     {slide.subtitle}
                   </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      href={slide.href || "/print"}
+                      className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-bold text-white transition-colors"
+                      style={{ backgroundColor: slide.accent || "#e47911" }}
+                    >
+                      {slide.cta || "Start Printing"}
+                    </Link>
+                    <Link
+                      href="#how-it-works"
+                      className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8"
+                    >
+                      How It Works
+                    </Link>
+                  </div>
                 </div>
                 <div className="hidden md:flex justify-end">
                   {slide.image ? (
@@ -168,10 +201,13 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                 Print On Demand
               </div>
               <h2 className="mt-4 max-w-2xl text-2xl font-black leading-tight md:text-4xl">
-                Upload your notes once. We print, bind, and deliver them without the bookstore wait.
+                Upload your notes once. We print, bind, and deliver them without
+                the bookstore wait.
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72 md:text-base">
-                The catalog supports discovery, but the core service is fast academic printing. Students can upload files, set print options, and get doorstep delivery from one checkout flow.
+                The catalog supports discovery, but the core service is fast
+                academic printing. Students can upload files, set print options,
+                and get doorstep delivery from one checkout flow.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -220,7 +256,8 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                       Configure before checkout
                     </p>
                     <p className="mt-1 text-sm leading-6 text-gray-600">
-                      Paper size, binding, print type, paper type, and copies are all selectable inside the print flow.
+                      Paper size, binding, print type, paper type, and copies
+                      are all selectable inside the print flow.
                     </p>
                   </div>
                   <div>
@@ -228,7 +265,8 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                       Separate from the book catalog
                     </p>
                     <p className="mt-1 text-sm leading-6 text-gray-600">
-                      Books stay browsable, but the landing page now makes the document-printing workflow impossible to miss.
+                      Books stay browsable, but the landing page now makes the
+                      document-printing workflow impossible to miss.
                     </p>
                   </div>
                 </div>
@@ -241,7 +279,10 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                       Live Catalog Reach
                     </p>
                     <p className="mt-2 text-3xl font-black text-[#232f3e]">
-                      {Math.max(metrics.totalTitles, bookCount).toLocaleString("en-IN")}+
+                      {Math.max(metrics.totalTitles, bookCount).toLocaleString(
+                        "en-IN",
+                      )}
+                      +
                     </p>
                     <p className="mt-1 text-sm text-gray-500">
                       titles paired with on-demand print support.
@@ -253,7 +294,8 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                 </div>
                 <div className="mt-5 flex items-center gap-2 text-sm text-gray-600">
                   <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#e47911]" />
-                  Print workflow and catalog shopping now sit in the same first-screen narrative.
+                  Print workflow and catalog shopping now sit in the same
+                  first-screen narrative.
                 </div>
               </div>
             </div>

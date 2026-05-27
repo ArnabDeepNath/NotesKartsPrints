@@ -68,21 +68,6 @@ export default function AdminPanel() {
   });
   const [bookForm, setBookForm] = useState<any>({});
 
-  useEffect(() => {
-    if (!authLoading && (!user || user.role !== "ADMIN")) router.push("/");
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user?.role === "ADMIN") fetchDashboard();
-  }, [user, fetchDashboard]);
-
-  useEffect(() => {
-    if (tab === "books") fetchBooks();
-    if (tab === "users") fetchUsers();
-    if (tab === "orders") fetchOrders();
-    if (tab === "loginLogs") fetchLoginLogs();
-  }, [tab, fetchBooks, fetchUsers, fetchOrders, fetchLoginLogs]);
-
   const formatLocation = (log: AdminLoginLog) => {
     const namedLocation = [log.city, log.region, log.country]
       .filter(Boolean)
@@ -156,6 +141,21 @@ export default function AdminPanel() {
       toast("Failed to load admin login logs", "error");
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== "ADMIN")) router.push("/");
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (user?.role === "ADMIN") fetchDashboard();
+  }, [user, fetchDashboard]);
+
+  useEffect(() => {
+    if (tab === "books") fetchBooks();
+    if (tab === "users") fetchUsers();
+    if (tab === "orders") fetchOrders();
+    if (tab === "loginLogs") fetchLoginLogs();
+  }, [tab, fetchBooks, fetchUsers, fetchOrders, fetchLoginLogs]);
 
   const handleDeleteBook = async (id: string) => {
     if (!confirm("Delete this book?")) return;

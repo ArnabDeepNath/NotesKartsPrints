@@ -266,6 +266,13 @@ export default function AdminPanel() {
               <span>⚙</span>
               Site Settings
             </Link>
+            <Link
+              href="/admin/logistics"
+              className="flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium text-gray-600 hover:text-[#232f3e] hover:bg-gray-100"
+            >
+              <span>🚚</span>
+              Logistics Hub
+            </Link>
           </nav>
 
           <div className="mt-auto pt-6 border-t border-gray-200">
@@ -300,6 +307,12 @@ export default function AdminPanel() {
               className="px-4 py-2 rounded text-xs font-medium whitespace-nowrap border text-gray-600 bg-white border-gray-200"
             >
               ⚙ Site Settings
+            </Link>
+            <Link
+              href="/admin/logistics"
+              className="px-4 py-2 rounded text-xs font-medium whitespace-nowrap border text-gray-600 bg-white border-gray-200"
+            >
+              🚚 Logistics Hub
             </Link>
           </div>
 

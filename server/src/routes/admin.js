@@ -6,6 +6,8 @@ const {
   updateUser,
   deleteUser,
   getOrders,
+  createOrderShipment,
+  refreshOrderShipmentTracking,
   updateOrderStatus,
   getPrintJobs,
   updatePrintJob,
@@ -27,6 +29,8 @@ router.delete("/users/:id", deleteUser);
 
 // Order management
 router.get("/orders", getOrders);
+router.post("/orders/:id/shiprocket", createOrderShipment);
+router.post("/orders/:id/shiprocket/track", refreshOrderShipmentTracking);
 router.put("/orders/:id", updateOrderStatus);
 
 // Print Job management

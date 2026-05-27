@@ -2,7 +2,11 @@ const router = require("express").Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { uploadDocument, calculatePrice, createPrintJob } = require("../controllers/printController");
+const {
+  uploadDocument,
+  calculatePrice,
+  createPrintJob,
+} = require("../controllers/printController");
 const { authenticate } = require("../middleware/auth");
 
 const storage = multer.diskStorage({
@@ -14,17 +18,20 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${Math.round(Math.random()*1e9)}${path.extname(file.originalname)}`);
+    cb(
+      null,
+      `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`,
+    );
   },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: 300 * 1024 * 1024 }, // 300MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') cb(null, true);
-    else cb(new Error('Only PDFs are allowed for printing.'));
-  }
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Only PDFs are allowed for printing."));
+  },
 });
 
 router.post("/upload", authenticate, upload.single("document"), uploadDocument);

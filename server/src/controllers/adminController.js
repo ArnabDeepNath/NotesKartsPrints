@@ -5,7 +5,10 @@ const {
   sendOrderUpdate,
 } = require("../utils/emailService");
 const { mergeOrderNotes, parseOrderNotes } = require("../utils/orderNotes");
-const { createShiprocketOrder } = require("../utils/shiprocketService");
+const {
+  createShiprocketOrder,
+  getShiprocketTracking,
+} = require("../utils/shiprocketService");
 
 const SAFE_ORDER_SELECT = {
   id: true,
@@ -40,6 +43,105 @@ const safeAdminLoginLogsQuery = async (operation, fallback) => {
     }
     throw error;
   }
+};
+
+const toShiprocketMeta = (payload, fallbackStatus) => ({
+  orderId: payload?.order_id || payload?.orderId || null,
+  shipmentId: payload?.shipment_id || payload?.shipmentId || null,
+  awbCode:
+    payload?.awb_code ||
+    payload?.awbCode ||
+    payload?.tracking_data?.awb_code ||
+    null,
+  trackingUrl:
+    payload?.tracking_url ||
+    payload?.trackingUrl ||
+    payload?.tracking_data?.track_url ||
+    null,
+  status:
+    payload?.status ||
+    payload?.tracking_data?.track_status ||
+    fallbackStatus ||
+    null,
+  raw: payload,
+});
+
+const extractTrackingStatus = (
+  trackingPayload,
+  existingMeta,
+  fallbackStatus,
+) => {
+  const trackingData = trackingPayload?.tracking_data;
+  const shipmentTrack = Array.isArray(trackingData?.shipment_track)
+    ? trackingData.shipment_track[0]
+    : null;
+
+  return {
+    ...existingMeta,
+    awbCode:
+      shipmentTrack?.awb_code ||
+      trackingData?.awb_code ||
+      existingMeta?.awbCode ||
+      null,
+    trackingUrl: trackingData?.track_url || existingMeta?.trackingUrl || null,
+    status:
+      shipmentTrack?.current_status ||
+      trackingData?.track_status ||
+      trackingPayload?.status ||
+      existingMeta?.status ||
+      fallbackStatus ||
+      null,
+    rawTrack: trackingPayload,
+  };
+};
+
+const decorateOrderWithShiprocket = (order) => ({
+  ...order,
+  shiprocket: parseOrderNotes(order.notes).shiprocket || null,
+});
+
+const ADMIN_ORDER_DETAIL_SELECT = {
+  id: true,
+  status: true,
+  userId: true,
+  subtotal: true,
+  discount: true,
+  tax: true,
+  total: true,
+  currency: true,
+  paymentMethod: true,
+  paymentId: true,
+  notes: true,
+  shippingName: true,
+  shippingEmail: true,
+  shippingPhone: true,
+  shippingAddress: true,
+  shippingCity: true,
+  shippingCountry: true,
+  shippingZip: true,
+  createdAt: true,
+  updatedAt: true,
+  user: { select: { id: true, email: true, name: true } },
+  items: {
+    select: {
+      id: true,
+      bookId: true,
+      quantity: true,
+      price: true,
+      book: { select: { title: true, coverImage: true } },
+    },
+  },
+  printJobs: {
+    select: {
+      id: true,
+      fileUrl: true,
+      fileName: true,
+      pages: true,
+      copies: true,
+      price: true,
+      status: true,
+    },
+  },
 };
 
 // GET /api/admin/stats
@@ -428,6 +530,8 @@ const getOrders = async (req, res, next) => {
       }
     }
 
+    orders = orders.map(decorateOrderWithShiprocket);
+
     res.json({
       orders,
       pagination: {
@@ -552,6 +656,95 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+// POST /api/admin/orders/:id/shiprocket
+const createOrderShipment = async (req, res, next) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      select: ADMIN_ORDER_DETAIL_SELECT,
+    });
+
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    const currentMeta = parseOrderNotes(order.notes).shiprocket;
+    if (currentMeta?.shipmentId || currentMeta?.orderId) {
+      res.json({
+        message: "Shipment already created",
+        shiprocket: currentMeta,
+        order: decorateOrderWithShiprocket(order),
+      });
+      return;
+    }
+
+    const shipment = await createShiprocketOrder(order);
+    const shiprocketMeta = toShiprocketMeta(shipment, order.status);
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        notes: mergeOrderNotes(order.notes, {
+          shiprocket: shiprocketMeta,
+        }),
+      },
+      select: ADMIN_ORDER_DETAIL_SELECT,
+    });
+
+    res.json({
+      message: "Shipment created successfully",
+      shiprocket: shiprocketMeta,
+      order: decorateOrderWithShiprocket(updatedOrder),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/admin/orders/:id/shiprocket/track
+const refreshOrderShipmentTracking = async (req, res, next) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      select: ADMIN_ORDER_DETAIL_SELECT,
+    });
+
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    const currentMeta = parseOrderNotes(order.notes).shiprocket;
+    if (!currentMeta?.shipmentId) {
+      throw new AppError("Create the shipment before tracking it", 400);
+    }
+
+    const trackingPayload = await getShiprocketTracking(currentMeta.shipmentId);
+    const shiprocketMeta = extractTrackingStatus(
+      trackingPayload,
+      currentMeta,
+      order.status,
+    );
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        notes: mergeOrderNotes(order.notes, {
+          shiprocket: shiprocketMeta,
+        }),
+      },
+      select: ADMIN_ORDER_DETAIL_SELECT,
+    });
+
+    res.json({
+      message: "Tracking refreshed",
+      shiprocket: shiprocketMeta,
+      order: decorateOrderWithShiprocket(updatedOrder),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/admin/print-jobs
 const getPrintJobs = async (req, res, next) => {
   try {
@@ -647,6 +840,8 @@ module.exports = {
   updateUser,
   deleteUser,
   getOrders,
+  createOrderShipment,
+  refreshOrderShipmentTracking,
   updateOrderStatus,
   getPrintJobs,
   updatePrintJob,

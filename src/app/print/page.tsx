@@ -9,6 +9,16 @@ import { api, PrintJob } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 
+const MAX_PRINT_UPLOAD_BYTES = 300 * 1024 * 1024;
+
+const buildWhatsAppHref = (value?: string) => {
+  if (!value) return "https://wa.me/919643239402";
+  if (value.startsWith("http")) return value;
+
+  const digits = value.replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : "https://wa.me/919643239402";
+};
+
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
@@ -32,6 +42,7 @@ export default function PrintSaaSPage() {
     pages: number;
   } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [oversizeFileName, setOversizeFileName] = useState<string | null>(null);
 
   const [options, setOptions] = useState({
     colorMode: "BW",
@@ -45,6 +56,9 @@ export default function PrintSaaSPage() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [price, setPrice] = useState<number>(0);
   const [isAdding, setIsAdding] = useState(false);
+  const whatsappHref = buildWhatsAppHref(
+    settings.footer.socialLinks.whatsapp || settings.footer.supportPhone,
+  );
 
   const calculatePrice = async (currOptions = options, currPages?: number) => {
     const p = currPages || (fileData ? fileData.pages : 1);
@@ -79,6 +93,16 @@ export default function PrintSaaSPage() {
       }
 
       const selectedFile = e.target.files[0];
+
+      if (selectedFile.size > MAX_PRINT_UPLOAD_BYTES) {
+        setOversizeFileName(selectedFile.name);
+        setFile(null);
+        setFileData(null);
+        toast("Files above 300MB must be coordinated on WhatsApp.", "error");
+        return;
+      }
+
+      setOversizeFileName(null);
 
       if (selectedFile.type !== "application/pdf") {
         toast("Only PDF files are supported currently.", "error");
@@ -195,6 +219,20 @@ export default function PrintSaaSPage() {
                   Upload Document
                 </h2>
 
+                <div className="mb-4 rounded border border-[#e47911]/20 bg-[#fff7ef] px-4 py-3 text-xs text-gray-600">
+                  Upload PDFs up to 300MB here. For files larger than 300MB,
+                  contact the print desk directly on{" "}
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[#e47911] underline"
+                  >
+                    WhatsApp
+                  </a>
+                  .
+                </div>
+
                 <div className="flex-1 border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center p-12 text-center relative hover:bg-gray-50 transition-colors group">
                   <input
                     type="file"
@@ -261,11 +299,31 @@ export default function PrintSaaSPage() {
                         Drag & drop or click to upload
                       </p>
                       <p className="text-gray-400 text-sm">
-                        Supported formats: PDF (Max 50MB)
+                        Supported formats: PDF (Max 300MB)
                       </p>
                     </>
                   )}
                 </div>
+
+                {oversizeFileName && (
+                  <div className="mt-4 rounded border border-[#e47911]/30 bg-[#fff7ef] px-4 py-3 text-sm text-gray-700">
+                    <p className="font-semibold text-[#232f3e]">
+                      {oversizeFileName} is larger than 300MB.
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600">
+                      Send the file to the print desk over WhatsApp so the admin
+                      team can process it manually.
+                    </p>
+                    <a
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center justify-center rounded bg-[#25D366] px-4 py-2 text-xs font-semibold text-white hover:brightness-95"
+                    >
+                      Contact on WhatsApp
+                    </a>
+                  </div>
+                )}
               </div>
             </motion.div>
 

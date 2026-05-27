@@ -117,6 +117,31 @@ const createShiprocketOrder = async (order) => {
   return data;
 };
 
+const getShiprocketTracking = async (shipmentId) => {
+  const { token } = await getShiprocketToken();
+
+  const response = await fetch(
+    `${SHIPROCKET_BASE_URL}/courier/track/shipment/${shipmentId}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new AppError(
+      data.message || "Shiprocket tracking lookup failed",
+      502,
+    );
+  }
+
+  return data;
+};
+
 module.exports = {
   createShiprocketOrder,
+  getShiprocketTracking,
 };

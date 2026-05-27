@@ -401,6 +401,14 @@ export default function Navbar() {
                             Admin Panel
                           </DropdownLink>
                         )}
+                        {user.role === "ADMIN" && (
+                          <DropdownLink
+                            href="/admin/logistics"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            Logistics Hub
+                          </DropdownLink>
+                        )}
                         <DropdownLink
                           href="/user/dashboard"
                           onClick={() => setUserMenuOpen(false)}
@@ -582,7 +590,10 @@ export default function Navbar() {
                   </div>
                 </Link>
               ))}
-              <Link href="/books?offers=true" onClick={() => setMobileOpen(false)}>
+              <Link
+                href="/books?offers=true"
+                onClick={() => setMobileOpen(false)}
+              >
                 <div className="py-2.5 border-b border-gray-100 text-sm font-medium text-[#e47911]">
                   New Offers
                 </div>

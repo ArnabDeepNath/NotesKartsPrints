@@ -155,8 +155,18 @@ export const api = {
             const qs = params ? '?' + new URLSearchParams(params).toString() : '';
             return apiFetch(`/admin/orders${qs}`);
         },
+        createShipment: (id: string) =>
+            apiFetch(`/admin/orders/${id}/shiprocket`, { method: 'POST' }),
+        refreshShipmentTracking: (id: string) =>
+            apiFetch(`/admin/orders/${id}/shiprocket/track`, { method: 'POST' }),
         updateOrder: (id: string, status: string) =>
             apiFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+        printJobs: (params?: Record<string, string>) => {
+            const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+            return apiFetch(`/admin/print-jobs${qs}`);
+        },
+        updatePrintJob: (id: string, data: { status: string; trackingUrl?: string }) =>
+            apiFetch(`/admin/print-jobs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     },
 
     categories: {
@@ -284,17 +294,33 @@ export interface Order {
     id: string;
     status: string;
     subtotal: number;
+    discount?: number;
+    notes?: string;
     tax: number;
     total: number;
     currency: string;
     createdAt: string;
     items: OrderItem[];
+    printJobs?: PrintJob[];
     user?: User;
     shippingName?: string;
     shippingEmail?: string;
+    shippingPhone?: string;
     shippingAddress?: string;
     shippingCity?: string;
     shippingCountry?: string;
+    shippingZip?: string;
+    shiprocket?: ShiprocketMeta | null;
+}
+
+export interface ShiprocketMeta {
+    orderId?: string | null;
+    shipmentId?: string | null;
+    awbCode?: string | null;
+    trackingUrl?: string | null;
+    status?: string | null;
+    raw?: unknown;
+    rawTrack?: unknown;
 }
 
 export interface OrderItem {
@@ -352,4 +378,6 @@ export interface PrintJob {
     price: number;
     status: string;
     createdAt?: string;
+    user?: Pick<User, 'id' | 'name' | 'email'>;
+    order?: Pick<Order, 'id' | 'shippingAddress' | 'shippingName' | 'status'>;
 }

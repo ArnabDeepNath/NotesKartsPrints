@@ -1,8 +1,42 @@
 const fs = require("fs");
-const pdfParse = require("pdf-parse");
+const pdfParseModule = require("pdf-parse");
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 const { getSiteSettings } = require("../utils/siteSettings");
+
+const legacyPdfParse =
+  typeof pdfParseModule === "function"
+    ? pdfParseModule
+    : typeof pdfParseModule.default === "function"
+      ? pdfParseModule.default
+      : null;
+
+const PdfParser =
+  typeof pdfParseModule.PDFParse === "function"
+    ? pdfParseModule.PDFParse
+    : null;
+
+const getPdfPageCount = async (dataBuffer) => {
+  if (legacyPdfParse) {
+    const data = await legacyPdfParse(dataBuffer);
+    return data.numpages || data.numPages || 1;
+  }
+
+  if (PdfParser) {
+    const parser = new PdfParser({ data: dataBuffer });
+
+    try {
+      const info = await parser.getInfo();
+      return info.total || 1;
+    } finally {
+      if (typeof parser.destroy === "function") {
+        await parser.destroy().catch(() => undefined);
+      }
+    }
+  }
+
+  throw new TypeError("Unsupported pdf-parse export shape");
+};
 
 const calculateJobPrice = async (
   pages,
@@ -45,8 +79,7 @@ const uploadDocument = async (req, res, next) => {
     const dataBuffer = fs.readFileSync(filePath);
     let pages = 1;
     try {
-      const data = await pdfParse(dataBuffer);
-      pages = data.numpages || 1;
+      pages = await getPdfPageCount(dataBuffer);
     } catch (e) {
       console.error("PDF Parse error", e);
       throw new AppError(

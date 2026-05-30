@@ -529,22 +529,22 @@ export default function Navbar() {
 
       {/* Category Nav Bar */}
       {navMenuItems.length > 0 ? (
-      <div className="bg-[#37475a] border-b border-[#232f3e] hidden md:block">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center overflow-x-auto hide-scrollbar">
-            {navMenuItems.map((item) => (
-              <div key={item.id} className="flex-shrink-0">
-                <Link
-                  href={item.href}
-                  className="whitespace-nowrap text-xs font-semibold px-4 py-2.5 inline-flex items-center transition-colors hover:bg-[#485769] cursor-pointer text-white"
-                >
-                  <span>{item.label}</span>
-                </Link>
-              </div>
-            ))}
+        <div className="bg-[#37475a] border-b border-[#232f3e] hidden md:block">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center overflow-x-auto hide-scrollbar">
+              {navMenuItems.map((item) => (
+                <div key={item.id} className="flex-shrink-0">
+                  <Link
+                    href={item.href}
+                    className="whitespace-nowrap text-xs font-semibold px-4 py-2.5 inline-flex items-center transition-colors hover:bg-[#485769] cursor-pointer text-white"
+                  >
+                    <span>{item.label}</span>
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
       ) : null}
 
       {/* Mobile Menu */}
@@ -559,10 +559,7 @@ export default function Navbar() {
             <div className="px-4 py-3 flex flex-col gap-0">
               {navMenuItems.map((item) => (
                 <div key={item.id} className="border-b border-gray-100 py-2">
-                  <Link
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                  >
+                  <Link href={item.href} onClick={() => setMobileOpen(false)}>
                     <div className="text-sm font-medium text-gray-700">
                       {item.label}
                     </div>

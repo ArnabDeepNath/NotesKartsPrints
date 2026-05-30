@@ -70,7 +70,11 @@ const normalizeCategoryTree = (items: Category[]) => {
 
 type CategoryManagerMode = "category" | "subcategory";
 
-export default function CategoryManager({ mode }: { mode: CategoryManagerMode }) {
+export default function CategoryManager({
+  mode,
+}: {
+  mode: CategoryManagerMode;
+}) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -146,25 +150,20 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
         name: formData.name,
         slug: slugify(formData.name),
         description: formData.description,
-        parentId:
-          mode === "subcategory" ? formData.parentId || null : null,
+        parentId: mode === "subcategory" ? formData.parentId || null : null,
         image: imageUrl,
       };
 
       if (editingCategory) {
         await api.categories.update(editingCategory.id, payload);
         toast(
-          mode === "subcategory"
-            ? "Subcategory updated"
-            : "Category updated",
+          mode === "subcategory" ? "Subcategory updated" : "Category updated",
           "success",
         );
       } else {
         await api.categories.create(payload);
         toast(
-          mode === "subcategory"
-            ? "Subcategory created"
-            : "Category created",
+          mode === "subcategory" ? "Subcategory created" : "Category created",
           "success",
         );
       }
@@ -185,7 +184,10 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
 
     try {
       await api.categories.delete(id);
-      toast(mode === "subcategory" ? "Subcategory deleted" : "Category deleted", "success");
+      toast(
+        mode === "subcategory" ? "Subcategory deleted" : "Category deleted",
+        "success",
+      );
       fetchCategories();
     } catch (error: unknown) {
       toast(getErrorMessage(error, "Failed to delete category"), "error");
@@ -197,7 +199,8 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
   );
   const slugPreview = slugify(formData.name);
   const pageTitle = mode === "subcategory" ? "Subcategories" : "Categories";
-  const addButtonLabel = mode === "subcategory" ? "Add Subcategory" : "Add Category";
+  const addButtonLabel =
+    mode === "subcategory" ? "Add Subcategory" : "Add Category";
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -227,7 +230,9 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
 
         <div className="bg-white border border-gray-200 rounded-md p-8 overflow-hidden">
           {loading ? (
-            <div className="text-center text-gray-500">Loading {pageTitle.toLowerCase()}...</div>
+            <div className="text-center text-gray-500">
+              Loading {pageTitle.toLowerCase()}...
+            </div>
           ) : mode === "category" ? (
             <div className="divide-y divide-gray-100">
               {topLevels.length === 0 && (
@@ -236,7 +241,10 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                 </div>
               )}
               {topLevels.map((category) => (
-                <div key={category.id} className="py-4 px-2 hover:bg-gray-50 transition-colors rounded">
+                <div
+                  key={category.id}
+                  className="py-4 px-2 hover:bg-gray-50 transition-colors rounded"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h3 className="text-[#232f3e] font-medium flex items-center gap-2 flex-wrap">
@@ -251,7 +259,9 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                         ) : null}
                       </h3>
                       {category.description ? (
-                        <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {category.description}
+                        </p>
                       ) : null}
                     </div>
                     <div className="flex gap-3 text-sm">
@@ -276,7 +286,8 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
             <div className="space-y-6">
               {topLevels.length === 0 && (
                 <div className="rounded border border-[#ffe0b2] bg-[#fff8f1] px-4 py-3 text-sm text-[#8a5a15]">
-                  Create a top-level category first. Subcategories need a parent category.
+                  Create a top-level category first. Subcategories need a parent
+                  category.
                 </div>
               )}
               {subcategoryGroups.length === 0 ? (
@@ -285,11 +296,18 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                 </div>
               ) : (
                 subcategoryGroups.map((category) => (
-                  <div key={category.id} className="rounded-xl border border-gray-200 p-5">
+                  <div
+                    key={category.id}
+                    className="rounded-xl border border-gray-200 p-5"
+                  >
                     <div className="flex items-center justify-between gap-4 mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-[#232f3e]">{category.name}</h3>
-                        <p className="text-xs text-gray-500">/{category.slug}</p>
+                        <h3 className="text-lg font-semibold text-[#232f3e]">
+                          {category.name}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          /{category.slug}
+                        </p>
                       </div>
                       <button
                         onClick={() => openModal(null, category.id)}
@@ -300,12 +318,21 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                     </div>
                     <div className="space-y-3">
                       {category.children?.map((child) => (
-                        <div key={child.id} className="flex items-start justify-between gap-4 rounded border border-gray-100 px-4 py-3 bg-gray-50/70">
+                        <div
+                          key={child.id}
+                          className="flex items-start justify-between gap-4 rounded border border-gray-100 px-4 py-3 bg-gray-50/70"
+                        >
                           <div>
-                            <p className="text-sm font-medium text-[#232f3e]">{child.name}</p>
-                            <p className="text-xs text-gray-500">/{child.slug}</p>
+                            <p className="text-sm font-medium text-[#232f3e]">
+                              {child.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              /{child.slug}
+                            </p>
                             {child.description ? (
-                              <p className="text-xs text-gray-500 mt-1">{child.description}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {child.description}
+                              </p>
                             ) : null}
                           </div>
                           <div className="flex gap-3 text-xs">
@@ -349,7 +376,10 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                       ? "New Subcategory"
                       : "New Category"}
                 </h2>
-                <button onClick={closeModal} className="text-gray-500 hover:text-[#232f3e]">
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-[#232f3e]"
+                >
                   ✕
                 </button>
               </div>
@@ -373,7 +403,9 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <p className="block text-sm font-medium text-[#232f3e] mb-2">URL Preview</p>
+                    <p className="block text-sm font-medium text-[#232f3e] mb-2">
+                      URL Preview
+                    </p>
                     <div className="w-full bg-gray-50 border border-gray-200 rounded px-4 py-3 text-sm text-gray-700">
                       {slugPreview
                         ? mode === "subcategory"
@@ -402,7 +434,9 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                           : "None (Top-level category)"}
                       </option>
                       {topLevels
-                        .filter((category) => category.id !== editingCategory?.id)
+                        .filter(
+                          (category) => category.id !== editingCategory?.id,
+                        )
                         .map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.name}
@@ -414,7 +448,8 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
 
                 {mode === "subcategory" && selectedParent ? (
                   <div className="rounded border border-[#ffe0b2] bg-[#fff8f1] px-4 py-3 text-sm text-[#8a5a15]">
-                    This will appear under <strong>{selectedParent.name}</strong>.
+                    This will appear under{" "}
+                    <strong>{selectedParent.name}</strong>.
                   </div>
                 ) : null}
 
@@ -438,7 +473,9 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+                    onChange={(event) =>
+                      setImageFile(event.target.files?.[0] || null)
+                    }
                     className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
                   />
                 </label>
@@ -453,7 +490,10 @@ export default function CategoryManager({ mode }: { mode: CategoryManagerMode })
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting || (mode === "subcategory" && !formData.parentId)}
+                    disabled={
+                      isSubmitting ||
+                      (mode === "subcategory" && !formData.parentId)
+                    }
                     className="px-5 py-2.5 rounded bg-[#e47911] text-sm text-white font-medium hover:bg-[#c45500] transition disabled:opacity-50"
                   >
                     {isSubmitting ? "Saving..." : "Save"}

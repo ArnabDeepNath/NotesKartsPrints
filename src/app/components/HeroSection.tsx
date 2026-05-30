@@ -336,35 +336,41 @@ export default function HeroSection({ bookCount, metrics }: Props) {
 
       {/* Category Grid */}
       {categoryTiles.length > 0 ? (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-lg font-bold text-[#232f3e] mb-4">
-          Browse by Category
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {categoryTiles.map((cat) => (
-            <Link key={cat.id} href={cat.href}>
-              <motion.div
-                whileHover={{ y: -3, boxShadow: "0 6px 20px rgba(0,0,0,0.1)" }}
-                className="category-card bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer"
-                style={{ borderTopColor: "transparent", borderTopWidth: "3px" }}
-              >
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-2"
-                  style={{ background: cat.color }}
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h2 className="text-lg font-bold text-[#232f3e] mb-4">
+            Browse by Category
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {categoryTiles.map((cat) => (
+              <Link key={cat.id} href={cat.href}>
+                <motion.div
+                  whileHover={{
+                    y: -3,
+                    boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
+                  }}
+                  className="category-card bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer"
+                  style={{
+                    borderTopColor: "transparent",
+                    borderTopWidth: "3px",
+                  }}
                 >
-                  {cat.icon}
-                </div>
-                <span className="text-xs font-semibold text-[#232f3e] leading-tight">
-                  {cat.name}
-                </span>
-                <span className="text-[10px] text-[#e47911] font-medium mt-1">
-                  Explore More →
-                </span>
-              </motion.div>
-            </Link>
-          ))}
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-2"
+                    style={{ background: cat.color }}
+                  >
+                    {cat.icon}
+                  </div>
+                  <span className="text-xs font-semibold text-[#232f3e] leading-tight">
+                    {cat.name}
+                  </span>
+                  <span className="text-[10px] text-[#e47911] font-medium mt-1">
+                    Explore More →
+                  </span>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
       ) : null}
     </div>
   );

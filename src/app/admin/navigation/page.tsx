@@ -54,7 +54,10 @@ export default function AdminNavigationPage() {
             : [],
         );
       } catch (error: unknown) {
-        toast(getErrorMessage(error, "Failed to load navigation menu"), "error");
+        toast(
+          getErrorMessage(error, "Failed to load navigation menu"),
+          "error",
+        );
       } finally {
         setLoading(false);
       }
@@ -66,8 +69,14 @@ export default function AdminNavigationPage() {
   }, [toast, user]);
 
   const categoryMap = useMemo(() => buildCategoryMap(categories), [categories]);
-  const targetGroups = useMemo(() => buildMenuTargetGroups(categories), [categories]);
-  const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
+  const targetGroups = useMemo(
+    () => buildMenuTargetGroups(categories),
+    [categories],
+  );
+  const flatCategories = useMemo(
+    () => flattenCategories(categories),
+    [categories],
+  );
 
   const updateNavigationMenu = (navigationMenu: TargetedMenuItem[]) => {
     setSettings((current) => ({
@@ -79,7 +88,10 @@ export default function AdminNavigationPage() {
     }));
   };
 
-  const applyTargetSelection = (item: TargetedMenuItem, selectionValue: string) => {
+  const applyTargetSelection = (
+    item: TargetedMenuItem,
+    selectionValue: string,
+  ) => {
     const target = parseMenuTargetValue(selectionValue);
     if (!target) {
       return item;
@@ -156,12 +168,18 @@ export default function AdminNavigationPage() {
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <Link href="/admin" className="text-sm text-gray-500 hover:text-[#232f3e]">
+            <Link
+              href="/admin"
+              className="text-sm text-gray-500 hover:text-[#232f3e]"
+            >
               ← Back to Dashboard
             </Link>
-            <h1 className="mt-3 text-3xl font-bold text-[#232f3e]">Navigation Menu</h1>
+            <h1 className="mt-3 text-3xl font-bold text-[#232f3e]">
+              Navigation Menu
+            </h1>
             <p className="mt-2 text-sm text-gray-500">
-              Choose which created categories and subcategories appear in the storefront navbar.
+              Choose which created categories and subcategories appear in the
+              storefront navbar.
             </p>
           </div>
           <button
@@ -176,9 +194,12 @@ export default function AdminNavigationPage() {
         <section className="bg-white border border-gray-200 rounded-md p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-[#232f3e]">Navbar Items</h2>
+              <h2 className="text-lg font-semibold text-[#232f3e]">
+                Navbar Items
+              </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Each item points to one category or one subcategory. The storefront link is generated automatically.
+                Each item points to one category or one subcategory. The
+                storefront link is generated automatically.
               </p>
             </div>
             <button
@@ -192,10 +213,13 @@ export default function AdminNavigationPage() {
           </div>
 
           {loading ? (
-            <div className="text-sm text-gray-500">Loading menu settings...</div>
+            <div className="text-sm text-gray-500">
+              Loading menu settings...
+            </div>
           ) : !flatCategories.length ? (
             <div className="rounded border border-[#ffe0b2] bg-[#fff8f1] px-4 py-3 text-sm text-[#8a5a15]">
-              Create categories and subcategories first. Then you can add them to the navbar here.
+              Create categories and subcategories first. Then you can add them
+              to the navbar here.
             </div>
           ) : settings.header.navigationMenu.length === 0 ? (
             <div className="rounded border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
@@ -211,10 +235,15 @@ export default function AdminNavigationPage() {
                     : "";
 
                 return (
-                  <div key={item.id} className="rounded-xl border border-gray-200 p-4 bg-gray-50/60">
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-gray-200 p-4 bg-gray-50/60"
+                  >
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
-                        <p className="text-sm font-semibold text-[#232f3e]">Item {index + 1}</p>
+                        <p className="text-sm font-semibold text-[#232f3e]">
+                          Item {index + 1}
+                        </p>
                         <p className="text-xs text-gray-500">
                           {resolved.missingTarget
                             ? "Target missing. Pick a new category or subcategory."
@@ -231,14 +260,19 @@ export default function AdminNavigationPage() {
                     </div>
 
                     <label className="block text-sm font-medium text-[#232f3e]">
-                      <span className="block mb-2">Category or Subcategory</span>
+                      <span className="block mb-2">
+                        Category or Subcategory
+                      </span>
                       <select
                         value={selectedValue}
                         onChange={(event) =>
                           updateNavigationMenu(
                             settings.header.navigationMenu.map((menuItem) =>
                               menuItem.id === item.id
-                                ? applyTargetSelection(menuItem, event.target.value)
+                                ? applyTargetSelection(
+                                    menuItem,
+                                    event.target.value,
+                                  )
                                 : menuItem,
                             ),
                           )
@@ -260,12 +294,21 @@ export default function AdminNavigationPage() {
 
                     <div className="mt-4 grid md:grid-cols-2 gap-4">
                       <div className="rounded border border-gray-200 bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Label Preview</p>
-                        <p className="mt-2 text-sm font-medium text-[#232f3e]">{resolved.label || "Select a target"}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                          Label Preview
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-[#232f3e]">
+                          {resolved.label || "Select a target"}
+                        </p>
                       </div>
                       <div className="rounded border border-gray-200 bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">URL Preview</p>
-                        <p className="mt-2 text-sm font-medium text-[#232f3e] break-all">{resolved.href || "Generated automatically after selection"}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                          URL Preview
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-[#232f3e] break-all">
+                          {resolved.href ||
+                            "Generated automatically after selection"}
+                        </p>
                       </div>
                     </div>
                   </div>

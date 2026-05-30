@@ -22,7 +22,18 @@ import {
   type ManagedCategory,
 } from "@/lib/category-menu";
 
-const CATEGORY_ICON_OPTIONS = ["📗", "⚡", "📘", "🔬", "🏥", "📋", "🦷", "📄", "📚", "🩺"];
+const CATEGORY_ICON_OPTIONS = [
+  "📗",
+  "⚡",
+  "📘",
+  "🔬",
+  "🏥",
+  "📋",
+  "🦷",
+  "📄",
+  "📚",
+  "🩺",
+];
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -71,8 +82,14 @@ export default function AdminHomepageBoxesPage() {
   }, [toast, user]);
 
   const categoryMap = useMemo(() => buildCategoryMap(categories), [categories]);
-  const targetGroups = useMemo(() => buildMenuTargetGroups(categories), [categories]);
-  const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
+  const targetGroups = useMemo(
+    () => buildMenuTargetGroups(categories),
+    [categories],
+  );
+  const flatCategories = useMemo(
+    () => flattenCategories(categories),
+    [categories],
+  );
 
   const updateTiles = (categoryTiles: CategoryTile[]) => {
     setSettings((current) => ({
@@ -132,7 +149,9 @@ export default function AdminHomepageBoxesPage() {
   };
 
   const removeTile = (id: string) => {
-    updateTiles(settings.homepage.categoryTiles.filter((tile) => tile.id !== id));
+    updateTiles(
+      settings.homepage.categoryTiles.filter((tile) => tile.id !== id),
+    );
   };
 
   const handleSave = async () => {
@@ -163,12 +182,18 @@ export default function AdminHomepageBoxesPage() {
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <Link href="/admin" className="text-sm text-gray-500 hover:text-[#232f3e]">
+            <Link
+              href="/admin"
+              className="text-sm text-gray-500 hover:text-[#232f3e]"
+            >
               ← Back to Dashboard
             </Link>
-            <h1 className="mt-3 text-3xl font-bold text-[#232f3e]">Homepage Boxes</h1>
+            <h1 className="mt-3 text-3xl font-bold text-[#232f3e]">
+              Homepage Boxes
+            </h1>
             <p className="mt-2 text-sm text-gray-500">
-              Control the category and subcategory boxes shown on the landing page under the hero.
+              Control the category and subcategory boxes shown on the landing
+              page under the hero.
             </p>
           </div>
           <button
@@ -183,9 +208,12 @@ export default function AdminHomepageBoxesPage() {
         <section className="bg-white border border-gray-200 rounded-md p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-[#232f3e]">Landing Page Boxes</h2>
+              <h2 className="text-lg font-semibold text-[#232f3e]">
+                Landing Page Boxes
+              </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Pick a category or subcategory for each box, then choose its icon and accent color.
+                Pick a category or subcategory for each box, then choose its
+                icon and accent color.
               </p>
             </div>
             <button
@@ -199,10 +227,13 @@ export default function AdminHomepageBoxesPage() {
           </div>
 
           {loading ? (
-            <div className="text-sm text-gray-500">Loading homepage boxes...</div>
+            <div className="text-sm text-gray-500">
+              Loading homepage boxes...
+            </div>
           ) : !flatCategories.length ? (
             <div className="rounded border border-[#ffe0b2] bg-[#fff8f1] px-4 py-3 text-sm text-[#8a5a15]">
-              Create categories and subcategories first. Then you can add them to the landing page here.
+              Create categories and subcategories first. Then you can add them
+              to the landing page here.
             </div>
           ) : settings.homepage.categoryTiles.length === 0 ? (
             <div className="rounded border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
@@ -218,10 +249,15 @@ export default function AdminHomepageBoxesPage() {
                     : "";
 
                 return (
-                  <div key={tile.id} className="rounded-xl border border-gray-200 p-4 bg-gray-50/60">
+                  <div
+                    key={tile.id}
+                    className="rounded-xl border border-gray-200 p-4 bg-gray-50/60"
+                  >
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
-                        <p className="text-sm font-semibold text-[#232f3e]">Box {index + 1}</p>
+                        <p className="text-sm font-semibold text-[#232f3e]">
+                          Box {index + 1}
+                        </p>
                         <p className="text-xs text-gray-500">
                           {resolved.missingTarget
                             ? "Target missing. Pick a new category or subcategory."
@@ -239,15 +275,21 @@ export default function AdminHomepageBoxesPage() {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                       <label className="block text-sm font-medium text-[#232f3e] lg:col-span-2">
-                        <span className="block mb-2">Category or Subcategory</span>
+                        <span className="block mb-2">
+                          Category or Subcategory
+                        </span>
                         <select
                           value={selectedValue}
                           onChange={(event) =>
                             updateTiles(
-                              settings.homepage.categoryTiles.map((currentTile) =>
-                                currentTile.id === tile.id
-                                  ? applyTargetSelection(currentTile, event.target.value)
-                                  : currentTile,
+                              settings.homepage.categoryTiles.map(
+                                (currentTile) =>
+                                  currentTile.id === tile.id
+                                    ? applyTargetSelection(
+                                        currentTile,
+                                        event.target.value,
+                                      )
+                                    : currentTile,
                               ),
                             )
                           }
@@ -272,10 +314,14 @@ export default function AdminHomepageBoxesPage() {
                           value={tile.icon}
                           onChange={(event) =>
                             updateTiles(
-                              settings.homepage.categoryTiles.map((currentTile) =>
-                                currentTile.id === tile.id
-                                  ? { ...currentTile, icon: event.target.value }
-                                  : currentTile,
+                              settings.homepage.categoryTiles.map(
+                                (currentTile) =>
+                                  currentTile.id === tile.id
+                                    ? {
+                                        ...currentTile,
+                                        icon: event.target.value,
+                                      }
+                                    : currentTile,
                               ),
                             )
                           }
@@ -297,10 +343,14 @@ export default function AdminHomepageBoxesPage() {
                             value={tile.color}
                             onChange={(event) =>
                               updateTiles(
-                                settings.homepage.categoryTiles.map((currentTile) =>
-                                  currentTile.id === tile.id
-                                    ? { ...currentTile, color: event.target.value }
-                                    : currentTile,
+                                settings.homepage.categoryTiles.map(
+                                  (currentTile) =>
+                                    currentTile.id === tile.id
+                                      ? {
+                                          ...currentTile,
+                                          color: event.target.value,
+                                        }
+                                      : currentTile,
                                 ),
                               )
                             }
@@ -311,10 +361,14 @@ export default function AdminHomepageBoxesPage() {
                             value={tile.color}
                             onChange={(event) =>
                               updateTiles(
-                                settings.homepage.categoryTiles.map((currentTile) =>
-                                  currentTile.id === tile.id
-                                    ? { ...currentTile, color: event.target.value }
-                                    : currentTile,
+                                settings.homepage.categoryTiles.map(
+                                  (currentTile) =>
+                                    currentTile.id === tile.id
+                                      ? {
+                                          ...currentTile,
+                                          color: event.target.value,
+                                        }
+                                      : currentTile,
                                 ),
                               )
                             }
@@ -326,12 +380,21 @@ export default function AdminHomepageBoxesPage() {
 
                     <div className="mt-4 grid md:grid-cols-2 gap-4">
                       <div className="rounded border border-gray-200 bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Label Preview</p>
-                        <p className="mt-2 text-sm font-medium text-[#232f3e]">{resolved.name || "Select a target"}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                          Label Preview
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-[#232f3e]">
+                          {resolved.name || "Select a target"}
+                        </p>
                       </div>
                       <div className="rounded border border-gray-200 bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">URL Preview</p>
-                        <p className="mt-2 text-sm font-medium text-[#232f3e] break-all">{resolved.href || "Generated automatically after selection"}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                          URL Preview
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-[#232f3e] break-all">
+                          {resolved.href ||
+                            "Generated automatically after selection"}
+                        </p>
                       </div>
                     </div>
                   </div>

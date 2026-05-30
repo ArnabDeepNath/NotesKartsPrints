@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { api } from "@/lib/api";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import {
+  buildCategoryMap,
+  resolveCategoryTile,
+  type ManagedCategory,
+} from "@/lib/category-menu";
 
 interface Props {
   bookCount: number;
@@ -20,6 +26,7 @@ interface Props {
 
 export default function HeroSection({ bookCount, metrics }: Props) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [categories, setCategories] = useState<ManagedCategory[]>([]);
   const { settings } = useSiteSettings();
   const baseSlides = settings.homepage.heroSlides.length
     ? settings.homepage.heroSlides
@@ -39,9 +46,10 @@ export default function HeroSection({ bookCount, metrics }: Props) {
         }
       : item,
   );
-  const categories = settings.homepage.categoryTiles.length
-    ? settings.homepage.categoryTiles
-    : DEFAULT_FALLBACK.categoryTiles;
+  const categoryMap = buildCategoryMap(categories);
+  const categoryTiles = settings.homepage.categoryTiles
+    .map((tile) => resolveCategoryTile(tile, categoryMap))
+    .filter((tile) => tile.name && tile.href);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -49,6 +57,29 @@ export default function HeroSection({ bookCount, metrics }: Props) {
     }, 4500);
     return () => clearInterval(timer);
   }, [slides.length]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        const data = (await api.categories.getAll()) as ManagedCategory[];
+        if (isMounted && Array.isArray(data)) {
+          setCategories(data);
+        }
+      } catch {
+        if (isMounted) {
+          setCategories([]);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const slide = slides[currentSlide] || slides[0];
   const printHighlights = [
@@ -304,13 +335,14 @@ export default function HeroSection({ bookCount, metrics }: Props) {
       </section>
 
       {/* Category Grid */}
+      {categoryTiles.length > 0 ? (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-lg font-bold text-[#232f3e] mb-4">
           Browse by Category
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {categories.map((cat) => (
-            <Link key={cat.name} href={cat.href}>
+          {categoryTiles.map((cat) => (
+            <Link key={cat.id} href={cat.href}>
               <motion.div
                 whileHover={{ y: -3, boxShadow: "0 6px 20px rgba(0,0,0,0.1)" }}
                 className="category-card bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer"
@@ -333,6 +365,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
           ))}
         </div>
       </div>
+      ) : null}
     </div>
   );
 }
@@ -352,10 +385,13 @@ const DEFAULT_FALLBACK = {
   ],
   categoryTiles: [
     {
+      id: "fallback-category-tile",
       name: "NEET PG Full Notes",
       icon: "📗",
       href: "/books?category=neet-pg",
       color: "#e8f5e9",
+      targetType: "custom",
+      targetId: null,
     },
   ],
 };

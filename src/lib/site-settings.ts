@@ -3,6 +3,16 @@ export interface SiteLink {
   href: string;
 }
 
+export type MenuTargetType = "custom" | "category" | "subcategory";
+
+export interface TargetedMenuItem {
+  id: string;
+  label: string;
+  href: string;
+  targetType: MenuTargetType;
+  targetId: string | null;
+}
+
 export interface HeroSlide {
   title: string;
   subtitle: string;
@@ -15,10 +25,13 @@ export interface HeroSlide {
 }
 
 export interface CategoryTile {
+  id: string;
   name: string;
   icon: string;
   href: string;
   color: string;
+  targetType: MenuTargetType;
+  targetId: string | null;
 }
 
 export interface SiteSettings {
@@ -57,6 +70,7 @@ export interface SiteSettings {
     brandName: string;
     brandAccent: string;
     infoBarLinks: SiteLink[];
+    navigationMenu: TargetedMenuItem[];
     emailLabel: string;
     emailHref: string;
     trackOrderLabel: string;
@@ -148,6 +162,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       { label: "FAQs", href: "/#faqs" },
       { label: "OFFERS", href: "/books?offers=true" },
     ],
+    navigationMenu: [],
     emailLabel: "EMAIL: PRINT@NOTEKART.IN",
     emailHref: "mailto:print@notekart.in",
     trackOrderLabel: "TRACK ORDER",
@@ -190,12 +205,60 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       },
     ],
     categoryTiles: [
-      { name: "NEET PG Full Notes", icon: "📗", href: "/books?category=neet-pg", color: "#e8f5e9" },
-      { name: "Rapid Revision", icon: "⚡", href: "/books?category=rapid-revision", color: "#fff3e0" },
-      { name: "BTR Notes", icon: "📘", href: "/books?category=btr-notes", color: "#e3f2fd" },
-      { name: "Super Speciality", icon: "🔬", href: "/books?category=super-speciality", color: "#f3e5f5" },
-      { name: "USMLE Notes", icon: "🏥", href: "/books?category=usmle", color: "#fce4ec" },
-      { name: "Other Notes", icon: "📋", href: "/books?category=other", color: "#e0f7fa" },
+      {
+        id: "tile-neet-pg",
+        name: "NEET PG Full Notes",
+        icon: "📗",
+        href: "/books?category=neet-pg",
+        color: "#e8f5e9",
+        targetType: "custom",
+        targetId: null,
+      },
+      {
+        id: "tile-rapid-revision",
+        name: "Rapid Revision",
+        icon: "⚡",
+        href: "/books?category=rapid-revision",
+        color: "#fff3e0",
+        targetType: "custom",
+        targetId: null,
+      },
+      {
+        id: "tile-btr-notes",
+        name: "BTR Notes",
+        icon: "📘",
+        href: "/books?category=btr-notes",
+        color: "#e3f2fd",
+        targetType: "custom",
+        targetId: null,
+      },
+      {
+        id: "tile-super-speciality",
+        name: "Super Speciality",
+        icon: "🔬",
+        href: "/books?category=super-speciality",
+        color: "#f3e5f5",
+        targetType: "custom",
+        targetId: null,
+      },
+      {
+        id: "tile-usmle",
+        name: "USMLE Notes",
+        icon: "🏥",
+        href: "/books?category=usmle",
+        color: "#fce4ec",
+        targetType: "custom",
+        targetId: null,
+      },
+      {
+        id: "tile-other",
+        name: "Other Notes",
+        icon: "📋",
+        href: "/books?category=other",
+        color: "#e0f7fa",
+        targetType: "custom",
+        targetId: null,
+      },
     ],
   },
   logistics: {

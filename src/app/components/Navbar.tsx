@@ -7,45 +7,28 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { AnimatePresence, motion } from "framer-motion";
-
-type NavbarCategory = {
-  id: string;
-  name: string;
-  slug: string;
-  parentId: string | null;
-};
-
-const FALLBACK_CATEGORIES = [
-  { label: "NEET PG Full Notes", href: "/books?category=neet-pg" },
-  { label: "Rapid Revision", href: "/books?category=rapid-revision" },
-  { label: "BTR Notes", href: "/books?category=btr-notes" },
-  { label: "Super Speciality", href: "/books?category=super-speciality" },
-  { label: "USMLE Notes", href: "/books?category=usmle" },
-  { label: "BDS Dental", href: "/books?category=bds-dental" },
-  { label: "Thesis & Plan Work", href: "/books?category=thesis" },
-  { label: "MBBS Books", href: "/books?category=mbbs" },
-];
+import {
+  buildCategoryMap,
+  resolveMenuItem,
+  type ManagedCategory,
+} from "@/lib/category-menu";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categories, setCategories] = useState<NavbarCategory[]>([]);
+  const [categories, setCategories] = useState<ManagedCategory[]>([]);
   const { user, logout, cart, cartTotal, cartCount, removeFromCart } =
     useAuth();
   const { settings } = useSiteSettings();
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const header = settings.header;
-  const navCategories = categories.length
-    ? categories
-        .filter((category) => !category.parentId)
-        .map((category) => ({
-          label: category.name,
-          href: `/books?category=${category.slug}`,
-        }))
-    : FALLBACK_CATEGORIES;
+  const categoryMap = buildCategoryMap(categories);
+  const navMenuItems = settings.header.navigationMenu
+    .map((item) => resolveMenuItem(item, categoryMap))
+    .filter((item) => item.label && item.href);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -63,7 +46,7 @@ export default function Navbar() {
 
     const loadCategories = async () => {
       try {
-        const data = (await api.categories.getAll()) as NavbarCategory[];
+        const data = (await api.categories.getAll()) as ManagedCategory[];
         if (isMounted && Array.isArray(data)) {
           setCategories(data);
         }
@@ -545,29 +528,24 @@ export default function Navbar() {
       </div>
 
       {/* Category Nav Bar */}
+      {navMenuItems.length > 0 ? (
       <div className="bg-[#37475a] border-b border-[#232f3e] hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center overflow-x-auto">
-            {navCategories.map((cat) => (
-              <Link key={cat.label} href={cat.href}>
-                <span className="whitespace-nowrap text-xs font-semibold px-4 py-2.5 inline-block transition-colors hover:bg-[#485769] cursor-pointer text-white">
-                  {cat.label}
-                </span>
-              </Link>
+          <div className="flex items-center overflow-x-auto hide-scrollbar">
+            {navMenuItems.map((item) => (
+              <div key={item.id} className="flex-shrink-0">
+                <Link
+                  href={item.href}
+                  className="whitespace-nowrap text-xs font-semibold px-4 py-2.5 inline-flex items-center transition-colors hover:bg-[#485769] cursor-pointer text-white"
+                >
+                  <span>{item.label}</span>
+                </Link>
+              </div>
             ))}
-            <Link href="/books?offers=true">
-              <span className="whitespace-nowrap text-xs font-semibold px-4 py-2.5 inline-block text-[#f5a623] hover:bg-[#485769] transition-colors cursor-pointer">
-                New Offers
-              </span>
-            </Link>
-            <Link href="/books">
-              <span className="whitespace-nowrap text-xs font-semibold px-4 py-2.5 inline-block text-white hover:bg-[#485769] transition-colors cursor-pointer">
-                All Products &rarr;
-              </span>
-            </Link>
           </div>
         </div>
       </div>
+      ) : null}
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -579,25 +557,18 @@ export default function Navbar() {
             className="md:hidden bg-white border-t border-gray-200 shadow-lg overflow-hidden"
           >
             <div className="px-4 py-3 flex flex-col gap-0">
-              {navCategories.map((cat) => (
-                <Link
-                  key={cat.label}
-                  href={cat.href}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <div className="py-2.5 border-b border-gray-100 text-sm font-medium text-gray-700">
-                    {cat.label}
-                  </div>
-                </Link>
-              ))}
-              <Link
-                href="/books?offers=true"
-                onClick={() => setMobileOpen(false)}
-              >
-                <div className="py-2.5 border-b border-gray-100 text-sm font-medium text-[#e47911]">
-                  New Offers
+              {navMenuItems.map((item) => (
+                <div key={item.id} className="border-b border-gray-100 py-2">
+                  <Link
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <div className="text-sm font-medium text-gray-700">
+                      {item.label}
+                    </div>
+                  </Link>
                 </div>
-              </Link>
+              ))}
               <div className="pt-3 flex gap-2">
                 {user ? (
                   <button

@@ -522,7 +522,22 @@ export default function AdminPanel() {
                   <div className="flex gap-4">
                     <Link href="/admin/categories">
                       <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
-                        📦 Manage Categories
+                        📦 Categories
+                      </button>
+                    </Link>
+                    <Link href="/admin/subcategories">
+                      <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
+                        🧩 Subcategories
+                      </button>
+                    </Link>
+                    <Link href="/admin/navigation">
+                      <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
+                        🧭 Navbar Menu
+                      </button>
+                    </Link>
+                    <Link href="/admin/homepage-boxes">
+                      <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
+                        🗂 Homepage Boxes
                       </button>
                     </Link>
                     <Link href="/admin/books/new">

@@ -72,6 +72,7 @@ const DEFAULT_SITE_SETTINGS = {
       { label: "FAQs", href: "/#faqs" },
       { label: "OFFERS", href: "/books?offers=true" },
     ],
+    navigationMenu: [],
     emailLabel: "EMAIL: PRINT@NOTEKART.IN",
     emailHref: "mailto:print@notekart.in",
     trackOrderLabel: "TRACK ORDER",
@@ -115,40 +116,58 @@ const DEFAULT_SITE_SETTINGS = {
     ],
     categoryTiles: [
       {
+        id: "tile-neet-pg",
         name: "NEET PG Full Notes",
         icon: "📗",
         href: "/books?category=neet-pg",
         color: "#e8f5e9",
+        targetType: "custom",
+        targetId: null,
       },
       {
+        id: "tile-rapid-revision",
         name: "Rapid Revision",
         icon: "⚡",
         href: "/books?category=rapid-revision",
         color: "#fff3e0",
+        targetType: "custom",
+        targetId: null,
       },
       {
+        id: "tile-btr-notes",
         name: "BTR Notes",
         icon: "📘",
         href: "/books?category=btr-notes",
         color: "#e3f2fd",
+        targetType: "custom",
+        targetId: null,
       },
       {
+        id: "tile-super-speciality",
         name: "Super Speciality",
         icon: "🔬",
         href: "/books?category=super-speciality",
         color: "#f3e5f5",
+        targetType: "custom",
+        targetId: null,
       },
       {
+        id: "tile-usmle",
         name: "USMLE Notes",
         icon: "🏥",
         href: "/books?category=usmle",
         color: "#fce4ec",
+        targetType: "custom",
+        targetId: null,
       },
       {
+        id: "tile-other",
         name: "Other Notes",
         icon: "📋",
         href: "/books?category=other",
         color: "#e0f7fa",
+        targetType: "custom",
+        targetId: null,
       },
     ],
   },
@@ -189,8 +208,89 @@ const sanitizeNumeric = (value, fallback) => {
   return Number.isFinite(number) ? number : fallback;
 };
 
+const parseBooleanEnv = (value, fallback) => {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["false", "0", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  return fallback;
+};
+
+const normalizeMenuItem = (item = {}, fallbackId) => {
+  const targetType =
+    item.targetType === "category" ||
+    item.targetType === "subcategory" ||
+    item.targetType === "custom"
+      ? item.targetType
+      : "custom";
+
+  return {
+    id: String(item.id || fallbackId),
+    label: String(item.label || "").trim(),
+    href: String(item.href || "").trim(),
+    targetType,
+    targetId: item.targetId ? String(item.targetId) : null,
+  };
+};
+
+const normalizeCategoryTile = (item = {}, fallbackId) => {
+  const normalizedMenuItem = normalizeMenuItem(item, fallbackId);
+
+  return {
+    id: normalizedMenuItem.id,
+    name: String(item.name || normalizedMenuItem.label || "").trim(),
+    icon: String(item.icon || "📗"),
+    href: normalizedMenuItem.href,
+    color: String(item.color || "#e8f5e9"),
+    targetType: normalizedMenuItem.targetType,
+    targetId: normalizedMenuItem.targetId,
+  };
+};
+
+const applyEnvOverrides = (settings) => ({
+  ...settings,
+  logistics: {
+    ...settings.logistics,
+    provider: process.env.LOGISTICS_PROVIDER || settings.logistics.provider,
+    shiprocketEnabled: parseBooleanEnv(
+      process.env.SHIPROCKET_ENABLED,
+      settings.logistics.shiprocketEnabled,
+    ),
+    shiprocketEmail:
+      process.env.SHIPROCKET_EMAIL || settings.logistics.shiprocketEmail,
+    shiprocketPassword:
+      process.env.SHIPROCKET_PASSWORD || settings.logistics.shiprocketPassword,
+    pickupLocation:
+      process.env.SHIPROCKET_PICKUP_LOCATION ||
+      settings.logistics.pickupLocation,
+    channelId:
+      process.env.SHIPROCKET_CHANNEL_ID || settings.logistics.channelId,
+  },
+});
+
 const normalizeSiteSettings = (input = {}) => {
   const merged = deepMerge(DEFAULT_SITE_SETTINGS, input);
+
+  merged.header.navigationMenu = Array.isArray(merged.header.navigationMenu)
+    ? merged.header.navigationMenu.map((item, index) =>
+        normalizeMenuItem(item, `nav-${index + 1}`),
+      )
+    : [];
+
+  merged.homepage.categoryTiles = Array.isArray(merged.homepage.categoryTiles)
+    ? merged.homepage.categoryTiles.map((item, index) =>
+        normalizeCategoryTile(item, `tile-${index + 1}`),
+      )
+    : [];
 
   merged.pricing.taxRate = sanitizeNumeric(
     merged.pricing.taxRate,
@@ -252,13 +352,13 @@ const getSiteSettings = async () => {
     where: { key: SITE_SETTINGS_KEY },
   });
   if (!row?.value) {
-    return DEFAULT_SITE_SETTINGS;
+    return applyEnvOverrides(DEFAULT_SITE_SETTINGS);
   }
 
   try {
-    return normalizeSiteSettings(JSON.parse(row.value));
+    return applyEnvOverrides(normalizeSiteSettings(JSON.parse(row.value)));
   } catch {
-    return DEFAULT_SITE_SETTINGS;
+    return applyEnvOverrides(DEFAULT_SITE_SETTINGS);
   }
 };
 

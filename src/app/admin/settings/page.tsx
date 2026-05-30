@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { createMenuItemId } from "@/lib/category-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
@@ -102,6 +103,9 @@ const STATIC_LINK_OPTION_GROUPS: LinkOptionGroup[] = [
       { label: "Admin Dashboard", value: "/admin" },
       { label: "Add Book", value: "/admin/books/new" },
       { label: "Manage Categories", value: "/admin/categories" },
+      { label: "Manage Subcategories", value: "/admin/subcategories" },
+      { label: "Navigation Menu", value: "/admin/navigation" },
+      { label: "Homepage Boxes", value: "/admin/homepage-boxes" },
       { label: "Site Settings", value: "/admin/settings" },
     ],
   },
@@ -352,10 +356,13 @@ export default function AdminSettingsPage() {
       categoryTiles: [
         ...settings.homepage.categoryTiles,
         {
+          id: createMenuItemId("tile"),
           name: "",
           icon: CATEGORY_ICON_OPTIONS[0],
           href: "/books",
           color: "#e8f5e9",
+          targetType: "custom",
+          targetId: null,
         },
       ],
     });

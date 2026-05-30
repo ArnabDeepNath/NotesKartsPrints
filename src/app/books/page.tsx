@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  Suspense,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -20,6 +27,65 @@ const SORT_OPTIONS = [
   { label: "Best Selling", value: "sold:desc" },
 ];
 
+type CategoryNode = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  parentId: string | null;
+  children?: CategoryNode[];
+};
+
+type CategoryTab = {
+  id: string;
+  label: string;
+  slug: string;
+  kind: "category" | "subcategory" | "all";
+  parentSlug?: string;
+};
+
+const flattenCategories = (items: CategoryNode[]): CategoryNode[] => {
+  const flattened: CategoryNode[] = [];
+
+  items.forEach((item) => {
+    flattened.push(item);
+    if (item.children?.length) {
+      flattened.push(...flattenCategories(item.children));
+    }
+  });
+
+  return flattened;
+};
+
+const buildBooksHref = ({
+  search,
+  genre,
+  category,
+  subcategory,
+  featured,
+  page,
+}: {
+  search: string;
+  genre: string;
+  category: string;
+  subcategory: string;
+  featured: boolean;
+  page: number;
+}) => {
+  const params = new URLSearchParams();
+
+  if (search) params.set("search", search);
+  if (genre) params.set("genre", genre);
+  if (category) params.set("category", category);
+  if (subcategory) params.set("subcategory", subcategory);
+  if (featured) params.set("featured", "true");
+  if (page > 1) params.set("page", String(page));
+
+  const query = params.toString();
+  return query ? `/books?${query}` : "/books";
+};
+
 function BooksPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -29,6 +95,7 @@ function BooksPageInner() {
 
   const [books, setBooks] = useState<Book[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -40,7 +107,7 @@ function BooksPageInner() {
     searchParams.get("subcategory") || "",
   );
   const [sort, setSort] = useState("createdAt:desc");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(Number(searchParams.get("page") || 1));
   const [featured, setFeatured] = useState(
     searchParams.get("featured") === "true",
   );
@@ -51,7 +118,19 @@ function BooksPageInner() {
       { opacity: 0, y: 30 },
       { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
     );
-    api.books.genres().then(({ genres: g }) => setGenres(g));
+    Promise.all([api.books.genres(), api.categories.getAll()])
+      .then(([genreResponse, categoryResponse]) => {
+        setGenres(genreResponse.genres || []);
+        setCategories(
+          Array.isArray(categoryResponse)
+            ? (categoryResponse as CategoryNode[])
+            : [],
+        );
+      })
+      .catch(() => {
+        setGenres([]);
+        setCategories([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -59,8 +138,126 @@ function BooksPageInner() {
     setGenre(searchParams.get("genre") || "");
     setCategory(searchParams.get("category") || "");
     setSubcategory(searchParams.get("subcategory") || "");
+    setPage(Number(searchParams.get("page") || 1));
     setFeatured(searchParams.get("featured") === "true");
   }, [searchParams]);
+
+  const categoryList = useMemo(
+    () => flattenCategories(categories),
+    [categories],
+  );
+  const categoryBySlug = useMemo(
+    () => new Map(categoryList.map((item) => [item.slug, item])),
+    [categoryList],
+  );
+
+  const activeSubcategory = subcategory
+    ? categoryBySlug.get(subcategory) || null
+    : null;
+  const activeCategory = useMemo(() => {
+    if (activeSubcategory?.parentId) {
+      return (
+        categoryList.find((item) => item.id === activeSubcategory.parentId) ||
+        null
+      );
+    }
+
+    return category ? categoryBySlug.get(category) || null : null;
+  }, [activeSubcategory, category, categoryBySlug, categoryList]);
+
+  const categoryTabs = useMemo<CategoryTab[]>(() => {
+    if (activeSubcategory && activeCategory) {
+      return [
+        {
+          id: `${activeCategory.id}-all`,
+          label: `All in ${activeCategory.name}`,
+          slug: activeCategory.slug,
+          kind: "all",
+        },
+        ...((activeCategory.children || []).map((item) => ({
+          id: item.id,
+          label: item.name,
+          slug: item.slug,
+          kind: "subcategory" as const,
+          parentSlug: activeCategory.slug,
+        })) || []),
+      ];
+    }
+
+    if (activeCategory) {
+      return (activeCategory.children || []).map((item) => ({
+        id: item.id,
+        label: item.name,
+        slug: item.slug,
+        kind: "subcategory" as const,
+        parentSlug: activeCategory.slug,
+      }));
+    }
+
+    return categories.map((item) => ({
+      id: item.id,
+      label: item.name,
+      slug: item.slug,
+      kind: "category" as const,
+    }));
+  }, [activeCategory, activeSubcategory, categories]);
+
+  const headerTitle =
+    activeSubcategory?.name ||
+    activeCategory?.name ||
+    (featured
+      ? "Featured Collection"
+      : search
+        ? `Search results for "${search}"`
+        : "Browse Collection");
+
+  const headerDescription =
+    activeSubcategory?.description ||
+    activeCategory?.description ||
+    (featured
+      ? "A sharper selection of standout titles, reordered around what is trending right now."
+      : "Discover curated academic titles, print-ready notes, and revision materials with cleaner category browsing.");
+
+  const headerImage = activeSubcategory?.image || activeCategory?.image || null;
+
+  const applyFilters = useCallback(
+    (
+      updates: Partial<{
+        search: string;
+        genre: string;
+        category: string;
+        subcategory: string;
+        featured: boolean;
+        page: number;
+      }>,
+    ) => {
+      const nextSearch = updates.search ?? search;
+      const nextGenre = updates.genre ?? genre;
+      const nextCategory = updates.category ?? category;
+      const nextSubcategory = updates.subcategory ?? subcategory;
+      const nextFeatured = updates.featured ?? featured;
+      const nextPage = updates.page ?? page;
+
+      setSearch(nextSearch);
+      setGenre(nextGenre);
+      setCategory(nextCategory);
+      setSubcategory(nextSubcategory);
+      setFeatured(nextFeatured);
+      setPage(nextPage);
+
+      router.push(
+        buildBooksHref({
+          search: nextSearch,
+          genre: nextGenre,
+          category: nextCategory,
+          subcategory: nextSubcategory,
+          featured: nextFeatured,
+          page: nextPage,
+        }),
+      );
+    },
+    [category, featured, genre, page, router, search, subcategory],
+  );
 
   const fetchBooks = useCallback(async () => {
     setLoading(true);
@@ -95,7 +292,7 @@ function BooksPageInner() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
+    applyFilters({ page: 1, search });
   };
 
   const handleAddToCart = (book: Book) => {
@@ -115,119 +312,285 @@ function BooksPageInner() {
       <Navbar />
       <main className="pt-6 pb-20 px-4 max-w-7xl mx-auto">
         {/* Header */}
-        <div ref={headerRef} className="mb-6 pt-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#232f3e] mb-1">
-            Browse Collection
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Showing {total.toLocaleString()} titles
-          </p>
+        <div ref={headerRef} className="mb-8 pt-4">
+          <div className="relative overflow-hidden rounded-[28px] border border-[#d8e0ea] bg-[linear-gradient(135deg,#f7fafc_0%,#eef3f8_46%,#ffffff_100%)] px-6 py-8 shadow-[0_18px_70px_rgba(35,47,62,0.08)] md:px-8 md:py-10">
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_top,_rgba(228,121,17,0.16),_transparent_56%)]" />
+            <div className="relative grid gap-8 md:grid-cols-[1.35fr_0.65fr] md:items-end">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#146eb4]">
+                  <span>Catalog</span>
+                  {activeCategory ? (
+                    <span className="text-gray-300">/</span>
+                  ) : null}
+                  {activeCategory ? <span>{activeCategory.name}</span> : null}
+                  {activeSubcategory ? (
+                    <span className="text-gray-300">/</span>
+                  ) : null}
+                  {activeSubcategory ? (
+                    <span>{activeSubcategory.name}</span>
+                  ) : null}
+                </div>
+                <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight text-[#172033] md:text-5xl">
+                  {headerTitle}
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600 md:text-base">
+                  {headerDescription}
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      Titles
+                    </p>
+                    <p className="mt-2 text-2xl font-black text-[#232f3e]">
+                      {total.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      Current View
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-[#232f3e]">
+                      {activeSubcategory
+                        ? "Subcategory"
+                        : activeCategory
+                          ? "Category"
+                          : featured
+                            ? "Featured"
+                            : "Full Catalog"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="rounded-[24px] border border-white/70 bg-white/75 p-4 shadow-sm backdrop-blur">
+                  {headerImage ? (
+                    <img
+                      src={headerImage}
+                      alt={headerTitle}
+                      className="h-48 w-full rounded-[18px] object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-48 items-center justify-center rounded-[18px] bg-[linear-gradient(145deg,#17233b_0%,#2f4d68_100%)] text-center text-white">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f5a623]">
+                          Refined Discovery
+                        </p>
+                        <p className="mt-3 max-w-[14rem] text-xl font-black leading-tight">
+                          Browse cleaner category paths without generic tabs.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Category Tabs */}
+        {categoryTabs.length > 0 ? (
+          <section className="mb-8 rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                  {activeCategory || activeSubcategory
+                    ? "Explore Nearby"
+                    : "Browse Categories"}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {activeSubcategory
+                    ? "Switch between sibling subcategories or jump back to the parent collection."
+                    : activeCategory
+                      ? "Move across the subcategories inside this collection."
+                      : "Jump directly into a top-level category."}
+                </p>
+              </div>
+              {activeCategory || activeSubcategory ? (
+                <button
+                  onClick={() =>
+                    applyFilters({ category: "", subcategory: "", page: 1 })
+                  }
+                  className="text-sm font-medium text-[#146eb4] hover:underline"
+                >
+                  View full catalog
+                </button>
+              ) : null}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {categoryTabs.map((tab) => {
+                const isActive =
+                  (tab.kind === "category" &&
+                    category === tab.slug &&
+                    !subcategory) ||
+                  (tab.kind === "subcategory" && subcategory === tab.slug) ||
+                  (tab.kind === "all" &&
+                    activeCategory?.slug === tab.slug &&
+                    !subcategory);
+
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      if (tab.kind === "subcategory") {
+                        applyFilters({
+                          category: tab.parentSlug || "",
+                          subcategory: tab.slug,
+                          page: 1,
+                        });
+                        return;
+                      }
+
+                      applyFilters({
+                        category: tab.slug,
+                        subcategory: "",
+                        page: 1,
+                      });
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${isActive ? "bg-[#17233b] text-white shadow-[0_10px_30px_rgba(23,35,59,0.18)]" : "border border-gray-200 bg-[#f8fafc] text-gray-600 hover:border-[#146eb4] hover:text-[#146eb4]"}`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <form onSubmit={handleSearch} className="flex-1 relative">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search books, authors, genres..."
-              className="w-full bg-white border border-gray-300 rounded-md px-4 py-2.5 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-[#e47911] pr-10"
-            />
-            <button
-              type="submit"
-              className="absolute right-0 top-0 h-full px-3 bg-[#e47911] hover:bg-[#c45500] text-white rounded-r-md transition-colors"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
+        <div className="mb-6 rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
+            <form onSubmit={handleSearch} className="flex-1">
+              <label className="block text-sm font-medium text-[#232f3e]">
+                <span className="mb-2 block">
+                  Search the current collection
+                </span>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search books, authors, titles, or revision notes..."
+                    className="w-full rounded-2xl border border-gray-300 bg-[#fbfcfe] px-4 py-3 pr-11 text-sm text-gray-800 placeholder-gray-400 focus:border-[#146eb4] focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-1.5 top-1.5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#e47911] text-white transition-colors hover:bg-[#c45500]"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                  </button>
+                </div>
+              </label>
+            </form>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 md:min-w-[480px]">
+              <label className="block text-sm font-medium text-[#232f3e]">
+                <span className="mb-2 block">Genre</span>
+                <select
+                  value={genre}
+                  onChange={(e) =>
+                    applyFilters({ genre: e.target.value, page: 1 })
+                  }
+                  className="w-full rounded-2xl border border-gray-300 bg-[#fbfcfe] px-4 py-3 text-sm text-gray-700 focus:border-[#146eb4] focus:outline-none cursor-pointer"
+                >
+                  <option value="">All Genres</option>
+                  {genres.map((g) => (
+                    <option key={g.id} value={g.slug}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block text-sm font-medium text-[#232f3e]">
+                <span className="mb-2 block">Sort by</span>
+                <select
+                  value={sort}
+                  onChange={(e) => {
+                    setSort(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full rounded-2xl border border-gray-300 bg-[#fbfcfe] px-4 py-3 text-sm text-gray-700 focus:border-[#146eb4] focus:outline-none cursor-pointer"
+                >
+                  {SORT_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                onClick={() => applyFilters({ featured: !featured, page: 1 })}
+                className={`mt-7 rounded-2xl px-4 py-3 text-sm font-semibold transition-all ${featured ? "bg-[#17233b] text-white shadow-[0_12px_30px_rgba(23,35,59,0.16)]" : "border border-gray-300 bg-[#fbfcfe] text-gray-600 hover:border-[#e47911] hover:text-[#e47911]"}`}
               >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </button>
-          </form>
-
-          <div className="flex gap-2 flex-wrap">
-            <select
-              value={genre}
-              onChange={(e) => {
-                setGenre(e.target.value);
-                setPage(1);
-              }}
-              className="bg-white border border-gray-300 rounded-md px-3 py-2.5 text-gray-700 text-sm focus:outline-none focus:border-[#e47911] cursor-pointer"
-            >
-              <option value="">All Genres</option>
-              {genres.map((g) => (
-                <option key={g.id} value={g.slug}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value);
-                setPage(1);
-              }}
-              className="bg-white border border-gray-300 rounded-md px-3 py-2.5 text-gray-700 text-sm focus:outline-none focus:border-[#e47911] cursor-pointer"
-            >
-              {SORT_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={() => {
-                setFeatured((f) => !f);
-                setPage(1);
-              }}
-              className={`px-3 py-2.5 rounded-md text-sm font-medium transition-all border ${featured ? "bg-[#e47911] border-[#e47911] text-white" : "bg-white border-gray-300 text-gray-600 hover:border-[#e47911] hover:text-[#e47911]"}`}
-            >
-              ★ Featured
-            </button>
+                ★ Featured only
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Genre pills */}
-        {genres.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-6">
+        {/* Active Filters */}
+        {genre || featured || category || subcategory || search ? (
+          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-[#d9e4f2] bg-[#f8fbff] px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+              Active filters
+            </span>
+            {category ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#232f3e] border border-gray-200">
+                Category: {activeCategory?.name || category}
+              </span>
+            ) : null}
+            {subcategory ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#232f3e] border border-gray-200">
+                Subcategory: {activeSubcategory?.name || subcategory}
+              </span>
+            ) : null}
+            {genre ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#232f3e] border border-gray-200">
+                Genre:{" "}
+                {genres.find((item) => item.slug === genre)?.name || genre}
+              </span>
+            ) : null}
+            {featured ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#232f3e] border border-gray-200">
+                Featured
+              </span>
+            ) : null}
+            {search ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#232f3e] border border-gray-200">
+                Search: {search}
+              </span>
+            ) : null}
             <button
-              onClick={() => setGenre("")}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${!genre ? "bg-[#232f3e] text-white border-[#232f3e]" : "bg-white text-gray-600 border-gray-300 hover:border-[#232f3e] hover:text-[#232f3e]"}`}
+              onClick={() =>
+                applyFilters({
+                  search: "",
+                  genre: "",
+                  category: "",
+                  subcategory: "",
+                  featured: false,
+                  page: 1,
+                })
+              }
+              className="ml-auto text-sm font-medium text-[#146eb4] hover:underline"
             >
-              All
+              Clear all
             </button>
-            {genres.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => {
-                  setGenre(g.slug);
-                  setPage(1);
-                }}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${genre === g.slug ? "text-white" : "bg-white text-gray-600 border-gray-300 hover:border-gray-500"}`}
-                style={
-                  genre === g.slug
-                    ? { backgroundColor: g.color, borderColor: g.color }
-                    : {}
-                }
-              >
-                {g.name}{" "}
-                {g._count && (
-                  <span className="opacity-70">({g._count.books})</span>
-                )}
-              </button>
-            ))}
           </div>
-        )}
+        ) : null}
 
         {/* Grid */}
         {loading ? (
@@ -257,11 +620,14 @@ function BooksPageInner() {
             </p>
             <button
               onClick={() => {
-                setSearch("");
-                setGenre("");
-                setCategory("");
-                setSubcategory("");
-                setFeatured(false);
+                applyFilters({
+                  search: "",
+                  genre: "",
+                  category: "",
+                  subcategory: "",
+                  featured: false,
+                  page: 1,
+                });
               }}
               className="mt-6 text-[#146eb4] text-sm hover:underline"
             >
@@ -297,7 +663,7 @@ function BooksPageInner() {
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-10">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => applyFilters({ page: Math.max(1, page - 1) })}
               disabled={page === 1}
               className="px-3 py-2 rounded border border-gray-300 bg-white text-gray-700 disabled:opacity-40 hover:border-[#e47911] hover:text-[#e47911] transition-colors text-sm"
             >
@@ -308,7 +674,7 @@ function BooksPageInner() {
               return (
                 <button
                   key={p}
-                  onClick={() => setPage(p)}
+                  onClick={() => applyFilters({ page: p })}
                   className={`w-9 h-9 rounded border text-sm font-medium transition-colors ${p === page ? "bg-[#e47911] border-[#e47911] text-white" : "bg-white border-gray-300 text-gray-700 hover:border-[#e47911] hover:text-[#e47911]"}`}
                 >
                   {p}
@@ -316,7 +682,9 @@ function BooksPageInner() {
               );
             })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() =>
+                applyFilters({ page: Math.min(totalPages, page + 1) })
+              }
               disabled={page === totalPages}
               className="px-3 py-2 rounded border border-gray-300 bg-white text-gray-700 disabled:opacity-40 hover:border-[#e47911] hover:text-[#e47911] transition-colors text-sm"
             >

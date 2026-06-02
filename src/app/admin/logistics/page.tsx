@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
-import { api, Order, PrintJob, ShiprocketMeta } from "@/lib/api";
+import {
+  api,
+  type AdminOrderUpdatePayload,
+  Order,
+  PrintJob,
+  ShiprocketMeta,
+} from "@/lib/api";
 
 const ORDER_STATUSES = [
   "PENDING",
@@ -37,6 +43,16 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 const getDownloadUrl = (fileUrl: string) =>
   fileUrl.startsWith("http") ? fileUrl : `${API_ORIGIN}${fileUrl}`;
 
+const buildOrderDraft = (order: Order): AdminOrderUpdatePayload => ({
+  shippingName: order.shippingName || order.user?.name || "",
+  shippingEmail: order.shippingEmail || order.user?.email || "",
+  shippingPhone: order.shippingPhone || order.user?.phone || "",
+  shippingAddress: order.shippingAddress || "",
+  shippingCity: order.shippingCity || "",
+  shippingCountry: order.shippingCountry || "",
+  shippingZip: order.shippingZip || "",
+});
+
 export default function AdminLogisticsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -46,7 +62,10 @@ export default function AdminLogisticsPage() {
   const [printJobs, setPrintJobs] = useState<PrintJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [phoneDrafts, setPhoneDrafts] = useState<Record<string, string>>({});
+  const [editorOpen, setEditorOpen] = useState<Record<string, boolean>>({});
+  const [orderDrafts, setOrderDrafts] = useState<
+    Record<string, AdminOrderUpdatePayload>
+  >({});
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) {
@@ -112,12 +131,45 @@ export default function AdminLogisticsPage() {
     });
   };
 
-  const handleShippingPhoneSave = async (orderId: string) => {
-    const shippingPhone = (phoneDrafts[orderId] || "").trim();
+  const toggleEditor = (order: Order) => {
+    setEditorOpen((current) => ({
+      ...current,
+      [order.id]: !current[order.id],
+    }));
+    setOrderDrafts((current) =>
+      current[order.id]
+        ? current
+        : {
+            ...current,
+            [order.id]: buildOrderDraft(order),
+          },
+    );
+  };
 
-    await runAction(`shipping-phone-${orderId}`, async () => {
-      await api.admin.updateOrder(orderId, { shippingPhone });
-      toast("Shipping phone updated", "success");
+  const updateDraftField = (
+    order: Order,
+    field: keyof AdminOrderUpdatePayload,
+    value: string,
+  ) => {
+    setOrderDrafts((current) => ({
+      ...current,
+      [order.id]: {
+        ...(current[order.id] || buildOrderDraft(order)),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleOrderDetailsSave = async (order: Order) => {
+    const draft = orderDrafts[order.id] || buildOrderDraft(order);
+
+    await runAction(`order-details-${order.id}`, async () => {
+      await api.admin.updateOrder(order.id, draft);
+      toast("Order details updated", "success");
+      setEditorOpen((current) => ({
+        ...current,
+        [order.id]: false,
+      }));
       await fetchLogistics();
     });
   };
@@ -330,6 +382,12 @@ export default function AdminLogisticsPage() {
                       >
                         Refresh Tracking
                       </button>
+                      <button
+                        onClick={() => toggleEditor(order)}
+                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-[#232f3e]"
+                      >
+                        {editorOpen[order.id] ? "Close Edit" : "Edit Fields"}
+                      </button>
                     </div>
                   </div>
 
@@ -350,32 +408,9 @@ export default function AdminLogisticsPage() {
                           .filter(Boolean)
                           .join(", ") || "Location unavailable"}
                       </p>
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <input
-                          type="tel"
-                          value={
-                            phoneDrafts[order.id] ??
-                            order.shippingPhone ??
-                            order.user?.phone ??
-                            ""
-                          }
-                          onChange={(event) =>
-                            setPhoneDrafts((current) => ({
-                              ...current,
-                              [order.id]: event.target.value,
-                            }))
-                          }
-                          placeholder="Shipping phone"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e] sm:max-w-xs"
-                        />
-                        <button
-                          onClick={() => void handleShippingPhoneSave(order.id)}
-                          disabled={busyKey === `shipping-phone-${order.id}`}
-                          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-[#232f3e] disabled:opacity-50"
-                        >
-                          Save Phone
-                        </button>
-                      </div>
+                      <p className="mt-2 text-sm text-gray-500">
+                        {order.shippingPhone || order.user?.phone || "No phone"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-gray-400">
@@ -403,6 +438,123 @@ export default function AdminLogisticsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {editorOpen[order.id] && (
+                    <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-gray-400">
+                            Edit Shipment Details
+                          </p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            Update the order contact and delivery fields used for
+                            Shiprocket.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => void handleOrderDetailsSave(order)}
+                          disabled={busyKey === `order-details-${order.id}`}
+                          className="rounded-lg bg-[#232f3e] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        <input
+                          type="text"
+                          value={
+                            orderDrafts[order.id]?.shippingName ??
+                            buildOrderDraft(order).shippingName ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingName", event.target.value)
+                          }
+                          placeholder="Customer name"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                        />
+                        <input
+                          type="email"
+                          value={
+                            orderDrafts[order.id]?.shippingEmail ??
+                            buildOrderDraft(order).shippingEmail ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingEmail", event.target.value)
+                          }
+                          placeholder="Customer email"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                        />
+                        <input
+                          type="tel"
+                          value={
+                            orderDrafts[order.id]?.shippingPhone ??
+                            buildOrderDraft(order).shippingPhone ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingPhone", event.target.value)
+                          }
+                          placeholder="Shipping phone"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                        />
+                        <input
+                          type="text"
+                          value={
+                            orderDrafts[order.id]?.shippingAddress ??
+                            buildOrderDraft(order).shippingAddress ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingAddress", event.target.value)
+                          }
+                          placeholder="Delivery address"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e] md:col-span-2 xl:col-span-2"
+                        />
+                        <input
+                          type="text"
+                          value={
+                            orderDrafts[order.id]?.shippingCity ??
+                            buildOrderDraft(order).shippingCity ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingCity", event.target.value)
+                          }
+                          placeholder="City"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                        />
+                        <input
+                          type="text"
+                          value={
+                            orderDrafts[order.id]?.shippingCountry ??
+                            buildOrderDraft(order).shippingCountry ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingCountry", event.target.value)
+                          }
+                          placeholder="Country"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                        />
+                        <input
+                          type="text"
+                          value={
+                            orderDrafts[order.id]?.shippingZip ??
+                            buildOrderDraft(order).shippingZip ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            updateDraftField(order, "shippingZip", event.target.value)
+                          }
+                          placeholder="Postal code"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

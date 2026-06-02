@@ -16,6 +16,17 @@ interface FetchOptions extends RequestInit {
 
 type EntityPayload = Record<string, unknown>;
 
+export interface AdminOrderUpdatePayload {
+    status?: string;
+    shippingName?: string;
+    shippingEmail?: string;
+    shippingPhone?: string;
+    shippingAddress?: string;
+    shippingCity?: string;
+    shippingCountry?: string;
+    shippingZip?: string;
+}
+
 async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
     const { auth = true, ...rest } = options;
 
@@ -159,7 +170,7 @@ export const api = {
             apiFetch(`/admin/orders/${id}/shiprocket`, { method: 'POST' }),
         refreshShipmentTracking: (id: string) =>
             apiFetch(`/admin/orders/${id}/shiprocket/track`, { method: 'POST' }),
-        updateOrder: (id: string, data: { status?: string; shippingPhone?: string }) =>
+        updateOrder: (id: string, data: AdminOrderUpdatePayload) =>
             apiFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         printJobs: (params?: Record<string, string>) => {
             const qs = params ? '?' + new URLSearchParams(params).toString() : '';

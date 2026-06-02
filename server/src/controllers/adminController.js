@@ -548,7 +548,16 @@ const getOrders = async (req, res, next) => {
 // PUT /api/admin/orders/:id
 const updateOrderStatus = async (req, res, next) => {
   try {
-    const { status, shippingPhone } = req.body;
+    const {
+      status,
+      shippingName,
+      shippingEmail,
+      shippingPhone,
+      shippingAddress,
+      shippingCity,
+      shippingCountry,
+      shippingZip,
+    } = req.body;
     const validStatuses = [
       "PENDING",
       "PAID",
@@ -558,6 +567,15 @@ const updateOrderStatus = async (req, res, next) => {
       "CANCELLED",
       "REFUNDED",
     ];
+    const editableShippingFields = {
+      shippingName,
+      shippingEmail,
+      shippingPhone,
+      shippingAddress,
+      shippingCity,
+      shippingCountry,
+      shippingZip,
+    };
 
     const data = {};
 
@@ -568,9 +586,10 @@ const updateOrderStatus = async (req, res, next) => {
       data.status = status;
     }
 
-    if (shippingPhone !== undefined) {
-      data.shippingPhone =
-        typeof shippingPhone === "string" ? shippingPhone.trim() : null;
+    for (const [field, value] of Object.entries(editableShippingFields)) {
+      if (value !== undefined) {
+        data[field] = typeof value === "string" ? value.trim() || null : null;
+      }
     }
 
     if (!Object.keys(data).length) {

@@ -212,6 +212,59 @@ const buildShiprocketOrderPayload = (order, settings) => {
   };
 };
 
+const assignShiprocketAwb = async (token, orderId) => {
+  const oid = Number(orderId);
+  const payload = {
+    oid: Number.isFinite(oid) ? oid : orderId,
+  };
+
+  const response = await fetch(`${SHIPROCKET_BASE_URL}/courier/assign/awb`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new AppError(
+      getShiprocketErrorMessage(data, "Shiprocket courier assignment failed"),
+      502,
+    );
+  }
+
+  return data;
+};
+
+const mergeShiprocketOrderAndShipment = (orderData, shipmentData) => {
+  const shipmentPayload = shipmentData?.response?.data || shipmentData?.data || {};
+
+  return {
+    ...orderData,
+    shipment_id:
+      shipmentPayload.shipment_id ||
+      shipmentPayload.shipmentId ||
+      orderData?.shipment_id ||
+      orderData?.shipmentId ||
+      null,
+    awb_code:
+      shipmentPayload.awb_code ||
+      shipmentPayload.awbCode ||
+      orderData?.awb_code ||
+      orderData?.awbCode ||
+      null,
+    courier_name:
+      shipmentPayload.courier_name || shipmentPayload.courierName || null,
+    courier_company_id:
+      shipmentPayload.courier_company_id ||
+      shipmentPayload.courierCompanyId ||
+      null,
+    shipment_response: shipmentData,
+  };
+};
+
 const createShiprocketOrder = async (order) => {
   const { token, settings } = await getShiprocketToken();
   const payload = buildShiprocketOrderPayload(order, settings);
@@ -233,7 +286,17 @@ const createShiprocketOrder = async (order) => {
     );
   }
 
-  return data;
+  const shiprocketOrderId = data?.order_id || data?.orderId;
+  if (!shiprocketOrderId) {
+    throw new AppError(
+      "Shiprocket order was created but no order ID was returned",
+      502,
+    );
+  }
+
+  const shipmentData = await assignShiprocketAwb(token, shiprocketOrderId);
+
+  return mergeShiprocketOrderAndShipment(data, shipmentData);
 };
 
 const getShiprocketTracking = async (shipmentId) => {

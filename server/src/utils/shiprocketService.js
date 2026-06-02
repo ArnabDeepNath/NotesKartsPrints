@@ -64,6 +64,36 @@ const getConfiguredShiprocketToken = (settings) => {
   return rawToken;
 };
 
+const normalizeShiprocketPhone = (phone, country) => {
+  const digits = normalizeCredential(phone).replace(/\D/g, "");
+  if (!digits) {
+    return "";
+  }
+
+  const normalizedCountry = normalizeCredential(country).toLowerCase();
+  const isIndia = !normalizedCountry || normalizedCountry === "india";
+
+  if (isIndia) {
+    if (digits.length === 10) {
+      return digits;
+    }
+
+    if (digits.length === 11 && digits.startsWith("0")) {
+      return digits.slice(-10);
+    }
+
+    if (digits.length >= 12 && digits.startsWith("91")) {
+      return digits.slice(-10);
+    }
+  }
+
+  if (digits.length >= 8 && digits.length <= 15) {
+    return digits;
+  }
+
+  return "";
+};
+
 const getShiprocketToken = async () => {
   const settings = await getSiteSettings();
   const { shiprocketEnabled } = settings.logistics;
@@ -118,6 +148,18 @@ const getShiprocketToken = async () => {
 };
 
 const buildShiprocketOrderPayload = (order, settings) => {
+  const billingPhone = normalizeShiprocketPhone(
+    order.shippingPhone,
+    order.shippingCountry,
+  );
+
+  if (!billingPhone) {
+    throw new AppError(
+      "Order is missing a valid shipping phone number for Shiprocket",
+      400,
+    );
+  }
+
   const items = (order.items || []).map((item) => ({
     name: item.book?.title || `Book ${item.bookId}`,
     sku: item.bookId,
@@ -152,7 +194,7 @@ const buildShiprocketOrderPayload = (order, settings) => {
     billing_state: "NA",
     billing_country: order.shippingCountry || "India",
     billing_email: order.shippingEmail || order.user?.email || "",
-    billing_phone: order.shippingPhone || "0000000000",
+    billing_phone: billingPhone,
     shipping_is_billing: true,
     order_items: items,
     payment_method:

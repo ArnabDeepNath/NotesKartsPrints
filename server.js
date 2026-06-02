@@ -24,20 +24,6 @@ const hostname = "0.0.0.0";
 const nextApp = next({ dev, hostname, port });
 const handle = nextApp.getRequestHandler();
 
-const STARTUP_DB_TIMEOUT_MS = Number(
-  process.env.STARTUP_DB_TIMEOUT_MS || "8000",
-);
-
-const withTimeout = (promise, timeoutMs, label) =>
-  Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`${label} timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-    }),
-  ]);
-
 async function maybePushPrismaSchema() {
   if (process.env.PRISMA_DB_PUSH_ON_BOOT !== "true") {
     console.log(
@@ -74,7 +60,8 @@ async function maybePushPrismaSchema() {
 }
 
 function connectDatabaseInBackground(prisma) {
-  withTimeout(prisma.$connect(), STARTUP_DB_TIMEOUT_MS, "Database connection")
+  prisma
+    .$connect()
     .then(() => {
       console.log("✅ Database connected");
     })

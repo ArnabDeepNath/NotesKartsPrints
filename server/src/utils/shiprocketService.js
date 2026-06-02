@@ -6,17 +6,88 @@ const SHIPROCKET_BASE_URL = "https://apiv2.shiprocket.in/v1/external";
 let cachedToken = null;
 let cachedTokenExpiry = 0;
 
+const normalizeCredential = (value) => {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  const normalized = String(value)
+    .replace(/^\uFEFF/, "")
+    .replace(/[\r\n]+/g, "")
+    .trim();
+
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+  ) {
+    return normalized.slice(1, -1).trim();
+  }
+
+  return normalized;
+};
+
+const getShiprocketErrorMessage = (data, fallback) => {
+  if (typeof data?.message === "string" && data.message.trim()) {
+    const message = data.message.trim();
+    if (/invalid email and password combination/i.test(message)) {
+      return `${message}. Shiprocket external API requires the API User credentials from Settings > API > Add New API User, not the normal OTP dashboard login.`;
+    }
+
+    return message;
+  }
+
+  if (Array.isArray(data?.errors) && data.errors.length > 0) {
+    return data.errors
+      .map((entry) => {
+        if (typeof entry === "string") {
+          return entry;
+        }
+
+        if (typeof entry?.message === "string") {
+          return entry.message;
+        }
+
+        return JSON.stringify(entry);
+      })
+      .join(", ");
+  }
+
+  return fallback;
+};
+
+const getConfiguredShiprocketToken = (settings) => {
+  const rawToken = normalizeCredential(settings.logistics.shiprocketToken);
+  if (!rawToken) {
+    return null;
+  }
+
+  return rawToken;
+};
+
 const getShiprocketToken = async () => {
   const settings = await getSiteSettings();
-  const { shiprocketEnabled, shiprocketEmail, shiprocketPassword } =
-    settings.logistics;
+  const { shiprocketEnabled } = settings.logistics;
+  const shiprocketEmail = normalizeCredential(
+    settings.logistics.shiprocketEmail,
+  );
+  const shiprocketPassword = normalizeCredential(
+    settings.logistics.shiprocketPassword,
+  );
+  const configuredToken = getConfiguredShiprocketToken(settings);
 
   if (!shiprocketEnabled) {
     throw new AppError("Shiprocket integration is disabled", 400);
   }
 
+  if (configuredToken) {
+    return { token: configuredToken, settings };
+  }
+
   if (!shiprocketEmail || !shiprocketPassword) {
-    throw new AppError("Shiprocket credentials are incomplete", 400);
+    throw new AppError(
+      "Configure either a Shiprocket API token or email/password credentials",
+      400,
+    );
   }
 
   if (cachedToken && Date.now() < cachedTokenExpiry) {
@@ -34,7 +105,10 @@ const getShiprocketToken = async () => {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.token) {
-    throw new AppError(data.message || "Shiprocket authentication failed", 502);
+    throw new AppError(
+      getShiprocketErrorMessage(data, "Shiprocket authentication failed"),
+      502,
+    );
   }
 
   cachedToken = data.token;
@@ -111,7 +185,10 @@ const createShiprocketOrder = async (order) => {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new AppError(data.message || "Shiprocket order creation failed", 502);
+    throw new AppError(
+      getShiprocketErrorMessage(data, "Shiprocket order creation failed"),
+      502,
+    );
   }
 
   return data;
@@ -133,7 +210,7 @@ const getShiprocketTracking = async (shipmentId) => {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new AppError(
-      data.message || "Shiprocket tracking lookup failed",
+      getShiprocketErrorMessage(data, "Shiprocket tracking lookup failed"),
       502,
     );
   }

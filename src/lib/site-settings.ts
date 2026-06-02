@@ -87,6 +87,7 @@ export interface SiteSettings {
     shiprocketEnabled: boolean;
     shiprocketEmail?: string;
     shiprocketPassword?: string;
+    shiprocketToken?: string;
     pickupLocation?: string;
     channelId?: string;
   };
@@ -266,6 +267,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     shiprocketEnabled: false,
     shiprocketEmail: "",
     shiprocketPassword: "",
+    shiprocketToken: "",
     pickupLocation: "Primary",
     channelId: "",
   },

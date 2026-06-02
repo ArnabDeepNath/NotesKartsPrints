@@ -24,13 +24,12 @@ Before enabling the integration, make sure all of these are ready:
 You can drive the Shiprocket integration directly from deployment environment variables. When these are present, the backend will use them instead of the saved logistics credentials.
 
 - `SHIPROCKET_ENABLED=true`
-- `SHIPROCKET_EMAIL=your-shiprocket-login-email`
-- `SHIPROCKET_PASSWORD=your-shiprocket-login-password`
+- `SHIPROCKET_TOKEN=your-shiprocket-bearer-token`
 - `SHIPROCKET_PICKUP_LOCATION=Primary`
 - `SHIPROCKET_CHANNEL_ID=`
 - `LOGISTICS_PROVIDER=shiprocket`
 
-`SHIPROCKET_CHANNEL_ID` is optional. `LOGISTICS_PROVIDER` is optional unless you plan to support more than one logistics provider.
+`SHIPROCKET_TOKEN` is the preferred setup because it skips the legacy email/password login flow. `SHIPROCKET_CHANNEL_ID` is optional. `LOGISTICS_PROVIDER` is optional unless you plan to support more than one logistics provider.
 
 ## Admin Setup
 
@@ -41,8 +40,9 @@ You can drive the Shiprocket integration directly from deployment environment va
 
 - `Enable Shiprocket integration`: turn this on.
 - `Provider`: keep this as `shiprocket` unless you are changing the backend integration too.
-- `Shiprocket Email`: your Shiprocket login email.
-- `Shiprocket Password`: your Shiprocket login password.
+- `Shiprocket API Token`: paste your Shiprocket bearer token here if you are not using login credentials.
+- `Shiprocket Email`: optional fallback for older email/password auth.
+- `Shiprocket Password`: optional fallback for older email/password auth.
 - `Pickup Location`: the exact pickup location name from Shiprocket. The backend uses `Primary` by default.
 - `Channel ID`: optional. Fill this only if your Shiprocket setup requires a specific channel.
 
@@ -99,14 +99,14 @@ If you need more accurate courier rates, update the payload builder in the Shipr
 
 ### `Shiprocket credentials are incomplete`
 
-- Check that both email and password are filled in admin settings.
+- Set `SHIPROCKET_TOKEN`, or fill both email and password in admin settings.
 - Save settings again.
 
 ### `Shiprocket authentication failed`
 
-- Verify the credentials directly in the Shiprocket dashboard.
+- If you are using `SHIPROCKET_TOKEN`, refresh it in your deployment environment and restart the app.
+- If you are using the older credential flow, verify the credentials directly in the Shiprocket dashboard.
 - Confirm the account is active and API access is available.
-- If you deploy on Hostinger or another platform, make sure `SHIPROCKET_EMAIL` and `SHIPROCKET_PASSWORD` match the Shiprocket panel login exactly.
 
 ### `Create the shipment before tracking it`
 

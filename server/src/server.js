@@ -1,7 +1,11 @@
-require("dotenv").config();
+const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: path.join(__dirname, "../../.env") });
+dotenv.config({ path: path.join(__dirname, "../../.env.local") });
+
 const app = require("./app");
 const { PrismaClient } = require("@prisma/client");
-const path = require("path");
 const { execSync } = require("child_process");
 
 const prisma = new PrismaClient();

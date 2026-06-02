@@ -176,6 +176,7 @@ const DEFAULT_SITE_SETTINGS = {
     shiprocketEnabled: false,
     shiprocketEmail: "",
     shiprocketPassword: "",
+    shiprocketToken: "",
     pickupLocation: "Primary",
     channelId: "",
   },
@@ -269,6 +270,8 @@ const applyEnvOverrides = (settings) => ({
       process.env.SHIPROCKET_EMAIL || settings.logistics.shiprocketEmail,
     shiprocketPassword:
       process.env.SHIPROCKET_PASSWORD || settings.logistics.shiprocketPassword,
+    shiprocketToken:
+      process.env.SHIPROCKET_TOKEN || settings.logistics.shiprocketToken,
     pickupLocation:
       process.env.SHIPROCKET_PICKUP_LOCATION ||
       settings.logistics.pickupLocation,

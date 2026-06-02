@@ -7,12 +7,15 @@
  *   Next.js handles  everything else (pages, assets)
  */
 
-require("dotenv").config(); // loads .env from project root
+const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config({ path: path.join(__dirname, ".env.local") });
 
 const express = require("express");
 const next = require("next");
 const { parse } = require("url");
-const path = require("path");
 
 const dev = process.env.NODE_ENV !== "production";
 const port = parseInt(process.env.PORT || "3000", 10);

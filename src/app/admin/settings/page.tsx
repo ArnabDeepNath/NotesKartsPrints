@@ -760,6 +760,16 @@ export default function AdminSettingsPage() {
                 }
               />
               <LabeledInput
+                label="Shiprocket API Token"
+                value={settings.logistics.shiprocketToken || ""}
+                onChange={(value) =>
+                  updateSection("logistics", {
+                    ...settings.logistics,
+                    shiprocketToken: value,
+                  })
+                }
+              />
+              <LabeledInput
                 label="Pickup Location"
                 value={settings.logistics.pickupLocation || ""}
                 onChange={(value) =>

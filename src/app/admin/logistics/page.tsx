@@ -46,6 +46,7 @@ export default function AdminLogisticsPage() {
   const [printJobs, setPrintJobs] = useState<PrintJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [phoneDrafts, setPhoneDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) {
@@ -105,8 +106,18 @@ export default function AdminLogisticsPage() {
 
   const handleOrderStatus = async (orderId: string, status: string) => {
     await runAction(`order-status-${orderId}`, async () => {
-      await api.admin.updateOrder(orderId, status);
+      await api.admin.updateOrder(orderId, { status });
       toast("Order status updated", "success");
+      await fetchLogistics();
+    });
+  };
+
+  const handleShippingPhoneSave = async (orderId: string) => {
+    const shippingPhone = (phoneDrafts[orderId] || "").trim();
+
+    await runAction(`shipping-phone-${orderId}`, async () => {
+      await api.admin.updateOrder(orderId, { shippingPhone });
+      toast("Shipping phone updated", "success");
       await fetchLogistics();
     });
   };
@@ -339,6 +350,32 @@ export default function AdminLogisticsPage() {
                           .filter(Boolean)
                           .join(", ") || "Location unavailable"}
                       </p>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <input
+                          type="tel"
+                          value={
+                            phoneDrafts[order.id] ??
+                            order.shippingPhone ??
+                            order.user?.phone ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            setPhoneDrafts((current) => ({
+                              ...current,
+                              [order.id]: event.target.value,
+                            }))
+                          }
+                          placeholder="Shipping phone"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e] sm:max-w-xs"
+                        />
+                        <button
+                          onClick={() => void handleShippingPhoneSave(order.id)}
+                          disabled={busyKey === `shipping-phone-${order.id}`}
+                          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-[#232f3e] disabled:opacity-50"
+                        >
+                          Save Phone
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-gray-400">

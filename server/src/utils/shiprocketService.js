@@ -155,7 +155,7 @@ const buildShiprocketOrderPayload = (order, settings) => {
 
   if (!billingPhone) {
     throw new AppError(
-      "Order is missing a valid shipping phone number for Shiprocket",
+      "Order is missing a valid shipping phone number for Shiprocket. Update the order shipping phone in Admin Logistics and retry.",
       400,
     );
   }
@@ -239,7 +239,8 @@ const assignShiprocketAwb = async (token, orderId) => {
 };
 
 const mergeShiprocketOrderAndShipment = (orderData, shipmentData) => {
-  const shipmentPayload = shipmentData?.response?.data || shipmentData?.data || {};
+  const shipmentPayload =
+    shipmentData?.response?.data || shipmentData?.data || {};
 
   return {
     ...orderData,

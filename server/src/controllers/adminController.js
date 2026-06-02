@@ -548,7 +548,7 @@ const getOrders = async (req, res, next) => {
 // PUT /api/admin/orders/:id
 const updateOrderStatus = async (req, res, next) => {
   try {
-    const { status } = req.body;
+    const { status, shippingPhone } = req.body;
     const validStatuses = [
       "PENDING",
       "PAID",
@@ -558,12 +558,28 @@ const updateOrderStatus = async (req, res, next) => {
       "CANCELLED",
       "REFUNDED",
     ];
-    if (!validStatuses.includes(status))
-      throw new AppError("Invalid status", 400);
+
+    const data = {};
+
+    if (status !== undefined) {
+      if (!validStatuses.includes(status)) {
+        throw new AppError("Invalid status", 400);
+      }
+      data.status = status;
+    }
+
+    if (shippingPhone !== undefined) {
+      data.shippingPhone =
+        typeof shippingPhone === "string" ? shippingPhone.trim() : null;
+    }
+
+    if (!Object.keys(data).length) {
+      throw new AppError("No valid order fields provided", 400);
+    }
 
     const order = await prisma.order.update({
       where: { id: req.params.id },
-      data: { status },
+      data,
       select: {
         id: true,
         status: true,
@@ -601,7 +617,7 @@ const updateOrderStatus = async (req, res, next) => {
       },
     });
 
-    if (["PROCESSING", "SHIPPED"].includes(status)) {
+    if (status && ["PROCESSING", "SHIPPED"].includes(status)) {
       const meta = parseOrderNotes(order.notes);
       if (!meta.shiprocket?.orderId) {
         try {

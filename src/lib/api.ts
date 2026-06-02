@@ -159,8 +159,8 @@ export const api = {
             apiFetch(`/admin/orders/${id}/shiprocket`, { method: 'POST' }),
         refreshShipmentTracking: (id: string) =>
             apiFetch(`/admin/orders/${id}/shiprocket/track`, { method: 'POST' }),
-        updateOrder: (id: string, status: string) =>
-            apiFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+        updateOrder: (id: string, data: { status?: string; shippingPhone?: string }) =>
+            apiFetch(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
         printJobs: (params?: Record<string, string>) => {
             const qs = params ? '?' + new URLSearchParams(params).toString() : '';
             return apiFetch(`/admin/print-jobs${qs}`);

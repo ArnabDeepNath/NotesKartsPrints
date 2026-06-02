@@ -121,7 +121,7 @@ const ADMIN_ORDER_DETAIL_SELECT = {
   shippingZip: true,
   createdAt: true,
   updatedAt: true,
-  user: { select: { id: true, email: true, name: true } },
+  user: { select: { id: true, email: true, name: true, phone: true } },
   items: {
     select: {
       id: true,

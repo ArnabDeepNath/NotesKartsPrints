@@ -149,7 +149,7 @@ const getShiprocketToken = async () => {
 
 const buildShiprocketOrderPayload = (order, settings) => {
   const billingPhone = normalizeShiprocketPhone(
-    order.shippingPhone,
+    order.shippingPhone || order.user?.phone,
     order.shippingCountry,
   );
 

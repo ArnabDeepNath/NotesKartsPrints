@@ -128,6 +128,12 @@ export default function CheckoutPage() {
       toast("Your cart is empty", "error");
       return;
     }
+
+    if (!shipping.phone.trim()) {
+      toast("Please enter a phone number for shipping", "error");
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (paymentMethod === "COD") {
@@ -520,6 +526,7 @@ export default function CheckoutPage() {
                           if (
                             !shipping.name ||
                             !shipping.email ||
+                            !shipping.phone ||
                             !shipping.address ||
                             !shipping.city ||
                             !shipping.country

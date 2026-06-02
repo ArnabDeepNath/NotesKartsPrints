@@ -28,6 +28,7 @@ const authenticate = async (req, res, next) => {
         id: true,
         email: true,
         name: true,
+        phone: true,
         avatar: true,
         role: true,
         isActive: true,
@@ -68,7 +69,14 @@ const optionalAuth = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, name: true, role: true, isActive: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        isActive: true,
+      },
     });
 
     if (user && user.isActive) req.user = user;

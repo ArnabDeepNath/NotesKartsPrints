@@ -26,30 +26,47 @@ const normalizeCredential = (value) => {
   return normalized;
 };
 
+const flattenShiprocketErrors = (errors, prefix = "") => {
+  if (!errors) {
+    return [];
+  }
+
+  if (Array.isArray(errors)) {
+    return errors.flatMap((entry) => flattenShiprocketErrors(entry, prefix));
+  }
+
+  if (typeof errors === "string") {
+    return [prefix ? `${prefix}: ${errors}` : errors];
+  }
+
+  if (typeof errors !== "object") {
+    return [prefix ? `${prefix}: ${String(errors)}` : String(errors)];
+  }
+
+  return Object.entries(errors).flatMap(([key, value]) => {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    return flattenShiprocketErrors(value, nextPrefix);
+  });
+};
+
 const getShiprocketErrorMessage = (data, fallback) => {
+  const detailedErrors = flattenShiprocketErrors(data?.errors).filter(Boolean);
+
   if (typeof data?.message === "string" && data.message.trim()) {
     const message = data.message.trim();
     if (/invalid email and password combination/i.test(message)) {
       return `${message}. Shiprocket external API requires the API User credentials from Settings > API > Add New API User, not the normal OTP dashboard login.`;
     }
 
+    if (detailedErrors.length > 0) {
+      return `${message} ${detailedErrors.join(", ")}`;
+    }
+
     return message;
   }
 
-  if (Array.isArray(data?.errors) && data.errors.length > 0) {
-    return data.errors
-      .map((entry) => {
-        if (typeof entry === "string") {
-          return entry;
-        }
-
-        if (typeof entry?.message === "string") {
-          return entry.message;
-        }
-
-        return JSON.stringify(entry);
-      })
-      .join(", ");
+  if (detailedErrors.length > 0) {
+    return detailedErrors.join(", ");
   }
 
   return fallback;
@@ -92,6 +109,36 @@ const normalizeShiprocketPhone = (phone, country) => {
   }
 
   return "";
+};
+
+const resolveShiprocketAddressParts = (order) => {
+  const rawAddress = normalizeCredential(order.shippingAddress);
+  const rawZip = normalizeCredential(order.shippingZip);
+
+  const addressZipMatch = rawAddress.match(/(\d{6})(?!.*\d)/);
+  const resolvedPincode = rawZip || addressZipMatch?.[1] || "";
+
+  const addressWithoutZip = resolvedPincode
+    ? rawAddress
+        .replace(new RegExp(`([,\\s-]*)${resolvedPincode}$`), "")
+        .trim()
+        .replace(/[,-\s]+$/, "")
+    : rawAddress;
+
+  const segments = addressWithoutZip
+    .split(",")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  const state = segments.length > 1 ? segments[segments.length - 1] : "";
+  const streetAddress =
+    segments.length > 1 ? segments.slice(0, -1).join(", ") : addressWithoutZip;
+
+  return {
+    streetAddress,
+    state,
+    pincode: resolvedPincode,
+  };
 };
 
 const getShiprocketToken = async () => {
@@ -152,10 +199,25 @@ const buildShiprocketOrderPayload = (order, settings) => {
     order.shippingPhone || order.user?.phone,
     order.shippingCountry,
   );
+  const addressParts = resolveShiprocketAddressParts(order);
 
   if (!billingPhone) {
     throw new AppError(
       "Order is missing a valid shipping phone number for Shiprocket. Update the order shipping phone in Admin Logistics and retry.",
+      400,
+    );
+  }
+
+  if (!addressParts.pincode) {
+    throw new AppError(
+      "Order is missing a valid shipping pincode for Shiprocket. Update the order shipping address in Admin Logistics and retry.",
+      400,
+    );
+  }
+
+  if (!addressParts.state) {
+    throw new AppError(
+      "Order is missing a valid shipping state for Shiprocket. Include the state in the shipping address and retry.",
       400,
     );
   }
@@ -188,10 +250,13 @@ const buildShiprocketOrderPayload = (order, settings) => {
     channel_id: settings.logistics.channelId || undefined,
     billing_customer_name: order.shippingName || order.user?.name || "Customer",
     billing_last_name: "",
-    billing_address: order.shippingAddress || "Address unavailable",
+    billing_address:
+      addressParts.streetAddress ||
+      order.shippingAddress ||
+      "Address unavailable",
     billing_city: order.shippingCity || "City",
-    billing_pincode: order.shippingZip || "000000",
-    billing_state: "NA",
+    billing_pincode: addressParts.pincode,
+    billing_state: addressParts.state,
     billing_country: order.shippingCountry || "India",
     billing_email: order.shippingEmail || order.user?.email || "",
     billing_phone: billingPhone,

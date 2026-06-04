@@ -55,6 +55,27 @@ const STEPS = [
   { id: "payment" as Step, label: "Payment" },
 ];
 
+const buildShippingAddressPayload = (shipping: {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+}) => ({
+  name: shipping.name,
+  email: shipping.email,
+  phone: shipping.phone,
+  address: [shipping.address.trim(), shipping.state.trim()]
+    .filter(Boolean)
+    .join(", "),
+  city: shipping.city,
+  zip: shipping.pincode,
+  country: shipping.country,
+});
+
 export default function CheckoutPage() {
   const {
     user,
@@ -141,14 +162,7 @@ export default function CheckoutPage() {
           items: cart,
           printJobs: printCart.map((job) => job.id),
           paymentMethod: "COD",
-          shippingAddress: {
-            name: shipping.name,
-            email: shipping.email,
-            phone: shipping.phone,
-            address: `${shipping.address}, ${shipping.state} ${shipping.pincode}`,
-            city: shipping.city,
-            country: shipping.country,
-          },
+          shippingAddress: buildShippingAddressPayload(shipping),
         });
 
         clearCart();
@@ -173,14 +187,7 @@ export default function CheckoutPage() {
         items: cart,
         printJobs: printCart.map((job) => job.id),
         paymentMethod: "ONLINE",
-        shippingAddress: {
-          name: shipping.name,
-          email: shipping.email,
-          phone: shipping.phone,
-          address: `${shipping.address}, ${shipping.state} ${shipping.pincode}`,
-          city: shipping.city,
-          country: shipping.country,
-        },
+        shippingAddress: buildShippingAddressPayload(shipping),
       });
 
       // 2. Create Razorpay order

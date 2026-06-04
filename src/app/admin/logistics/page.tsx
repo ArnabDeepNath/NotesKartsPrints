@@ -447,8 +447,8 @@ export default function AdminLogisticsPage() {
                             Edit Shipment Details
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
-                            Update the order contact and delivery fields used for
-                            Shiprocket.
+                            Update the order contact and delivery fields used
+                            for Shiprocket.
                           </p>
                         </div>
                         <button
@@ -469,7 +469,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingName", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingName",
+                              event.target.value,
+                            )
                           }
                           placeholder="Customer name"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
@@ -482,7 +486,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingEmail", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingEmail",
+                              event.target.value,
+                            )
                           }
                           placeholder="Customer email"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
@@ -495,7 +503,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingPhone", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingPhone",
+                              event.target.value,
+                            )
                           }
                           placeholder="Shipping phone"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
@@ -508,7 +520,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingAddress", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingAddress",
+                              event.target.value,
+                            )
                           }
                           placeholder="Delivery address"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e] md:col-span-2 xl:col-span-2"
@@ -521,7 +537,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingCity", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingCity",
+                              event.target.value,
+                            )
                           }
                           placeholder="City"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
@@ -534,7 +554,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingCountry", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingCountry",
+                              event.target.value,
+                            )
                           }
                           placeholder="Country"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
@@ -547,7 +571,11 @@ export default function AdminLogisticsPage() {
                             ""
                           }
                           onChange={(event) =>
-                            updateDraftField(order, "shippingZip", event.target.value)
+                            updateDraftField(
+                              order,
+                              "shippingZip",
+                              event.target.value,
+                            )
                           }
                           placeholder="Postal code"
                           className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"

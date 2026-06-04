@@ -208,7 +208,7 @@ export default function AdminPanel() {
   };
 
   const handleOrderStatus = async (id: string, status: string) => {
-    await api.admin.updateOrder(id, status);
+    await api.admin.updateOrder(id, { status });
     toast("Order status updated", "success");
     fetchOrders();
   };

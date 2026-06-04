@@ -303,21 +303,42 @@ const assignShiprocketAwb = async (token, orderId) => {
   return data;
 };
 
+const extractShiprocketOrderPayload = (orderData) => {
+  const candidates = [
+    orderData,
+    orderData?.response,
+    orderData?.response?.data,
+    orderData?.data,
+    orderData?.data?.response,
+    orderData?.data?.data,
+  ].filter(Boolean);
+
+  return candidates.find(
+    (candidate) => candidate?.order_id || candidate?.orderId,
+  ) || orderData;
+};
+
 const mergeShiprocketOrderAndShipment = (orderData, shipmentData) => {
+  const orderPayload = extractShiprocketOrderPayload(orderData);
   const shipmentPayload =
     shipmentData?.response?.data || shipmentData?.data || {};
 
   return {
     ...orderData,
+    ...orderPayload,
     shipment_id:
       shipmentPayload.shipment_id ||
       shipmentPayload.shipmentId ||
+      orderPayload?.shipment_id ||
+      orderPayload?.shipmentId ||
       orderData?.shipment_id ||
       orderData?.shipmentId ||
       null,
     awb_code:
       shipmentPayload.awb_code ||
       shipmentPayload.awbCode ||
+      orderPayload?.awb_code ||
+      orderPayload?.awbCode ||
       orderData?.awb_code ||
       orderData?.awbCode ||
       null,
@@ -352,7 +373,26 @@ const createShiprocketOrder = async (order) => {
     );
   }
 
-  const shiprocketOrderId = data?.order_id || data?.orderId;
+  console.log(
+    "[Shiprocket] create/adhoc response:",
+    JSON.stringify({
+      orderId: data?.order_id || data?.orderId || null,
+      responseOrderId:
+        data?.response?.order_id || data?.response?.orderId || null,
+      responseDataOrderId:
+        data?.response?.data?.order_id ||
+        data?.response?.data?.orderId ||
+        null,
+      dataOrderId: data?.data?.order_id || data?.data?.orderId || null,
+      keys: Object.keys(data || {}),
+      responseKeys: Object.keys(data?.response || {}),
+      dataKeys: Object.keys(data?.data || {}),
+      raw: data,
+    }),
+  );
+
+  const orderPayload = extractShiprocketOrderPayload(data);
+  const shiprocketOrderId = orderPayload?.order_id || orderPayload?.orderId;
   if (!shiprocketOrderId) {
     throw new AppError(
       "Shiprocket order was created but no order ID was returned",

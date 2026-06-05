@@ -19,8 +19,16 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<ManagedCategory[]>([]);
-  const { user, logout, cart, cartTotal, cartCount, removeFromCart } =
-    useAuth();
+  const {
+    user,
+    logout,
+    cart,
+    cartTotal,
+    cartCount,
+    printCart,
+    removeFromCart,
+    removeFromPrintCart,
+  } = useAuth();
   const { settings } = useSiteSettings();
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -251,54 +259,92 @@ export default function Navbar() {
                       </p>
                     </div>
                     <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
-                      {cart.length === 0 ? (
+                      {cart.length === 0 && printCart.length === 0 ? (
                         <div className="p-6 text-center text-gray-500 text-sm">
                           Your cart is empty
                         </div>
                       ) : (
-                        cart.map((item) => (
-                          <div
-                            key={item.bookId}
-                            className="flex items-center gap-3 p-3"
-                          >
-                            {item.coverImage && (
-                              <img
-                                src={item.coverImage}
-                                alt={item.title}
-                                className="w-10 h-14 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-gray-800 truncate">
-                                {item.title}
-                              </p>
-                              {item.variationString && (
-                                <p className="text-[10px] text-[#e47911]">
-                                  {item.variationString}
-                                </p>
+                        <>
+                          {cart.map((item) => (
+                            <div
+                              key={`${item.bookId}-${item.variationId || "default"}`}
+                              className="flex items-center gap-3 p-3"
+                            >
+                              {item.coverImage && (
+                                <img
+                                  src={item.coverImage}
+                                  alt={item.title}
+                                  className="w-10 h-14 object-cover rounded"
+                                />
                               )}
-                              <p className="text-xs text-gray-500">
-                                x{item.quantity}
-                              </p>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-gray-800 truncate">
+                                  {item.title}
+                                </p>
+                                {item.variationString && (
+                                  <p className="text-[10px] text-[#e47911]">
+                                    {item.variationString}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-500">
+                                  x{item.quantity}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs font-bold text-[#232f3e]">
+                                  Rs.{(item.price * item.quantity).toFixed(0)}
+                                </p>
+                                <button
+                                  onClick={() =>
+                                    removeFromCart(
+                                      item.bookId,
+                                      item.variationId,
+                                    )
+                                  }
+                                  className="text-[10px] text-red-500 hover:underline mt-0.5"
+                                >
+                                  Remove
+                                </button>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xs font-bold text-[#232f3e]">
-                                Rs.{(item.price * item.quantity).toFixed(0)}
-                              </p>
-                              <button
-                                onClick={() =>
-                                  removeFromCart(item.bookId, item.variationId)
-                                }
-                                className="text-[10px] text-red-500 hover:underline mt-0.5"
-                              >
-                                Remove
-                              </button>
+                          ))}
+                          {printCart.map((job) => (
+                            <div
+                              key={job.id}
+                              className="flex items-center gap-3 p-3"
+                            >
+                              <div className="w-10 h-14 rounded bg-[#fff7ed] text-[#e47911] flex items-center justify-center text-lg font-bold shrink-0">
+                                PDF
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-gray-800 truncate">
+                                  {job.fileName}
+                                </p>
+                                <p className="text-[10px] text-[#e47911] truncate">
+                                  {job.paperSize} • {job.binding} •{" "}
+                                  {job.colorMode}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {job.pages} pages • x{job.copies}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs font-bold text-[#232f3e]">
+                                  Rs.{Number(job.price).toFixed(0)}
+                                </p>
+                                <button
+                                  onClick={() => removeFromPrintCart(job.id)}
+                                  className="text-[10px] text-red-500 hover:underline mt-0.5"
+                                >
+                                  Remove
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                        </>
                       )}
                     </div>
-                    {cart.length > 0 && (
+                    {(cart.length > 0 || printCart.length > 0) && (
                       <div className="p-3 border-t border-gray-100 bg-gray-50">
                         <div className="flex justify-between text-sm mb-3">
                           <span className="text-gray-600">Subtotal</span>

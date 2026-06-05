@@ -313,9 +313,22 @@ const extractShiprocketOrderPayload = (orderData) => {
     orderData?.data?.data,
   ].filter(Boolean);
 
-  return candidates.find(
-    (candidate) => candidate?.order_id || candidate?.orderId,
-  ) || orderData;
+  return (
+    candidates.find((candidate) => candidate?.order_id || candidate?.orderId) ||
+    orderData
+  );
+};
+
+const extractShiprocketPickupLocations = (data) => {
+  const locationEntries = data?.data?.data;
+
+  if (!Array.isArray(locationEntries)) {
+    return [];
+  }
+
+  return locationEntries
+    .map((entry) => normalizeCredential(entry?.pickup_location))
+    .filter(Boolean);
 };
 
 const mergeShiprocketOrderAndShipment = (orderData, shipmentData) => {
@@ -380,9 +393,7 @@ const createShiprocketOrder = async (order) => {
       responseOrderId:
         data?.response?.order_id || data?.response?.orderId || null,
       responseDataOrderId:
-        data?.response?.data?.order_id ||
-        data?.response?.data?.orderId ||
-        null,
+        data?.response?.data?.order_id || data?.response?.data?.orderId || null,
       dataOrderId: data?.data?.order_id || data?.data?.orderId || null,
       keys: Object.keys(data || {}),
       responseKeys: Object.keys(data?.response || {}),
@@ -390,6 +401,18 @@ const createShiprocketOrder = async (order) => {
       raw: data,
     }),
   );
+
+  if (/wrong pickup location entered/i.test(data?.message || "")) {
+    const pickupLocations = extractShiprocketPickupLocations(data);
+    const availableLocations = pickupLocations.length
+      ? ` Available pickup locations: ${pickupLocations.join(", ")}.`
+      : "";
+
+    throw new AppError(
+      `${data.message}. Update the Shiprocket pickup location in Admin Settings > Logistics to exactly match a Shiprocket pickup location.${availableLocations}`,
+      400,
+    );
+  }
 
   const orderPayload = extractShiprocketOrderPayload(data);
   const shiprocketOrderId = orderPayload?.order_id || orderPayload?.orderId;

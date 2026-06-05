@@ -40,8 +40,18 @@ const API_ORIGIN = (
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
-const getDownloadUrl = (fileUrl: string) =>
-  fileUrl.startsWith("http") ? fileUrl : `${API_ORIGIN}${fileUrl}`;
+const getDownloadUrl = (fileUrl: string) => {
+  // If already a full URL, return as-is
+  if (fileUrl.startsWith("http")) return fileUrl;
+  
+  // If it's a relative path (starts with /), prepend the API origin
+  if (fileUrl.startsWith("/")) {
+    return `${API_ORIGIN}${fileUrl}`;
+  }
+  
+  // Otherwise construct the standard path
+  return `${API_ORIGIN}/uploads/prints/${fileUrl}`;
+};
 
 const buildOrderDraft = (order: Order): AdminOrderUpdatePayload => ({
   shippingName: order.shippingName || order.user?.name || "",
@@ -304,29 +314,30 @@ export default function AdminLogisticsPage() {
           ))}
         </div>
 
-        <section className="rounded-3xl border border-gray-200 bg-white p-5 md:p-6 shadow-sm mb-8">
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <div>
-              <h2 className="text-xl font-bold text-[#232f3e]">
-                Book Shipping
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Update order status, create Shiprocket shipments, and refresh
-                tracking.
-              </p>
+        <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] mb-8 auto-rows-max">
+          <section className="rounded-3xl border border-gray-200 bg-white p-5 md:p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-[#232f3e]">
+                  Book Shipping
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Update order status, create Shiprocket shipments, and refresh
+                  tracking.
+                </p>
+              </div>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="py-10 text-center text-sm text-gray-400">
-              Loading order logistics...
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="py-10 text-center text-sm text-gray-400">
-              No orders found.
-            </div>
-          ) : (
-            <div className="space-y-4">
+            {loading ? (
+              <div className="py-10 text-center text-sm text-gray-400">
+                Loading order logistics...
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="py-10 text-center text-sm text-gray-400">
+                No orders found.
+              </div>
+            ) : (
+              <div className="space-y-4">
               {orders.map((order) => (
                 <div
                   key={order.id}
@@ -587,86 +598,43 @@ export default function AdminLogisticsPage() {
               ))}
             </div>
           )}
-        </section>
+            </section>
 
-        <section className="rounded-3xl border border-gray-200 bg-white p-5 md:p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <div>
-              <h2 className="text-xl font-bold text-[#232f3e]">Print Queue</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Download customer PDFs, mark print progress, and keep dispatch
-                moving.
-              </p>
-            </div>
-          </div>
+            <section className="rounded-3xl border border-gray-200 bg-white p-5 md:p-6 shadow-sm h-fit">
+              <div className="flex items-center justify-between gap-4 mb-5">
+                <div>
+                  <h2 className="text-xl font-bold text-[#232f3e]">Print Queue</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Download customer PDFs, mark print progress, and keep dispatch
+                    moving.
+                  </p>
+                </div>
+              </div>
 
-          {loading ? (
-            <div className="py-10 text-center text-sm text-gray-400">
-              Loading print queue...
-            </div>
-          ) : printJobs.length === 0 ? (
-            <div className="py-10 text-center text-sm text-gray-400">
-              No print jobs found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      File
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      Customer
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      Specs
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <div className="py-10 text-center text-sm text-gray-400">
+                  Loading print queue...
+                </div>
+              ) : printJobs.length === 0 ? (
+                <div className="py-10 text-center text-sm text-gray-400">
+                  No print jobs found.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[800px] overflow-y-auto">
                   {printJobs.map((job) => (
-                    <tr
+                    <div
                       key={job.id}
-                      className="align-top hover:bg-gray-50 transition-colors"
+                      className="rounded-lg border border-gray-200 bg-[#fbfcfd] p-3"
                     >
-                      <td className="px-4 py-4">
-                        <p className="font-semibold text-[#232f3e]">
-                          {job.fileName}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-400">
-                          Created{" "}
-                          {job.createdAt
-                            ? new Date(job.createdAt).toLocaleString()
-                            : "recently"}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="text-sm text-[#232f3e]">
-                          {job.user?.name ||
-                            job.order?.shippingName ||
-                            "Customer"}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {job.user?.email || "No email"}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4 text-xs text-gray-600">
-                        <p>
-                          {job.pages} pages · {job.copies} copies
-                        </p>
-                        <p className="mt-1">
-                          {job.colorMode} · {job.printType} · {job.paperType}
-                        </p>
-                        <p className="mt-1">Binding: {job.binding}</p>
-                      </td>
-                      <td className="px-4 py-4">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-[#232f3e]">
+                            {job.fileName}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {job.user?.name || "Customer"}
+                          </p>
+                        </div>
                         <select
                           value={job.status}
                           onChange={(event) =>
@@ -676,7 +644,7 @@ export default function AdminLogisticsPage() {
                             )
                           }
                           disabled={busyKey === `print-status-${job.id}`}
-                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#232f3e]"
+                          className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-[#232f3e]"
                         >
                           {PRINT_JOB_STATUSES.map((status) => (
                             <option key={status} value={status}>
@@ -684,32 +652,47 @@ export default function AdminLogisticsPage() {
                             </option>
                           ))}
                         </select>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <a
-                            href={getDownloadUrl(job.fileUrl)}
-                            download={job.fileName}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex rounded-lg bg-[#232f3e] px-3 py-2 text-xs font-semibold text-white"
-                          >
-                            Download PDF
-                          </a>
-                          {job.order?.id && (
-                            <span className="inline-flex rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-[#232f3e]">
-                              Order #{job.order.id.slice(-6).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                      </div>
+
+                      <div className="text-xs text-gray-600 space-y-1 mb-3">
+                        <p>{job.pages} pages · {job.copies} copies</p>
+                        <p>{job.colorMode} · {job.printType} · {job.paperType}</p>
+                        <p className="text-gray-400">
+                          Created {job.createdAt
+                            ? new Date(job.createdAt).toLocaleDateString()
+                            : "recently"}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href={getDownloadUrl(job.fileUrl)}
+                          download={job.fileName}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex rounded-md bg-[#232f3e] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1a2332]"
+                          onClick={(e) => {
+                            const url = getDownloadUrl(job.fileUrl);
+                            if (!url.startsWith("http") && !url.startsWith("/uploads")) {
+                              e.preventDefault();
+                              alert(`Invalid file URL: ${url}`);
+                            }
+                          }}
+                        >
+                          Download PDF
+                        </a>
+                        {job.order?.id && (
+                          <span className="inline-flex rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-[#232f3e]">
+                            Order #{job.order.id.slice(-6).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                </div>
+              )}
+            </section>
+        </div>
       </main>
     </div>
   );

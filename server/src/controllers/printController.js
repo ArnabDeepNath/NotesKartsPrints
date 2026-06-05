@@ -75,11 +75,17 @@ const uploadDocument = async (req, res, next) => {
     const filePath = req.file.path;
     const fileUrl = `/uploads/prints/${req.file.filename}`;
 
+    console.log(`[Print] Uploading PDF: ${req.file.originalname}`);
+    console.log(`[Print] File path: ${filePath}`);
+    console.log(`[Print] File URL: ${fileUrl}`);
+    console.log(`[Print] File size: ${req.file.size} bytes`);
+
     // Parse PDF for pages
     const dataBuffer = fs.readFileSync(filePath);
     let pages = 1;
     try {
       pages = await getPdfPageCount(dataBuffer);
+      console.log(`[Print] PDF page count: ${pages}`);
     } catch (e) {
       console.error("PDF Parse error", e);
       throw new AppError(
@@ -88,12 +94,14 @@ const uploadDocument = async (req, res, next) => {
       );
     }
 
+    console.log(`[Print] Upload successful: ${fileUrl}`);
     res.json({
       fileUrl,
       fileName: req.file.originalname,
       pages,
     });
   } catch (err) {
+    console.error(`[Print] Upload failed:`, err);
     next(err);
   }
 };

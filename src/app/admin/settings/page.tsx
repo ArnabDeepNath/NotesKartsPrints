@@ -118,6 +118,7 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 
 const buildLinkOptionGroups = (
   categories: ManagedCategory[],
+  policyPages: PolicyPage[] = [],
 ): LinkOptionGroup[] => {
   const categoryNameById = new Map(
     categories.map((category) => [category.id, category.name]),
@@ -137,6 +138,11 @@ const buildLinkOptionGroups = (
       value: `/books?subcategory=${category.slug}`,
     }));
 
+  const policyPageOptions = policyPages.map((page) => ({
+    label: page.label,
+    value: `/policy/${page.slug}`,
+  }));
+
   return [
     ...STATIC_LINK_OPTION_GROUPS,
     ...(topLevelCategories.length
@@ -144,6 +150,9 @@ const buildLinkOptionGroups = (
       : []),
     ...(subcategories.length
       ? [{ label: "Subcategories", options: subcategories }]
+      : []),
+    ...(policyPageOptions.length
+      ? [{ label: "Policy Pages", options: policyPageOptions }]
       : []),
   ];
 };
@@ -161,7 +170,7 @@ export default function AdminSettingsPage() {
   const [uploadingSlideIndex, setUploadingSlideIndex] = useState<number | null>(
     null,
   );
-  const linkOptionGroups = buildLinkOptionGroups(categories);
+  const linkOptionGroups = buildLinkOptionGroups(categories, settings.policyPages);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) {
@@ -837,7 +846,7 @@ export default function AdminSettingsPage() {
 
               <EditableLinksCard
                 title="Header Links"
-                description="These show in the top bar next to the email link."
+                description="These links appear in the top dark bar of every page, next to the email. Tip: pick a 'Policy Page' from the dropdown."
                 items={settings.header.infoBarLinks}
                 onAdd={addHeaderLinkItem}
                 onChange={updateHeaderLinkList}
@@ -847,7 +856,7 @@ export default function AdminSettingsPage() {
 
               <EditableLinksCard
                 title="Footer Quick Links"
-                description="Add common pages for users to click from the footer."
+                description="These appear in the Quick Links column in the footer. Tip: pick a 'Policy Page' from the dropdown instead of typing the URL."
                 items={settings.footer.quickLinks}
                 onAdd={() => addFooterLinkItem("quickLinks")}
                 onChange={(index, field, value) =>
@@ -859,7 +868,7 @@ export default function AdminSettingsPage() {
 
               <EditableLinksCard
                 title="Footer Policy Links"
-                description="Add policy pages or external links for legal and support info."
+                description="These appear in the Policies column and the bottom bar of the footer. Tip: pick a 'Policy Page' from the dropdown to auto-fill the URL."
                 items={settings.footer.policies}
                 onAdd={() => addFooterLinkItem("policies")}
                 onChange={(index, field, value) =>

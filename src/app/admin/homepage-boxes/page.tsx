@@ -102,6 +102,22 @@ export default function AdminHomepageBoxesPage() {
   };
 
   const applyTargetSelection = (tile: CategoryTile, selectionValue: string) => {
+    // Handle policy page selections (format: "policy::{slug}")
+    if (selectionValue.startsWith("policy::")) {
+      const policySlug = selectionValue.replace("policy::", "");
+      const policyPage = settings.policyPages.find((p) => p.slug === policySlug);
+      if (policyPage) {
+        return {
+          ...tile,
+          name: policyPage.label,
+          href: `/policy/${policyPage.slug}`,
+          targetType: "custom" as const,
+          targetId: null,
+        };
+      }
+      return tile;
+    }
+
     const target = parseMenuTargetValue(selectionValue);
     if (!target) {
       return tile;
@@ -243,8 +259,13 @@ export default function AdminHomepageBoxesPage() {
             <div className="space-y-4">
               {settings.homepage.categoryTiles.map((tile, index) => {
                 const resolved = resolveCategoryTile(tile, categoryMap);
-                const selectedValue =
-                  tile.targetType !== "custom" && tile.targetId
+                // Check if this tile links to a policy page
+                const policyPage = settings.policyPages.find(
+                  (p) => `/policy/${p.slug}` === tile.href
+                );
+                const selectedValue = policyPage
+                  ? `policy::${policyPage.slug}`
+                  : tile.targetType !== "custom" && tile.targetId
                     ? `${tile.targetType}::${tile.targetId}`
                     : "";
 
@@ -305,6 +326,15 @@ export default function AdminHomepageBoxesPage() {
                               ))}
                             </optgroup>
                           ))}
+                          
+                          {/* Policy Pages Section */}
+                          <optgroup label="Policy Pages">
+                            {settings.policyPages.map((page) => (
+                              <option key={`policy-${page.id}`} value={`policy::${page.slug}`}>
+                                {page.label}
+                              </option>
+                            ))}
+                          </optgroup>
                         </select>
                       </label>
 

@@ -92,6 +92,22 @@ export default function AdminNavigationPage() {
     item: TargetedMenuItem,
     selectionValue: string,
   ) => {
+    // Handle policy page selections (format: "policy::{slug}")
+    if (selectionValue.startsWith("policy::")) {
+      const policySlug = selectionValue.replace("policy::", "");
+      const policyPage = settings.policyPages.find((p) => p.slug === policySlug);
+      if (policyPage) {
+        return {
+          ...item,
+          label: policyPage.label,
+          href: `/policy/${policyPage.slug}`,
+          targetType: "custom" as const,
+          targetId: null,
+        };
+      }
+      return item;
+    }
+
     const target = parseMenuTargetValue(selectionValue);
     if (!target) {
       return item;
@@ -194,12 +210,12 @@ export default function AdminNavigationPage() {
         <section className="bg-white border border-gray-200 rounded-md p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-[#232f3e]">
+            <h2 className="text-lg font-semibold text-[#232f3e]">
                 Navbar Items
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Each item points to one category or one subcategory. The
-                storefront link is generated automatically.
+                Each item points to a category, subcategory, or policy page. 
+                The storefront link is generated automatically.
               </p>
             </div>
             <button
@@ -222,75 +238,89 @@ export default function AdminNavigationPage() {
               to the navbar here.
             </div>
           ) : settings.header.navigationMenu.length === 0 ? (
-            <div className="rounded border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-              No navbar items configured yet.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {settings.header.navigationMenu.map((item, index) => {
-                const resolved = resolveMenuItem(item, categoryMap);
-                const selectedValue =
-                  item.targetType !== "custom" && item.targetId
-                    ? `${item.targetType}::${item.targetId}`
-                    : "";
+              <div className="rounded border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
+                No navbar items configured yet.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {settings.header.navigationMenu.map((item, index) => {
+                  const resolved = resolveMenuItem(item, categoryMap);
+                  // Check if this is a policy page link
+                  const policyPage = settings.policyPages.find(
+                    (p) => `/policy/${p.slug}` === item.href
+                  );
+                  const selectedValue = policyPage
+                    ? `policy::${policyPage.slug}`
+                    : item.targetType !== "custom" && item.targetId
+                      ? `${item.targetType}::${item.targetId}`
+                      : "";
 
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-xl border border-gray-200 p-4 bg-gray-50/60"
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div>
-                        <p className="text-sm font-semibold text-[#232f3e]">
-                          Item {index + 1}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {resolved.missingTarget
-                            ? "Target missing. Pick a new category or subcategory."
-                            : `Redirects to ${resolved.href || "the selected target"}`}
-                        </p>
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-gray-200 p-4 bg-gray-50/60"
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                          <p className="text-sm font-semibold text-[#232f3e]">
+                            Item {index + 1}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {resolved.missingTarget
+                              ? "Target missing. Pick a new category or subcategory."
+                              : `Redirects to ${resolved.href || "the selected target"}`}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeMenuItem(item.id)}
+                          className="px-4 py-2 rounded border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Remove
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeMenuItem(item.id)}
-                        className="px-4 py-2 rounded border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Remove
-                      </button>
-                    </div>
 
-                    <label className="block text-sm font-medium text-[#232f3e]">
-                      <span className="block mb-2">
-                        Category or Subcategory
-                      </span>
-                      <select
-                        value={selectedValue}
-                        onChange={(event) =>
-                          updateNavigationMenu(
-                            settings.header.navigationMenu.map((menuItem) =>
-                              menuItem.id === item.id
-                                ? applyTargetSelection(
-                                    menuItem,
-                                    event.target.value,
-                                  )
-                                : menuItem,
-                            ),
-                          )
-                        }
-                        className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800 bg-white"
-                      >
-                        <option value="">Select a target</option>
-                        {targetGroups.map((group) => (
-                          <optgroup key={group.label} label={group.label}>
-                            {group.options.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
+                      <label className="block text-sm font-medium text-[#232f3e]">
+                        <span className="block mb-2">
+                          Category or Subcategory
+                        </span>
+                        <select
+                          value={selectedValue}
+                          onChange={(event) =>
+                            updateNavigationMenu(
+                              settings.header.navigationMenu.map((menuItem) =>
+                                menuItem.id === item.id
+                                  ? applyTargetSelection(
+                                      menuItem,
+                                      event.target.value,
+                                    )
+                                  : menuItem,
+                              ),
+                            )
+                          }
+                          className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800 bg-white"
+                        >
+                          <option value="">Select a target</option>
+                          {targetGroups.map((group) => (
+                            <optgroup key={group.label} label={group.label}>
+                              {group.options.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                          
+                          {/* Policy Pages Section */}
+                          <optgroup label="Policy Pages">
+                            {settings.policyPages.map((page) => (
+                              <option key={`policy-${page.id}`} value={`policy::${page.slug}`}>
+                                {page.label}
                               </option>
                             ))}
                           </optgroup>
-                        ))}
-                      </select>
-                    </label>
+                        </select>
+                      </label>
 
                     <div className="mt-4 grid md:grid-cols-2 gap-4">
                       <div className="rounded border border-gray-200 bg-white px-4 py-3">

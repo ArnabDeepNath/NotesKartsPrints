@@ -14,7 +14,9 @@ import {
   type HeroSlide,
   type SiteLink,
   type SiteSettings,
+  type PolicyPage,
 } from "@/lib/site-settings";
+import RichTextEditor from "@/app/components/RichTextEditor";
 
 const SOCIAL_FIELDS = [
   { key: "facebook", label: "Facebook URL" },
@@ -385,6 +387,37 @@ export default function AdminSettingsPage() {
         [field]: value,
       },
     });
+  };
+
+  const updatePolicyPage = (
+    index: number,
+    field: keyof PolicyPage,
+    value: string,
+  ) => {
+    const next = settings.policyPages.map((page, i) =>
+      i === index ? { ...page, [field]: value } : page,
+    );
+    updateSection("policyPages", next);
+  };
+
+  const addPolicyPage = () => {
+    const id = `policy-${Date.now()}`;
+    updateSection("policyPages", [
+      ...settings.policyPages,
+      {
+        id,
+        label: "New Policy",
+        slug: `new-policy-${Date.now()}`,
+        content: "<p><strong>New Policy</strong></p><p>Enter policy content here.</p>",
+      },
+    ]);
+  };
+
+  const removePolicyPage = (index: number) => {
+    updateSection(
+      "policyPages",
+      settings.policyPages.filter((_, i) => i !== index),
+    );
   };
 
   if (authLoading || !user || user.role !== "ADMIN") {
@@ -1047,6 +1080,82 @@ export default function AdminSettingsPage() {
                   ))}
                 </div>
               </section>
+            </section>
+
+            <section className="bg-white border border-gray-200 rounded-md p-6 grid gap-6">
+              <div>
+                <h2 className="text-lg font-semibold text-[#232f3e]">
+                  Policy Pages Editor
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Create and edit rich-text policy pages. Slug must be URL-friendly (lowercase, dashes).
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {(settings.policyPages || []).map((page, index) => (
+                  <div
+                    key={page.id}
+                    className="rounded-lg border border-gray-200 p-4 bg-gray-50/60"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-[#232f3e]">
+                          {page.label || `Policy ${index + 1}`}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          /policy/{page.slug}
+                        </p>
+                      </div>
+                      {(settings.policyPages || []).length > 1 && (
+                        <GhostButton
+                          label="Remove"
+                          onClick={() => removePolicyPage(index)}
+                        />
+                      )}
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                      <LabeledInput
+                        label="Page Label"
+                        value={page.label}
+                        onChange={(value) =>
+                          updatePolicyPage(index, "label", value)
+                        }
+                      />
+                      <LabeledInput
+                        label="URL Slug"
+                        value={page.slug}
+                        onChange={(value) =>
+                          updatePolicyPage(index, "slug", value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#232f3e] mb-2">
+                        Page Content
+                      </label>
+                      <RichTextEditor
+                        value={page.content}
+                        onChange={(html) =>
+                          updatePolicyPage(index, "content", html)
+                        }
+                        placeholder={`Edit ${page.label || "policy"} content...`}
+                        minHeight={250}
+                      />
+                    </div>
+                    <div className="mt-3 text-xs text-gray-500">
+                      Page URL:{" "}
+                      <span className="font-mono text-[#146eb4]">
+                        /policy/{page.slug}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2">
+                <ActionButton label="Add Policy Page" onClick={addPolicyPage} />
+              </div>
             </section>
           </div>
         )}

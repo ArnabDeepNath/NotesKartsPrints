@@ -180,6 +180,38 @@ const DEFAULT_SITE_SETTINGS = {
     pickupLocation: "Primary",
     channelId: "",
   },
+  policyPages: [
+    {
+      id: "terms-conditions",
+      label: "Terms & Conditions",
+      slug: "terms-conditions",
+      content: "<p><strong>Terms & Conditions</strong></p><p>Welcome to our website. By accessing and using this website, you accept these terms.</p>",
+    },
+    {
+      id: "privacy-policy",
+      label: "Privacy Policy",
+      slug: "privacy-policy",
+      content: "<p><strong>Privacy Policy</strong></p><p>We respect your privacy and are committed to protecting your personal data.</p>",
+    },
+    {
+      id: "shipping-policy",
+      label: "Shipping Policy",
+      slug: "shipping-policy",
+      content: "<p><strong>Shipping Policy</strong></p><p>We process orders within 1-2 business days. Delivery typically takes 4-7 days.</p>",
+    },
+    {
+      id: "refund-policy",
+      label: "Refund Policy",
+      slug: "refund-policy",
+      content: "<p><strong>Refund Policy</strong></p><p>Orders cannot be cancelled or refunded once purchased since we print on demand.</p>",
+    },
+    {
+      id: "cancellation-policy",
+      label: "Cancellation Policy",
+      slug: "cancellation-policy",
+      content: "<p><strong>Cancellation Policy</strong></p><p>Cancellations are not permitted once an order is confirmed and payment is processed.</p>",
+    },
+  ],
 };
 
 const isRecord = (value) =>
@@ -347,6 +379,15 @@ const normalizeSiteSettings = (input = {}) => {
     DEFAULT_SITE_SETTINGS.printing.colorInktankPrice,
   );
 
+  merged.policyPages = Array.isArray(merged.policyPages)
+    ? merged.policyPages.map((page) => ({
+        id: String(page.id || ""),
+        label: String(page.label || "").trim(),
+        slug: String(page.slug || "").trim(),
+        content: String(page.content || ""),
+      }))
+    : DEFAULT_SITE_SETTINGS.policyPages;
+
   return merged;
 };
 
@@ -385,6 +426,7 @@ const getPublicSiteSettings = (settings) => ({
     provider: settings.logistics.provider,
     shiprocketEnabled: settings.logistics.shiprocketEnabled,
   },
+  policyPages: settings.policyPages || DEFAULT_SITE_SETTINGS.policyPages,
 });
 
 module.exports = {

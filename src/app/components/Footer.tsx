@@ -7,9 +7,17 @@ export default function Footer() {
   const year = new Date().getFullYear();
   const { settings } = useSiteSettings();
   const footer = settings.footer;
+  const policyPages = settings.policyPages || [];
   const socialEntries = Object.entries(footer.socialLinks || {}).filter(
     ([, href]) => Boolean(href),
   );
+
+  const getPolicyHref = (label: string) => {
+    const match = policyPages.find(
+      (p) => p.label.toLowerCase() === label.toLowerCase(),
+    );
+    return match ? `/policy/${match.slug}` : "#";
+  };
 
   return (
     <footer className="bg-[#232f3e] text-white">
@@ -99,12 +107,12 @@ export default function Footer() {
             <ul className="space-y-2">
               {footer.policies.map((p) => (
                 <li key={p.label}>
-                  <a
-                    href={p.href}
+                  <Link
+                    href={getPolicyHref(p.label)}
                     className="text-sm text-gray-300 hover:text-[#f5a623] transition-colors"
                   >
                     {p.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -221,13 +229,13 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             {footer.policies.slice(0, 3).map((policy) => (
-              <a
+              <Link
                 key={policy.label}
-                href={policy.href}
+                href={getPolicyHref(policy.label)}
                 className="hover:text-white transition-colors"
               >
                 {policy.label}
-              </a>
+              </Link>
             ))}
           </div>
           <p className="text-[#f5a623]">{footer.guaranteeText}</p>

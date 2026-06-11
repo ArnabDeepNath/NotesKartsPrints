@@ -106,9 +106,13 @@ const createOrder = async (req, res, next) => {
           404,
         );
       }
-      console.log(`[createOrder] Processing ${printJobRecords.length} print jobs:`);
-      printJobRecords.forEach(pj => {
-        console.log(`  - ${pj.fileName} (${pj.pages}p, ${pj.copies}x) | URL: ${pj.fileUrl}`);
+      console.log(
+        `[createOrder] Processing ${printJobRecords.length} print jobs:`,
+      );
+      printJobRecords.forEach((pj) => {
+        console.log(
+          `  - ${pj.fileName} (${pj.pages}p, ${pj.copies}x) | URL: ${pj.fileUrl}`,
+        );
       });
     }
 

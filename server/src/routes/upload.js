@@ -6,16 +6,16 @@ const fs = require('fs');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/rbac');
 
-// Ensure image directory exists
-const imagesDir = path.join(__dirname, '../../uploads/images');
-if (!fs.existsSync(imagesDir)) {
-  fs.mkdirSync(imagesDir, { recursive: true });
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Set up storage engine
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, imagesDir);
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -48,7 +48,7 @@ router.post('/', authenticate, requireAdmin, upload.single('image'), (req, res, 
     
     // Construct the URL to access the uploaded file
     // Relative to the /uploads static route defined in app.js
-    const imageUrl = `/uploads/images/${req.file.filename}`;
+    const imageUrl = `/uploads/${req.file.filename}`;
     
     res.json({
       success: true,

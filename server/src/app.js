@@ -19,6 +19,7 @@ const categoryRoutes = require("./routes/categories");
 const uploadRoutes = require("./routes/upload");
 const settingsRoutes = require("./routes/settings");
 const { errorHandler } = require("./middleware/errorHandler");
+const { staticAssetFix } = require("./middleware/staticFix");
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@basaklibrary.com";
 
@@ -83,7 +84,18 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // ─── Static files (uploads) ──────────────────────────────────────────────────
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads"), {
+  setHeaders: (res, path) => {
+    // Set proper MIME types for uploaded files
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
+
+// Ensure Next.js static assets are handled properly
+// This middleware ensures that _next/static assets are not intercepted by other middleware
+app.use(staticAssetFix());
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 const apiLimiter = rateLimit({

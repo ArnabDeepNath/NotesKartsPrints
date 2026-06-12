@@ -157,6 +157,7 @@ export default function RichTextEditor({
           onFocus={updateActiveCommands}
           className="w-full p-3 text-sm text-gray-800 outline-none"
           style={{ minHeight }}
+          dir="ltr"
           dangerouslySetInnerHTML={{ __html: value || `<p>${placeholder || "Start typing..."}</p>` }}
         />
       ) : (

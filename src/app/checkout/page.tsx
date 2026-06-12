@@ -290,6 +290,11 @@ export default function CheckoutPage() {
 
       setIsLoading(false);
     } catch (err: unknown) {
+      console.error("[Checkout Error]", err);
+      // Log the full error for debugging
+      if (err && typeof err === 'object') {
+        console.error("Error details:", JSON.stringify(err, null, 2));
+      }
       toast(getErrorMessage(err, "Failed to create order"), "error");
       setIsLoading(false);
     }

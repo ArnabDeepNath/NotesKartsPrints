@@ -70,7 +70,17 @@ const createRazorpayOrder = async (req, res, next) => {
       notes: { userId: req.user.id },
     };
 
-    const razorpayOrder = await razorpay.orders.create(options);
+    let razorpayOrder;
+    try {
+      razorpayOrder = await razorpay.orders.create(options);
+    } catch (rzpErr) {
+      console.error("[Razorpay Error]", rzpErr);
+      const message =
+        rzpErr?.error?.description ||
+        rzpErr?.message ||
+        "Failed to create Razorpay order. Please check your Razorpay configuration.";
+      throw new AppError(message, 500);
+    }
 
     // Store Razorpay order ID
     try {

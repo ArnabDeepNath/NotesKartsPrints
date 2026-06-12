@@ -59,8 +59,12 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
     }
 
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}: Request failed` }));
+        const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
+        const error = new Error(errorMessage);
+        (error as any).status = response.status;
+        (error as any).data = errorData;
+        throw error;
     }
 
     return response.json();

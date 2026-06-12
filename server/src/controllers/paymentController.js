@@ -4,11 +4,32 @@ const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
 
 let razorpay;
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-  razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
+const keyId = process.env.RAZORPAY_KEY_ID;
+const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+// Validate Razorpay credentials
+const isValidKey = keyId && 
+  keyId.startsWith("rzp_") && 
+  !keyId.includes("YOUR_KEY_ID") && 
+  !keyId.includes("xxxxxxxx");
+
+const isValidSecret = keySecret && 
+  keySecret.length > 10 && 
+  !keySecret.includes("YOUR_KEY_SECRET") && 
+  !keySecret.includes("xxxxxxxx");
+
+if (isValidKey && isValidSecret) {
+  try {
+    razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
+    console.log("[Razorpay] Initialized successfully with key:", keyId.substring(0, 10) + "...");
+  } catch (err) {
+    console.error("[Razorpay] Failed to initialize:", err.message);
+  }
+} else {
+  console.warn("[Razorpay] Credentials not configured or invalid. Key present:", !!keyId, "Secret present:", !!keySecret);
 }
 
 // POST /api/payment/create-razorpay-order

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { authenticate, requireAdmin } = require("../middleware/auth");
+const { authenticate } = require("../middleware/auth");
+const { requireAdmin } = require("../middleware/rbac");
 const {
   getCoupons,
   getCoupon,

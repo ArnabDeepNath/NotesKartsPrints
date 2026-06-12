@@ -18,6 +18,7 @@ const printRoutes = require("./routes/print");
 const categoryRoutes = require("./routes/categories");
 const uploadRoutes = require("./routes/upload");
 const settingsRoutes = require("./routes/settings");
+const couponRoutes = require("./routes/coupons");
 const { errorHandler } = require("./middleware/errorHandler");
 const { staticAssetFix } = require("./middleware/staticFix");
 
@@ -131,6 +132,7 @@ app.use("/api/print", printRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/coupons", couponRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (_, res) => {

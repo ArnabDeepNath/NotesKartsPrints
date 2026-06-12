@@ -112,6 +112,11 @@ export default function CheckoutPage() {
     null,
   );
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; discountType: string; discountValue: number } | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) router.push("/login?redirect=/checkout");
   }, [user, authLoading, router]);
@@ -142,7 +147,11 @@ export default function CheckoutPage() {
     subtotal >= settings.pricing.freeShippingThreshold
       ? 0
       : settings.pricing.shippingCost;
-  const total = subtotal + gst + shippingCost;
+  
+  // Apply coupon discount
+  const discount = appliedCoupon?.discount || 0;
+  const totalBeforeDiscount = subtotal + gst + shippingCost;
+  const total = Math.max(0, totalBeforeDiscount - discount);
 
   // Check if partial payment applies
   const threshold = settings.pricing.onlinePaymentThreshold;
@@ -150,6 +159,36 @@ export default function CheckoutPage() {
   const isPartialPayment = paymentMethod === "ONLINE" && threshold > 0 && total > threshold;
   const onlinePayAmount = isPartialPayment ? +(total * (percent / 100)).toFixed(2) : total;
   const codPayAmount = isPartialPayment ? +(total - onlinePayAmount).toFixed(2) : 0;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast("Please enter a coupon code", "error");
+      return;
+    }
+    setIsApplyingCoupon(true);
+    try {
+      const res = await api.coupons.validate(couponCode, subtotal);
+      if (res.valid) {
+        setAppliedCoupon({
+          code: res.coupon.code,
+          discount: res.discount,
+          discountType: res.coupon.discountType,
+          discountValue: res.coupon.discountValue,
+        });
+        toast(res.message, "success");
+        setCouponCode("");
+      }
+    } catch (err: any) {
+      toast(err.message || "Invalid coupon code", "error");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    toast("Coupon removed", "success");
+  };
 
   const handlePlaceOrder = async () => {
     if (cart.length === 0 && printCart.length === 0) {
@@ -757,6 +796,52 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
+                {/* Coupon Section */}
+                <div className="border-t border-gray-100 pt-4 pb-4">
+                  {!appliedCoupon ? (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                        Apply Coupon
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          placeholder="Enter coupon code"
+                          className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-800 text-sm focus:outline-none focus:border-[#e47911]"
+                        />
+                        <button
+                          onClick={handleApplyCoupon}
+                          disabled={isApplyingCoupon || !couponCode.trim()}
+                          className="bg-[#232f3e] hover:bg-[#1a2634] disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded transition-colors"
+                        >
+                          {isApplyingCoupon ? "..." : "Apply"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-green-50 border border-green-200 rounded p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-green-800">
+                            Coupon Applied: {appliedCoupon.code}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            You saved Rs. {appliedCoupon.discount.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleRemoveCoupon}
+                          className="text-xs text-red-500 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="border-t border-gray-100 pt-4 space-y-2 text-sm">
                   <div className="flex justify-between text-gray-500">
                     <span>Subtotal</span>
@@ -774,6 +859,12 @@ export default function CheckoutPage() {
                         : `Rs. ${shippingCost.toLocaleString("en-IN")}`}
                     </span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>- Rs. {appliedCoupon.discount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-[#232f3e] border-t border-gray-100 pt-2 mt-2">
                     <span>Total</span>
                     <span>Rs. {total.toLocaleString("en-IN")}</span>

@@ -229,6 +229,22 @@ export const api = {
         adminGet: () => apiFetch<{ settings: SiteSettings }>('/settings/admin'),
         adminUpdate: (data: Partial<SiteSettings>) =>
             apiFetch<{ message: string; settings: SiteSettings }>('/settings/admin', { method: 'PUT', body: JSON.stringify(data) }),
+    },
+
+    coupons: {
+        list: () => apiFetch<{ coupons: Coupon[] }>('/coupons'),
+        get: (id: string) => apiFetch<{ coupon: Coupon }>(`/coupons/${id}`),
+        create: (data: Partial<Coupon>) =>
+            apiFetch<{ message: string; coupon: Coupon }>('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: Partial<Coupon>) =>
+            apiFetch<{ message: string; coupon: Coupon }>(`/coupons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+        delete: (id: string) => apiFetch<{ message: string }>(`/coupons/${id}`, { method: 'DELETE' }),
+        validate: (code: string, subtotal: number) =>
+            apiFetch<{ valid: boolean; coupon: Coupon; discount: number; message: string }>('/coupons/validate', {
+                method: 'POST',
+                body: JSON.stringify({ code, subtotal }),
+                auth: false
+            }),
     }
 };
 
@@ -394,4 +410,21 @@ export interface PrintJob {
     createdAt?: string;
     user?: Pick<User, 'id' | 'name' | 'email'>;
     order?: Pick<Order, 'id' | 'shippingAddress' | 'shippingName' | 'status'>;
+}
+
+export interface Coupon {
+    id: string;
+    code: string;
+    description?: string;
+    discountType: 'PERCENTAGE' | 'FIXED';
+    discountValue: number;
+    minOrderAmount?: number;
+    maxDiscount?: number;
+    maxUses?: number;
+    usedCount: number;
+    validFrom: string;
+    validUntil?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }

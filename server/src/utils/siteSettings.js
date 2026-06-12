@@ -345,6 +345,14 @@ const normalizeSiteSettings = (input = {}) => {
     merged.pricing.codAdvancePercent,
     DEFAULT_SITE_SETTINGS.pricing.codAdvancePercent,
   );
+  merged.pricing.onlinePaymentThreshold = sanitizeNumeric(
+    merged.pricing.onlinePaymentThreshold,
+    DEFAULT_SITE_SETTINGS.pricing.onlinePaymentThreshold,
+  );
+  merged.pricing.onlinePaymentPercent = sanitizeNumeric(
+    merged.pricing.onlinePaymentPercent,
+    DEFAULT_SITE_SETTINGS.pricing.onlinePaymentPercent,
+  );
   merged.pricing.codEnabled = Boolean(merged.pricing.codEnabled);
   merged.logistics.shiprocketEnabled = Boolean(
     merged.logistics.shiprocketEnabled,

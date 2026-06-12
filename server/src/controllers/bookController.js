@@ -69,6 +69,7 @@ const getBooks = async (req, res, next) => {
       search = "",
       genre,
       featured,
+      section,
       minPrice,
       maxPrice,
       sort = "createdAt",
@@ -112,6 +113,7 @@ const getBooks = async (req, res, next) => {
       else where.subcategoryId = "___none___";
     }
     if (featured === "true") where.featured = true;
+    if (section) where.section = String(section);
     if (format) where.format = String(format);
 
     if (minPrice || maxPrice) {
@@ -309,6 +311,7 @@ const createBook = async (req, res, next) => {
       categoryId,
       subcategoryId,
       tags,
+      section,
       variations,
     } = req.body;
 
@@ -333,6 +336,7 @@ const createBook = async (req, res, next) => {
         stock: Number(stock) || 0,
         featured: featured === true || featured === "true",
         genreId: genreId || null,
+        section: section || null,
         tags,
         ...(variationsExist && variations && Array.isArray(variations) && variations.length > 0 && {
           variations: {
@@ -388,6 +392,7 @@ const updateBook = async (req, res, next) => {
     if (data.pages) data.pages = Number(data.pages);
     if (data.featured !== undefined)
       data.featured = data.featured === true || data.featured === "true";
+    if (data.section !== undefined) data.section = data.section.trim() || null;
     if (data.publishedAt) data.publishedAt = new Date(data.publishedAt);
     const catColumnsExist = await hasCategoryColumns();
     if (catColumnsExist) {

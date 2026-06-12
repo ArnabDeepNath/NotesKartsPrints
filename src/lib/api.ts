@@ -286,6 +286,7 @@ export interface Book {
     rating?: number;
     reviewCount?: number;
     featured?: boolean;
+    section?: string;
     genreId?: string;
     genre?: Genre;
     tags?: string;
@@ -309,6 +310,8 @@ export interface Order {
     notes?: string;
     tax: number;
     total: number;
+    onlineAmount?: number;
+    codAmount?: number;
     currency: string;
     createdAt: string;
     items: OrderItem[];

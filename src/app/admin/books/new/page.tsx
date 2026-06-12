@@ -67,6 +67,7 @@ export default function NewBookPage() {
     subcategoryId: "",
     coverImage: "",
     featured: false,
+    section: "",
   });
 
   useEffect(() => {
@@ -304,6 +305,21 @@ export default function NewBookPage() {
                   onChange={handleChange}
                   min="0"
                   step="0.01"
+                  className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 focus:outline-none focus:border-[#e47911]"
+                />
+              </div>
+
+              {/* Section */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Section (e.g. Limited, Editor's Choice)
+                </label>
+                <input
+                  type="text"
+                  name="section"
+                  value={formData.section}
+                  onChange={handleChange}
+                  placeholder="e.g. Limited, Editor's Choice"
                   className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 focus:outline-none focus:border-[#e47911]"
                 />
               </div>

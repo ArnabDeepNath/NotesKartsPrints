@@ -167,6 +167,7 @@ model Book {
   rating       Float      @default(0)
   reviewCount  Int        @default(0)
   featured     Boolean    @default(false)
+  section      String?    @db.VarChar(50)
   isActive     Boolean    @default(true)
   genreId      String?
   categoryId   String?
@@ -197,6 +198,8 @@ model Order {
   discount        Decimal     @db.Decimal(10, 2) @default(0)
   tax             Decimal     @db.Decimal(10, 2) @default(0)
   total           Decimal     @db.Decimal(10, 2)
+  onlineAmount    Decimal?    @db.Decimal(10, 2)
+  codAmount       Decimal?    @db.Decimal(10, 2)
   currency        String      @default("INR")
   paymentMethod   String?
   paymentId       String?

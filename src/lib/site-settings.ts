@@ -48,6 +48,8 @@ export interface SiteSettings {
     freeShippingThreshold: number;
     codEnabled: boolean;
     codAdvancePercent: number;
+    onlinePaymentThreshold: number;
+    onlinePaymentPercent: number;
   };
   printing: {
     bwLazerPrice: number;
@@ -108,6 +110,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     freeShippingThreshold: 499,
     codEnabled: true,
     codAdvancePercent: 40,
+    onlinePaymentThreshold: 500,
+    onlinePaymentPercent: 30,
   },
   printing: {
     bwLazerPrice: 2,

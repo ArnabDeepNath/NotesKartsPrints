@@ -217,6 +217,18 @@ export default function OrdersPage() {
                                 Rs. {Number(order.tax).toLocaleString("en-IN")}
                               </span>
                             </div>
+                            {order.onlineAmount != null && order.codAmount != null && (
+                              <>
+                                <div className="flex justify-between text-sm text-green-600">
+                                  <span>Paid Online</span>
+                                  <span>Rs. {Number(order.onlineAmount).toLocaleString("en-IN")}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-orange-600">
+                                  <span>Balance (COD)</span>
+                                  <span>Rs. {Number(order.codAmount).toLocaleString("en-IN")}</span>
+                                </div>
+                              </>
+                            )}
                             <div className="flex justify-between text-base font-bold text-[#232f3e] pt-1">
                               <span>Total</span>
                               <span>

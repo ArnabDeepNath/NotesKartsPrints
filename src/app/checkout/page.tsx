@@ -144,6 +144,13 @@ export default function CheckoutPage() {
       : settings.pricing.shippingCost;
   const total = subtotal + gst + shippingCost;
 
+  // Check if partial payment applies
+  const threshold = settings.pricing.onlinePaymentThreshold;
+  const percent = settings.pricing.onlinePaymentPercent;
+  const isPartialPayment = paymentMethod === "ONLINE" && threshold > 0 && total > threshold;
+  const onlinePayAmount = isPartialPayment ? +(total * (percent / 100)).toFixed(2) : total;
+  const codPayAmount = isPartialPayment ? +(total - onlinePayAmount).toFixed(2) : 0;
+
   const handlePlaceOrder = async () => {
     if (cart.length === 0 && printCart.length === 0) {
       toast("Your cart is empty", "error");
@@ -618,7 +625,15 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       {paymentMethod === "ONLINE" && (
-                        <div className="mt-4 flex items-center gap-2 text-gray-500 text-xs">
+                      <div className="mt-4 space-y-2">
+                        {isPartialPayment && (
+                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs">
+                            <p className="font-semibold text-blue-800">Partial Payment Applied</p>
+                            <p className="text-blue-700">Online: Rs. {onlinePayAmount.toLocaleString("en-IN")} ({percent}%)</p>
+                            <p className="text-blue-700">Balance COD: Rs. {codPayAmount.toLocaleString("en-IN")}</p>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-gray-500 text-xs">
                           <svg
                             className="w-4 h-4 text-green-500"
                             fill="none"
@@ -634,6 +649,7 @@ export default function CheckoutPage() {
                           </svg>
                           256-bit SSL Encryption · Powered by Razorpay
                         </div>
+                      </div>
                       )}
                     </div>
 
@@ -674,7 +690,9 @@ export default function CheckoutPage() {
                           ? "Processing..."
                           : paymentMethod === "COD"
                             ? `Place COD Order - Rs. ${total.toLocaleString("en-IN")}`
-                            : `Pay Rs. ${total.toLocaleString("en-IN")}`}
+                            : isPartialPayment
+                              ? `Pay Online Rs. ${onlinePayAmount.toLocaleString("en-IN")}`
+                              : `Pay Rs. ${total.toLocaleString("en-IN")}`}
                       </button>
                     </div>
                   </motion.div>

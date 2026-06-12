@@ -515,6 +515,28 @@ export default function AdminSettingsPage() {
                   })
                 }
               />
+              <LabeledInput
+                label="Partial Payment Threshold"
+                type="number"
+                value={settings.pricing.onlinePaymentThreshold}
+                onChange={(value) =>
+                  updateSection("pricing", {
+                    ...settings.pricing,
+                    onlinePaymentThreshold: Number(value),
+                  })
+                }
+              />
+              <LabeledInput
+                label="Partial Payment Online %"
+                type="number"
+                value={settings.pricing.onlinePaymentPercent}
+                onChange={(value) =>
+                  updateSection("pricing", {
+                    ...settings.pricing,
+                    onlinePaymentPercent: Number(value),
+                  })
+                }
+              />
               <label className="flex items-center gap-3 text-sm font-medium text-[#232f3e] md:col-span-2">
                 <input
                   type="checkbox"

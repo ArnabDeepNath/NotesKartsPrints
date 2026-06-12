@@ -988,6 +988,7 @@ export default function AdminPanel() {
                   },
                   { key: "stock", label: "Stock", type: "number" },
                   { key: "pages", label: "Pages", type: "number" },
+                  { key: "section", label: "Section", span: 2 },
                   { key: "isbn", label: "ISBN", span: 2 },
                 ].map((f) => (
                   <div key={f.key} className={f.span === 2 ? "col-span-2" : ""}>

@@ -1,8 +1,16 @@
 const path = require("path");
 const dotenv = require("dotenv");
 
-dotenv.config({ path: path.join(__dirname, "../../.env") });
-dotenv.config({ path: path.join(__dirname, "../../.env.local") });
+// Load .env files only if they exist AND don't override existing env vars
+// In production (Hostinger), env vars are already set
+dotenv.config({ 
+  path: path.join(__dirname, "../../.env"),
+  override: false // Don't override existing env vars
+});
+dotenv.config({ 
+  path: path.join(__dirname, "../../.env.local"),
+  override: false
+});
 
 const app = require("./app");
 const { PrismaClient } = require("@prisma/client");
@@ -13,6 +21,12 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
+    // Log Razorpay key status on startup
+    const rzpKey = process.env.RAZORPAY_KEY_ID;
+    console.log("[ENV Check] RAZORPAY_KEY_ID:", rzpKey 
+      ? (rzpKey.startsWith("rzp_") ? `Set (${rzpKey.substring(0, 10)}...)` : "INVALID VALUE") 
+      : "NOT SET");
+    
     await prisma.$connect();
     console.log("✅ Database connected");
 

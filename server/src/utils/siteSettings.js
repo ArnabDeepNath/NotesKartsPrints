@@ -9,6 +9,8 @@ const DEFAULT_SITE_SETTINGS = {
     freeShippingThreshold: 499,
     codEnabled: true,
     codAdvancePercent: 40,
+    onlinePaymentThreshold: 500,
+    onlinePaymentPercent: 30,
   },
   printing: {
     bwLazerPrice: 2,

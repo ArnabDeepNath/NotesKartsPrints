@@ -32,6 +32,54 @@ const createOrder = async (req, res, next) => {
       throw new AppError("Cash on delivery is currently unavailable", 400);
     }
 
+    // Calculate totals first
+    let subtotal = 0;
+    const orderItems = (items || []).map((item) => {
+      const book = books.find((b) => b.id === item.bookId);
+      let variant = null;
+      if (item.variationId) {
+        variant = book.variations.find((v) => v.id === item.variationId);
+      }
+
+      const itemPrice = variant ? Number(variant.price) : Number(book.price);
+      const lineTotal = itemPrice * item.quantity;
+      subtotal += lineTotal;
+      return {
+        bookId: item.bookId,
+        variationId: item.variationId || null,
+        quantity: item.quantity,
+        price: itemPrice,
+      };
+    });
+
+    for (const pj of printJobRecords) {
+      subtotal += Number(pj.price);
+    }
+
+    const shippingCharge =
+      subtotal >= Number(settings.pricing.freeShippingThreshold || 0)
+        ? 0
+        : Number(settings.pricing.shippingCost || 0);
+    const taxRate = Number(settings.pricing.taxRate || 0) / 100;
+    const tax = +(subtotal * taxRate).toFixed(2);
+    const total = +(subtotal + tax + shippingCharge).toFixed(2);
+    
+    // Check if order total exceeds online payment threshold
+    let finalPaymentMethod = requestedPaymentMethod;
+    let onlineAmount = 0;
+    let codAmount = 0;
+    
+    if (requestedPaymentMethod === "ONLINE" && 
+        settings.pricing.onlinePaymentThreshold > 0 && 
+        total > settings.pricing.onlinePaymentThreshold) {
+      // Calculate amounts for split payment
+      onlineAmount = +(total * (settings.pricing.onlinePaymentPercent / 100)).toFixed(2);
+      codAmount = +(total - onlineAmount).toFixed(2);
+      
+      // For high-value orders, we'll use online payment for part and COD for the rest
+      finalPaymentMethod = "PARTIAL_ONLINE_COD";
+    }
+
     const bookIds = items?.map((i) => i.bookId) || [];
     let books = [];
     try {
@@ -115,38 +163,6 @@ const createOrder = async (req, res, next) => {
         );
       });
     }
-
-    // Calculate totals
-    let subtotal = 0;
-    const orderItems = (items || []).map((item) => {
-      const book = books.find((b) => b.id === item.bookId);
-      let variant = null;
-      if (item.variationId) {
-        variant = book.variations.find((v) => v.id === item.variationId);
-      }
-
-      const itemPrice = variant ? Number(variant.price) : Number(book.price);
-      const lineTotal = itemPrice * item.quantity;
-      subtotal += lineTotal;
-      return {
-        bookId: item.bookId,
-        variationId: item.variationId || null,
-        quantity: item.quantity,
-        price: itemPrice,
-      };
-    });
-
-    for (const pj of printJobRecords) {
-      subtotal += Number(pj.price);
-    }
-
-    const shippingCharge =
-      subtotal >= Number(settings.pricing.freeShippingThreshold || 0)
-        ? 0
-        : Number(settings.pricing.shippingCost || 0);
-    const taxRate = Number(settings.pricing.taxRate || 0) / 100;
-    const tax = +(subtotal * taxRate).toFixed(2);
-    const total = +(subtotal + tax + shippingCharge).toFixed(2);
     const normalizedPaymentMethod =
       requestedPaymentMethod === "RAZORPAY" ? "ONLINE" : requestedPaymentMethod;
     const notes = mergeOrderNotes(null, {

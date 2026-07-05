@@ -148,23 +148,22 @@ const createOrder = async (req, res, next) => {
     const tax = +(subtotal * taxRate).toFixed(2);
     const total = +(subtotal + tax + shippingCharge).toFixed(2);
     
-    // Check if order total exceeds online payment threshold for partial payment
-    let finalPaymentMethod = requestedPaymentMethod;
+    // Determine partial payment splits.
+    // - COD: customer pays `codAdvancePercent`% online now, remainder as Cash-on-Delivery.
+    // - ONLINE: customer pays 100% online via Razorpay. No split ever.
     let onlineAmount = null;
     let codAmount = null;
-    
-    const threshold = Number(settings.pricing.onlinePaymentThreshold || 0);
-    const percent = Number(settings.pricing.onlinePaymentPercent || 0);
-    
-    if (requestedPaymentMethod === "ONLINE" && threshold > 0 && total > threshold) {
-      // Calculate amounts for split payment
-      onlineAmount = +(total * (percent / 100)).toFixed(2);
-      codAmount = +(total - onlineAmount).toFixed(2);
-      finalPaymentMethod = "PARTIAL_ONLINE";
-    }
 
     const normalizedPaymentMethod =
       requestedPaymentMethod === "RAZORPAY" ? "ONLINE" : requestedPaymentMethod;
+
+    if (normalizedPaymentMethod === "COD") {
+      const advancePct = Number(settings.pricing.codAdvancePercent || 0);
+      if (advancePct > 0 && advancePct < 100) {
+        onlineAmount = +(total * (advancePct / 100)).toFixed(2);
+        codAmount = +(total - onlineAmount).toFixed(2);
+      }
+    }
     
     const notes = mergeOrderNotes(null, {
       pricing: {

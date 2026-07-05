@@ -78,11 +78,23 @@ const createRazorpayOrder = async (req, res, next) => {
     if (order.userId !== req.user.id) throw new AppError("Access denied", 403);
     if (order.status !== "PENDING")
       throw new AppError("Order already processed", 400);
-    if (String(order.paymentMethod || "").toLowerCase() === "cod") {
+
+    // Determine the chargeable amount:
+    // - COD with advance (onlineAmount set): charge only the advance portion
+    // - Pure COD (no onlineAmount): block Razorpay entirely
+    // - ONLINE: charge the full total
+    const isCOD = String(order.paymentMethod || "").toLowerCase() === "cod";
+    const hasAdvance = order.onlineAmount != null && Number(order.onlineAmount) > 0;
+
+    if (isCOD && !hasAdvance) {
       throw new AppError("This order is marked for cash on delivery", 400);
     }
 
-    const amountInPaise = Math.round(Number(order.total) * 100);
+    const chargeableAmount = hasAdvance
+      ? Number(order.onlineAmount)
+      : Number(order.total);
+
+    const amountInPaise = Math.round(chargeableAmount * 100);
 
     const options = {
       amount: amountInPaise,

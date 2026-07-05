@@ -153,12 +153,13 @@ export default function CheckoutPage() {
   const totalBeforeDiscount = subtotal + gst + shippingCost;
   const total = Math.max(0, totalBeforeDiscount - discount);
 
-  // Check if partial payment applies
-  const threshold = settings.pricing.onlinePaymentThreshold;
-  const percent = settings.pricing.onlinePaymentPercent;
-  const isPartialPayment = paymentMethod === "ONLINE" && threshold > 0 && total > threshold;
-  const onlinePayAmount = isPartialPayment ? +(total * (percent / 100)).toFixed(2) : total;
-  const codPayAmount = isPartialPayment ? +(total - onlinePayAmount).toFixed(2) : 0;
+  // Determine payment amounts based on payment method
+  // - COD: customer pays codAdvancePercent% online now, remainder as Cash-on-Delivery
+  // - ONLINE: customer pays 100% online via Razorpay
+  const codAdvancePct = settings.pricing.codAdvancePercent || 0;
+  const isCODWithAdvance = paymentMethod === "COD" && codAdvancePct > 0 && codAdvancePct < 100;
+  const onlinePayAmount = isCODWithAdvance ? +(total * (codAdvancePct / 100)).toFixed(2) : total;
+  const codPayAmount = isCODWithAdvance ? +(total - onlinePayAmount).toFixed(2) : 0;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -203,7 +204,8 @@ export default function CheckoutPage() {
 
     setIsLoading(true);
     try {
-      if (paymentMethod === "COD") {
+      // COD without advance: place order directly, no online payment needed
+      if (paymentMethod === "COD" && !isCODWithAdvance) {
         const orderRes = await api.orders.create({
           items: cart,
           printJobs: printCart.map((job) => job.id),
@@ -219,6 +221,7 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Both ONLINE and COD-with-advance go through Razorpay
       const res = await loadScript(
         "https://checkout.razorpay.com/v1/checkout.js",
       );
@@ -232,23 +235,27 @@ export default function CheckoutPage() {
       const orderRes = await api.orders.create({
         items: cart,
         printJobs: printCart.map((job) => job.id),
-        paymentMethod: "ONLINE",
+        paymentMethod: paymentMethod, // "ONLINE" or "COD"
         shippingAddress: buildShippingAddressPayload(shipping),
       });
 
-      // 2. Create Razorpay order
+      // 2. Create Razorpay order (server returns the correct amount:
+      //    full total for ONLINE, advance portion for COD)
       const paymentRes = await api.payment.createRazorpayOrder(
         orderRes.order.id,
       );
 
       // 3. Open Razorpay Checkout modal
+      const description = isCODWithAdvance
+        ? `COD Advance (${codAdvancePct}%) · Balance Rs. ${codPayAmount.toLocaleString("en-IN")} on delivery`
+        : "Secure Online Payment";
+
       const options = {
-        key: paymentRes.key, // Enter the Key ID generated from the Dashboard
+        key: paymentRes.key,
         amount: paymentRes.amount,
         currency: paymentRes.currency,
         name: "Basak Library",
-        description: "Test Transaction",
-        // image: "/logo.png",
+        description,
         order_id: paymentRes.orderId,
         handler: async function (response: PaymentVerificationResponse) {
           try {
@@ -259,7 +266,12 @@ export default function CheckoutPage() {
               razorpay_signature: response.razorpay_signature,
             });
             if (verifyRes.success) {
-              toast("Payment successful!", "success");
+              toast(
+                isCODWithAdvance
+                  ? `Advance paid! Balance Rs. ${codPayAmount.toLocaleString("en-IN")} due on delivery.`
+                  : "Payment successful!",
+                "success",
+              );
               clearCart();
               clearPrintCart();
               router.push(
@@ -670,13 +682,6 @@ export default function CheckoutPage() {
                       </div>
                       {paymentMethod === "ONLINE" && (
                       <div className="mt-4 space-y-2">
-                        {isPartialPayment && (
-                          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs">
-                            <p className="font-semibold text-blue-800">Partial Payment Applied</p>
-                            <p className="text-blue-700">Online: Rs. {onlinePayAmount.toLocaleString("en-IN")} ({percent}%)</p>
-                            <p className="text-blue-700">Balance COD: Rs. {codPayAmount.toLocaleString("en-IN")}</p>
-                          </div>
-                        )}
                         <div className="flex items-center gap-2 text-gray-500 text-xs">
                           <svg
                             className="w-4 h-4 text-green-500"
@@ -692,6 +697,31 @@ export default function CheckoutPage() {
                             />
                           </svg>
                           256-bit SSL Encryption · Powered by Razorpay
+                        </div>
+                      </div>
+                      )}
+                      {paymentMethod === "COD" && isCODWithAdvance && (
+                      <div className="mt-4 space-y-2">
+                        <div className="bg-orange-50 border border-orange-200 rounded p-3 text-xs">
+                          <p className="font-semibold text-orange-800">COD Advance Payment Required</p>
+                          <p className="text-orange-700">Pay now: Rs. {onlinePayAmount.toLocaleString("en-IN")} ({codAdvancePct}%)</p>
+                          <p className="text-orange-700">Balance on delivery: Rs. {codPayAmount.toLocaleString("en-IN")}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-500 text-xs">
+                          <svg
+                            className="w-4 h-4 text-green-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                            />
+                          </svg>
+                          Secure advance payment via Razorpay
                         </div>
                       </div>
                       )}
@@ -733,10 +763,10 @@ export default function CheckoutPage() {
                         {isLoading
                           ? "Processing..."
                           : paymentMethod === "COD"
-                            ? `Place COD Order - Rs. ${total.toLocaleString("en-IN")}`
-                            : isPartialPayment
-                              ? `Pay Online Rs. ${onlinePayAmount.toLocaleString("en-IN")}`
-                              : `Pay Rs. ${total.toLocaleString("en-IN")}`}
+                            ? isCODWithAdvance
+                              ? `Pay Advance Rs. ${onlinePayAmount.toLocaleString("en-IN")} (${codAdvancePct}%)`
+                              : `Place COD Order - Rs. ${total.toLocaleString("en-IN")}`
+                            : `Pay Rs. ${total.toLocaleString("en-IN")}`}
                       </button>
                     </div>
                   </motion.div>

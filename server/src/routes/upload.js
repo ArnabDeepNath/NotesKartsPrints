@@ -2,15 +2,12 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const { ensureUploadSubdir } = require('../utils/uploadsPath');
 const { authenticate } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/rbac');
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Use persistent uploads directory (survives redeploys on Hostinger)
+const uploadsDir = ensureUploadSubdir('images');
 
 // Set up storage engine
 const storage = multer.diskStorage({
@@ -48,7 +45,7 @@ router.post('/', authenticate, requireAdmin, upload.single('image'), (req, res, 
     
     // Construct the URL to access the uploaded file
     // Relative to the /uploads static route defined in app.js
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = `/uploads/images/${req.file.filename}`;
     
     res.json({
       success: true,

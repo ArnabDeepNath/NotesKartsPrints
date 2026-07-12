@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
+const { getUploadsDir } = require("./utils/uploadsPath");
 
 const authRoutes = require("./routes/auth");
 const bookRoutes = require("./routes/books");
@@ -85,7 +86,8 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // ─── Static files (uploads) ──────────────────────────────────────────────────
-app.use("/uploads", express.static(path.join(__dirname, "../uploads"), {
+// Serve from the persistent uploads directory (may be outside the project folder)
+app.use("/uploads", express.static(getUploadsDir(), {
   setHeaders: (res, path) => {
     // Set proper MIME types for uploaded files
     if (path.endsWith('.css')) {

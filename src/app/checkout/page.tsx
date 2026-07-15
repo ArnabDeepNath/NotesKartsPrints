@@ -211,6 +211,7 @@ export default function CheckoutPage() {
           printJobs: printCart.map((job) => job.id),
           paymentMethod: "COD",
           shippingAddress: buildShippingAddressPayload(shipping),
+          couponCode: appliedCoupon?.code,
         });
 
         clearCart();
@@ -237,6 +238,7 @@ export default function CheckoutPage() {
         printJobs: printCart.map((job) => job.id),
         paymentMethod: paymentMethod, // "ONLINE" or "COD"
         shippingAddress: buildShippingAddressPayload(shipping),
+        couponCode: appliedCoupon?.code,
       });
 
       // 2. Create Razorpay order (server returns the correct amount:

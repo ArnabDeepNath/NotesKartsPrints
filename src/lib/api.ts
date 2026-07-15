@@ -133,7 +133,7 @@ export const api = {
     },
 
     orders: {
-        create: (data: { items: CartItem[]; printJobs?: string[]; shippingAddress?: ShippingAddress; paymentMethod?: string }) =>
+        create: (data: { items: CartItem[]; printJobs?: string[]; shippingAddress?: ShippingAddress; paymentMethod?: string; couponCode?: string }) =>
             apiFetch<{ order: Order }>('/orders', { method: 'POST', body: JSON.stringify(data) }),
         get: (id: string) => apiFetch<{ order: Order }>(`/orders/${id}`),
     },

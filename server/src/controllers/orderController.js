@@ -8,7 +8,7 @@ const { mergeOrderNotes } = require("../utils/orderNotes");
 // POST /api/orders  — create a pending order from cart
 const createOrder = async (req, res, next) => {
   try {
-    const { items, printJobs, shippingAddress, paymentMethod } = req.body;
+    const { items, printJobs, shippingAddress, paymentMethod, couponCode } = req.body;
     // items: [{ bookId, quantity }]
     // printJobs: [ "uuid-1", "uuid-2" ]
 
@@ -146,7 +146,30 @@ const createOrder = async (req, res, next) => {
         : Number(settings.pricing.shippingCost || 0);
     const taxRate = Number(settings.pricing.taxRate || 0) / 100;
     const tax = +(subtotal * taxRate).toFixed(2);
-    const total = +(subtotal + tax + shippingCharge).toFixed(2);
+    const totalBeforeDiscount = +(subtotal + tax + shippingCharge).toFixed(2);
+
+    // Apply coupon discount if provided
+    let discount = 0;
+    let appliedCoupon = null;
+    if (couponCode) {
+      const { validateCoupon, applyCoupon } = require("./couponController");
+      try {
+        const validation = await validateCoupon(
+          { body: { code: couponCode, subtotal } },
+          null,
+          (err) => {
+            if (err) throw err;
+          },
+        );
+        if (validation && validation.valid) {
+          discount = validation.discount;
+          appliedCoupon = validation.coupon;
+        }
+      } catch (couponErr) {
+        console.warn("[createOrder] Coupon validation failed:", couponErr.message);
+      }
+    }
+    const total = Math.max(0, +(totalBeforeDiscount - discount).toFixed(2));
     
     // Determine partial payment splits.
     // - COD: customer pays `codAdvancePercent`% online now, remainder as Cash-on-Delivery.
@@ -185,6 +208,7 @@ const createOrder = async (req, res, next) => {
         data: {
           userId: req.user.id,
           subtotal,
+          discount,
           tax,
           total,
           onlineAmount,
@@ -292,6 +316,16 @@ const createOrder = async (req, res, next) => {
         });
       } else {
         throw createErr;
+      }
+    }
+
+    // Increment coupon usage if applied
+    if (appliedCoupon) {
+      try {
+        const { applyCoupon } = require("./couponController");
+        await applyCoupon(appliedCoupon.code, order.id);
+      } catch (couponUsageErr) {
+        console.warn("[createOrder] Failed to increment coupon usage:", couponUsageErr.message);
       }
     }
 

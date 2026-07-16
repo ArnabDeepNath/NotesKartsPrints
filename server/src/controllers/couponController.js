@@ -126,77 +126,87 @@ const deleteCoupon = async (req, res, next) => {
   }
 };
 
+// Pure helper: validate a coupon and compute the discount.
+// Returns { valid, discount, coupon, message } on success, or { valid: false, error } on failure.
+const calculateCouponDiscount = async (code, subtotal) => {
+  if (!code) {
+    return { valid: false, error: "Coupon code is required" };
+  }
+
+  const coupon = await prisma.coupon.findUnique({
+    where: { code: code.toUpperCase() },
+  });
+
+  if (!coupon) {
+    return { valid: false, error: "Invalid coupon code" };
+  }
+
+  if (!coupon.isActive) {
+    return { valid: false, error: "This coupon is no longer active" };
+  }
+
+  const now = new Date();
+  if (coupon.validFrom && now < new Date(coupon.validFrom)) {
+    return { valid: false, error: "This coupon is not yet valid" };
+  }
+  if (coupon.validUntil && now > new Date(coupon.validUntil)) {
+    return { valid: false, error: "This coupon has expired" };
+  }
+
+  if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+    return { valid: false, error: "This coupon has reached its usage limit" };
+  }
+
+  const orderSubtotal = Number(subtotal) || 0;
+  if (coupon.minOrderAmount && orderSubtotal < Number(coupon.minOrderAmount)) {
+    return {
+      valid: false,
+      error: `Minimum order amount of Rs. ${Number(coupon.minOrderAmount)} required`,
+    };
+  }
+
+  let discount = 0;
+  if (coupon.discountType === "PERCENTAGE") {
+    discount = (orderSubtotal * Number(coupon.discountValue)) / 100;
+    if (coupon.maxDiscount && discount > Number(coupon.maxDiscount)) {
+      discount = Number(coupon.maxDiscount);
+    }
+  } else {
+    discount = Number(coupon.discountValue);
+    if (discount > orderSubtotal) {
+      discount = orderSubtotal;
+    }
+  }
+
+  return {
+    valid: true,
+    coupon: {
+      id: coupon.id,
+      code: coupon.code,
+      description: coupon.description,
+      discountType: coupon.discountType,
+      discountValue: Number(coupon.discountValue),
+    },
+    discount: Math.round(discount * 100) / 100,
+    message: `Coupon applied! You save Rs. ${discount.toFixed(2)}`,
+  };
+};
+
 // POST /api/coupons/validate - Validate and calculate discount
 const validateCoupon = async (req, res, next) => {
   try {
     const { code, subtotal } = req.body;
+    const result = await calculateCouponDiscount(code, subtotal);
 
-    if (!code) {
-      throw new AppError("Coupon code is required", 400);
-    }
-
-    const coupon = await prisma.coupon.findUnique({
-      where: { code: code.toUpperCase() },
-    });
-
-    if (!coupon) {
-      throw new AppError("Invalid coupon code", 400);
-    }
-
-    // Check if coupon is active
-    if (!coupon.isActive) {
-      throw new AppError("This coupon is no longer active", 400);
-    }
-
-    // Check validity dates
-    const now = new Date();
-    if (coupon.validFrom && now < new Date(coupon.validFrom)) {
-      throw new AppError("This coupon is not yet valid", 400);
-    }
-    if (coupon.validUntil && now > new Date(coupon.validUntil)) {
-      throw new AppError("This coupon has expired", 400);
-    }
-
-    // Check max uses
-    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-      throw new AppError("This coupon has reached its usage limit", 400);
-    }
-
-    // Check minimum order amount
-    const orderSubtotal = Number(subtotal) || 0;
-    if (coupon.minOrderAmount && orderSubtotal < Number(coupon.minOrderAmount)) {
-      throw new AppError(
-        `Minimum order amount of Rs. ${Number(coupon.minOrderAmount)} required`,
-        400
-      );
-    }
-
-    // Calculate discount
-    let discount = 0;
-    if (coupon.discountType === "PERCENTAGE") {
-      discount = (orderSubtotal * Number(coupon.discountValue)) / 100;
-      if (coupon.maxDiscount && discount > Number(coupon.maxDiscount)) {
-        discount = Number(coupon.maxDiscount);
-      }
-    } else {
-      // FIXED
-      discount = Number(coupon.discountValue);
-      if (discount > orderSubtotal) {
-        discount = orderSubtotal;
-      }
+    if (!result.valid) {
+      throw new AppError(result.error, 400);
     }
 
     res.json({
       valid: true,
-      coupon: {
-        id: coupon.id,
-        code: coupon.code,
-        description: coupon.description,
-        discountType: coupon.discountType,
-        discountValue: Number(coupon.discountValue),
-      },
-      discount: Math.round(discount * 100) / 100,
-      message: `Coupon applied! You save Rs. ${discount.toFixed(2)}`,
+      coupon: result.coupon,
+      discount: result.discount,
+      message: result.message,
     });
   } catch (err) {
     next(err);
@@ -226,5 +236,6 @@ module.exports = {
   updateCoupon,
   deleteCoupon,
   validateCoupon,
+  calculateCouponDiscount,
   applyCoupon,
 };

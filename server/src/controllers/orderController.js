@@ -152,18 +152,14 @@ const createOrder = async (req, res, next) => {
     let discount = 0;
     let appliedCoupon = null;
     if (couponCode) {
-      const { validateCoupon, applyCoupon } = require("./couponController");
+      const { calculateCouponDiscount } = require("./couponController");
       try {
-        const validation = await validateCoupon(
-          { body: { code: couponCode, subtotal } },
-          null,
-          (err) => {
-            if (err) throw err;
-          },
-        );
-        if (validation && validation.valid) {
-          discount = validation.discount;
-          appliedCoupon = validation.coupon;
+        const result = await calculateCouponDiscount(couponCode, subtotal);
+        if (result.valid) {
+          discount = result.discount;
+          appliedCoupon = result.coupon;
+        } else {
+          console.warn("[createOrder] Coupon validation failed:", result.error);
         }
       } catch (couponErr) {
         console.warn("[createOrder] Coupon validation failed:", couponErr.message);

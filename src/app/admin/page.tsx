@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import type { AdminLoginLog } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
@@ -188,11 +188,34 @@ export default function AdminPanel() {
   const handleBookFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Sanitize form data - only send editable scalar fields
+      const sanitizedData: Record<string, unknown> = {
+        title: bookForm.title,
+        author: bookForm.author,
+        description: bookForm.description,
+        shortDesc: bookForm.shortDesc || null,
+        price: bookForm.price ? Number(bookForm.price) : undefined,
+        comparePrice: bookForm.comparePrice ? Number(bookForm.comparePrice) : null,
+        stock: bookForm.stock !== undefined && bookForm.stock !== "" ? Number(bookForm.stock) : undefined,
+        pages: bookForm.pages ? Number(bookForm.pages) : null,
+        isbn: bookForm.isbn || null,
+        publisher: bookForm.publisher || null,
+        section: bookForm.section || null,
+        coverImage: bookForm.coverImage || null,
+        featured: bookForm.featured === true || bookForm.featured === "true",
+        genreId: bookForm.genreId || null,
+        categoryId: bookForm.categoryId || null,
+        subcategoryId: bookForm.subcategoryId || null,
+        tags: bookForm.tags || null,
+        format: bookForm.format || "PHYSICAL",
+        language: bookForm.language || "English",
+      };
+
       if (bookModal.book) {
-        await api.books.update(bookModal.book.id, bookForm);
+        await api.books.update(bookModal.book.id, sanitizedData);
         toast("Book updated", "success");
       } else {
-        await api.books.create(bookForm);
+        await api.books.create(sanitizedData);
         toast("Book created", "success");
       }
       setBookModal({ open: false });
@@ -455,7 +478,7 @@ export default function AdminPanel() {
                           </span>
                           {b.coverImage && (
                             <img
-                              src={b.coverImage}
+                              src={getImageUrl(b.coverImage)}
                               alt={b.title}
                               className="w-8 h-11 object-cover rounded"
                             />
@@ -600,7 +623,7 @@ export default function AdminPanel() {
                               <div className="flex items-center gap-3">
                                 {b.coverImage && (
                                   <img
-                                    src={b.coverImage}
+                                    src={getImageUrl(b.coverImage)}
                                     alt={b.title}
                                     className="w-8 h-11 object-cover rounded"
                                   />
@@ -632,7 +655,28 @@ export default function AdminPanel() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => {
-                                    setBookForm(b);
+                                    // Sanitize book data for form - only editable fields as strings
+                                    setBookForm({
+                                      title: b.title || "",
+                                      author: b.author || "",
+                                      description: b.description || "",
+                                      shortDesc: b.shortDesc || "",
+                                      price: b.price != null ? String(b.price) : "",
+                                      comparePrice: b.comparePrice != null ? String(b.comparePrice) : "",
+                                      stock: b.stock != null ? String(b.stock) : "0",
+                                      pages: b.pages != null ? String(b.pages) : "",
+                                      isbn: b.isbn || "",
+                                      publisher: b.publisher || "",
+                                      section: b.section || "",
+                                      coverImage: b.coverImage || "",
+                                      featured: b.featured || false,
+                                      genreId: b.genreId || "",
+                                      categoryId: b.categoryId || "",
+                                      subcategoryId: b.subcategoryId || "",
+                                      tags: b.tags || "",
+                                      format: b.format || "PHYSICAL",
+                                      language: b.language || "English",
+                                    });
                                     setBookModal({ open: true, book: b });
                                   }}
                                   className="text-xs text-[#146eb4] hover:underline"
@@ -1440,7 +1484,7 @@ export default function AdminPanel() {
                   {bookForm.coverImage && (
                     <div className="mt-4 p-2 border border-gray-200 rounded inline-block">
                       <img
-                        src={bookForm.coverImage}
+                        src={getImageUrl(bookForm.coverImage)}
                         className="h-32 object-contain rounded"
                         alt="Cover Preview"
                       />

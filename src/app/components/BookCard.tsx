@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { getImageUrl } from "@/lib/api";
 
 export interface Book {
   id: string;
@@ -62,10 +63,11 @@ function StarRating({ rating = 4.2 }: { rating?: number }) {
 export default function BookCard({ book, index }: Props) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
-  const coverImg =
+  const coverImg = getImageUrl(
     book.featuredImage?.node?.sourceUrl ||
     (book as any).coverImage ||
-    (book as any).images?.[0];
+    (book as any).images?.[0]
+  );
   const category =
     book.categories?.nodes?.[0]?.name ??
     (book as any).category?.name ??

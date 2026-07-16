@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { api, Genre } from "@/lib/api";
+import { api, Genre, getImageUrl } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
 import Link from "next/link";
@@ -458,7 +458,7 @@ export default function NewBookPage() {
               {formData.coverImage && (
                 <div className="mt-4 p-2 border border-gray-200 rounded inline-block">
                   <img
-                    src={formData.coverImage}
+                    src={getImageUrl(formData.coverImage)}
                     className="h-32 object-contain rounded"
                     alt="Cover Preview"
                   />
@@ -623,7 +623,7 @@ export default function NewBookPage() {
                         />
                         {v.image && (
                           <img
-                            src={v.image}
+                            src={getImageUrl(v.image)}
                             alt="preview"
                             className="w-10 h-10 object-cover rounded border border-gray-200"
                           />

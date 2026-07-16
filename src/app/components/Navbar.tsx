@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { AnimatePresence, motion } from "framer-motion";
@@ -272,7 +272,7 @@ export default function Navbar() {
                             >
                               {item.coverImage && (
                                 <img
-                                  src={item.coverImage}
+                                  src={getImageUrl(item.coverImage)}
                                   alt={item.title}
                                   className="w-10 h-14 object-cover rounded"
                                 />

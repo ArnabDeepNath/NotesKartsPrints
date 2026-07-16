@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -210,7 +210,7 @@ export default function BookDetailPage({
           <div className="relative">
             {selectedVariation?.image || book.coverImage ? (
               <img
-                src={selectedVariation?.image || book.coverImage}
+                src={getImageUrl(selectedVariation?.image || book.coverImage)}
                 alt={book.title}
                 className="w-full aspect-[3/4] object-cover rounded-md shadow-lg"
               />

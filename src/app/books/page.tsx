@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
-import { api, Book, Genre } from "@/lib/api";
+import { api, Book, Genre, getImageUrl } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
 import gsap from "gsap";
@@ -723,7 +723,7 @@ function BookCard({
         <div className="relative overflow-hidden bg-gray-100 h-48">
           {book.coverImage ? (
             <img
-              src={book.coverImage}
+              src={getImageUrl(book.coverImage)}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />

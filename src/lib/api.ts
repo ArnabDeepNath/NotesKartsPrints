@@ -2,6 +2,33 @@ import type { SiteSettings } from "@/lib/site-settings";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+/**
+ * Returns the origin of the API server (e.g. "http://localhost:5000").
+ * Used to resolve relative image URLs like "/uploads/images/..." into absolute URLs.
+ */
+function getApiOrigin(): string {
+  try {
+    return new URL(API_BASE).origin;
+  } catch {
+    return 'http://localhost:5000';
+  }
+}
+
+/**
+ * Converts a stored image URL into an absolute URL the browser can load.
+ * - If the URL is already absolute (http/https), it is returned as-is.
+ * - If the URL is relative (e.g. "/uploads/images/img-xxx.jpg"), the API origin is prepended.
+ * - Null/undefined/empty inputs return an empty string.
+ */
+export function getImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/uploads/') || url.startsWith('/uploads\\')) {
+    return getApiOrigin() + url;
+  }
+  return url;
+}
+
 let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null) => {

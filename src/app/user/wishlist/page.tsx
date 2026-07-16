@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import Link from "next/link";
@@ -122,7 +122,7 @@ export default function WishlistPage() {
                       >
                         {book.coverImage ? (
                           <img
-                            src={book.coverImage}
+                            src={getImageUrl(book.coverImage)}
                             alt={book.title}
                             className="w-16 h-22 object-cover rounded"
                           />

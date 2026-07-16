@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import Navbar from "@/app/components/Navbar";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -170,10 +170,10 @@ export default function OrdersPage() {
                                 {item.variation?.image ||
                                 item.book?.coverImage ? (
                                   <img
-                                    src={
+                                    src={getImageUrl(
                                       item.variation?.image ||
                                       item.book.coverImage
-                                    }
+                                    )}
                                     alt={item.book.title}
                                     className="w-10 h-14 object-cover rounded"
                                   />

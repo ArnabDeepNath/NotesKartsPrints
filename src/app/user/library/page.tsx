@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import Navbar from "@/app/components/Navbar";
 import Link from "next/link";
 
@@ -86,7 +86,7 @@ export default function LibraryPage() {
                       <div className="relative aspect-[3/4] rounded-md overflow-hidden bg-gray-100 border border-gray-200 mb-3 shadow-sm group-hover:shadow-md transition-all duration-300">
                         {book.coverImage ? (
                           <img
-                            src={book.coverImage}
+                            src={getImageUrl(book.coverImage)}
                             alt={book.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />

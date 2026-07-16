@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Book } from "./BookCard";
 import BookCard from "./BookCard";
+import { getImageUrl } from "@/lib/api";
 
 interface Props {
   book: Book;
@@ -17,8 +18,9 @@ export default function FeaturedBook({ book, allBooks = [] }: Props) {
     "Featured";
   const author =
     book.author?.node?.name ?? (book as any).author ?? "NoteKart Team";
-  const coverImg =
-    book.featuredImage?.node?.sourceUrl ?? (book as any).coverImage;
+  const coverImg = getImageUrl(
+    book.featuredImage?.node?.sourceUrl ?? (book as any).coverImage
+  );
   const rawPrice = book.price ?? (book as any).price;
   const price = rawPrice ? Number(rawPrice) : 599;
   const rawOriginalPrice = book.originalPrice ?? (book as any).comparePrice;

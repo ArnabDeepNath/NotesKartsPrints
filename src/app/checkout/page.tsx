@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 
@@ -396,7 +396,7 @@ export default function CheckoutPage() {
                             >
                               {item.coverImage ? (
                                 <img
-                                  src={item.coverImage}
+                                  src={getImageUrl(item.coverImage)}
                                   alt={item.title}
                                   className="w-12 h-16 object-cover rounded shrink-0"
                                 />
@@ -787,7 +787,7 @@ export default function CheckoutPage() {
                     <div key={item.bookId} className="flex items-center gap-3">
                       {item.coverImage && (
                         <img
-                          src={item.coverImage}
+                          src={getImageUrl(item.coverImage)}
                           alt={item.title}
                           className="w-8 h-11 object-cover rounded shrink-0"
                         />

@@ -392,7 +392,7 @@ const updateBook = async (req, res, next) => {
     if (data.pages) data.pages = Number(data.pages);
     if (data.featured !== undefined)
       data.featured = data.featured === true || data.featured === "true";
-    if (data.section !== undefined) data.section = data.section.trim() || null;
+    if (data.section != null) data.section = data.section.trim() || null;
     if (data.publishedAt) data.publishedAt = new Date(data.publishedAt);
     const catColumnsExist = await hasCategoryColumns();
     if (catColumnsExist) {

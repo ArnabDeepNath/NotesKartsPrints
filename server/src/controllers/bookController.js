@@ -79,8 +79,8 @@ const getBooks = async (req, res, next) => {
       subcategory,
     } = req.query;
 
-    const skipNum = Math.max(0, (Number(page) || 1) - 1) * (Number(limit) || 12);
-    const takeNum = Number(limit) || 12;
+    const takeNum = Math.min(Math.max(1, Number(limit) || 12), 100);
+    const skipNum = Math.max(0, (Number(page) || 1) - 1) * takeNum;
 
     const where = {
       isActive: true,

@@ -61,6 +61,12 @@ export default function AdminPanel() {
   const [loginLogs, setLoginLogs] = useState<AdminLoginLog[]>([]);
 
   const [books, setBooks] = useState<any[]>([]);
+  const [booksSearch, setBooksSearch] = useState("");
+  const [booksPage, setBooksPage] = useState(1);
+  const [booksLimit] = useState(20);
+  const [booksTotal, setBooksTotal] = useState(0);
+  const [booksTotalPages, setBooksTotalPages] = useState(1);
+
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -125,10 +131,18 @@ export default function AdminPanel() {
 
   const fetchBooks = useCallback(async () => {
     try {
-      const { books: b } = (await api.books.list({ limit: 50 })) as any;
+      const { books: b, pagination } = (await api.books.list({
+        limit: booksLimit,
+        page: booksPage,
+        search: booksSearch,
+      })) as any;
       setBooks(b);
-    } catch {}
-  }, []);
+      setBooksTotal(pagination.total);
+      setBooksTotalPages(pagination.totalPages);
+    } catch {
+      toast("Failed to load books", "error");
+    }
+  }, [booksLimit, booksPage, booksSearch, toast]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -171,18 +185,27 @@ export default function AdminPanel() {
   }, [user, fetchDashboard]);
 
   useEffect(() => {
-    if (tab === "books") fetchBooks();
+    if (tab !== "books") return;
+    const timer = setTimeout(() => fetchBooks(), 250);
+    return () => clearTimeout(timer);
+  }, [tab, booksPage, booksSearch, fetchBooks]);
+
+  useEffect(() => {
     if (tab === "users") fetchUsers();
     if (tab === "orders") fetchOrders();
     if (tab === "coupons") fetchCoupons();
     if (tab === "loginLogs") fetchLoginLogs();
-  }, [tab, fetchBooks, fetchUsers, fetchOrders, fetchCoupons, fetchLoginLogs]);
+  }, [tab, fetchUsers, fetchOrders, fetchCoupons, fetchLoginLogs]);
 
   const handleDeleteBook = async (id: string) => {
     if (!confirm("Delete this book?")) return;
     await api.books.delete(id);
     toast("Book removed", "success");
-    fetchBooks();
+    if (books.length === 1 && booksPage > 1) {
+      setBooksPage((p) => p - 1);
+    } else {
+      fetchBooks();
+    }
   };
 
   const handleBookFormSubmit = async (e: React.FormEvent) => {
@@ -560,10 +583,25 @@ export default function AdminPanel() {
                 exit={{ opacity: 0 }}
               >
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-[#232f3e]">
-                    Manage Books
-                  </h2>
-                  <div className="flex gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#232f3e]">
+                      Manage Books
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {booksTotal} book{booksTotal !== 1 ? "s" : ""} total
+                    </p>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <input
+                      type="text"
+                      placeholder="Search books..."
+                      value={booksSearch}
+                      onChange={(e) => {
+                        setBooksSearch(e.target.value);
+                        setBooksPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#e47911] w-56"
+                    />
                     <Link href="/admin/categories">
                       <button className="bg-white border border-gray-300 hover:border-[#232f3e] text-[#232f3e] text-sm font-semibold px-5 py-2.5 rounded transition-colors">
                         📦 Categories
@@ -695,6 +733,27 @@ export default function AdminPanel() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                  <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-500">
+                      Page {booksPage} of {booksTotalPages}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setBooksPage((p) => Math.max(1, p - 1))}
+                        disabled={booksPage <= 1}
+                        className="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded hover:border-[#232f3e] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setBooksPage((p) => Math.min(booksTotalPages, p + 1))}
+                        disabled={booksPage >= booksTotalPages}
+                        className="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded hover:border-[#232f3e] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>

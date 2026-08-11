@@ -732,7 +732,14 @@ const createOrderShipment = async (req, res, next) => {
       order: decorateOrderWithShiprocket(updatedOrder),
     });
   } catch (err) {
-    next(err);
+    if (err.name === "AppError") {
+      return next(err);
+    }
+    console.error(
+      `[Shiprocket] Unhandled error creating shipment for order ${req.params.id}:`,
+      err.stack || err.message,
+    );
+    next(new AppError("Failed to create Shiprocket shipment", 500));
   }
 };
 

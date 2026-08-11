@@ -33,15 +33,25 @@ const errorHandler = (err, req, res, next) => {
   }
 
   const statusCode = err.statusCode || err.status || 500;
-  const message = statusCode < 500 ? err.message : "Internal server error";
-  res.status(statusCode).json({ message });
+  const isClientError = statusCode >= 400 && statusCode < 500;
+  const expose = err.expose === true || isClientError;
+  const message = expose ? err.message : "Internal server error";
+  const body = { message };
+  if (expose && err.details && typeof err.details === "object") {
+    body.details = err.details;
+  }
+  res.status(statusCode).json(body);
 };
 
 class AppError extends Error {
-  constructor(message, statusCode = 500) {
+  constructor(message, statusCode = 500, details = undefined) {
     super(message);
     this.statusCode = statusCode;
     this.name = "AppError";
+    this.expose = statusCode < 500;
+    if (details !== undefined) {
+      this.details = details;
+    }
   }
 }
 

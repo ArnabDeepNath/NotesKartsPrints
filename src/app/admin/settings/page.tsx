@@ -48,6 +48,11 @@ type ManagedCategory = {
   name: string;
   slug: string;
   parentId: string | null;
+  children?: ManagedCategory[];
+};
+
+type FlattenedManagedCategory = ManagedCategory & {
+  path: string[];
 };
 
 type LinkOption = {
@@ -116,25 +121,51 @@ const STATIC_LINK_OPTION_GROUPS: LinkOptionGroup[] = [
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
+const flattenManagedCategories = (
+  categories: ManagedCategory[],
+  parentPath: string[] = [],
+): FlattenedManagedCategory[] => {
+  const flattened: FlattenedManagedCategory[] = [];
+
+  categories.forEach((category) => {
+    const path = [...parentPath, category.name];
+    flattened.push({
+      ...category,
+      path,
+    });
+
+    if (category.children?.length) {
+      flattened.push(...flattenManagedCategories(category.children, path));
+    }
+  });
+
+  return flattened;
+};
+
 const buildLinkOptionGroups = (
   categories: ManagedCategory[],
   policyPages: PolicyPage[] = [],
 ): LinkOptionGroup[] => {
+  const flattenedCategories = flattenManagedCategories(categories);
   const categoryNameById = new Map(
-    categories.map((category) => [category.id, category.name]),
+    flattenedCategories.map((category) => [category.id, category.name]),
   );
 
-  const topLevelCategories = categories
+  const topLevelCategories = flattenedCategories
     .filter((category) => !category.parentId)
     .map((category) => ({
       label: category.name,
       value: `/books?category=${category.slug}`,
     }));
 
-  const subcategories = categories
+  const subcategories = flattenedCategories
     .filter((category) => Boolean(category.parentId))
     .map((category) => ({
-      label: `${categoryNameById.get(category.parentId || "") || "Category"} / ${category.name}`,
+      label: `${
+        category.path.slice(0, -1).join(" / ") ||
+        categoryNameById.get(category.parentId || "") ||
+        "Category"
+      } / ${category.name}`,
       value: `/books?subcategory=${category.slug}`,
     }));
 

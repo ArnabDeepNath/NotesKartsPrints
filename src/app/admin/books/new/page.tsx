@@ -18,6 +18,35 @@ interface CategoryOption {
   children?: CategoryOption[];
 }
 
+type FlatCategoryOption = CategoryOption & {
+  depth: number;
+  path: string[];
+};
+
+const flattenCategories = (
+  items: CategoryOption[],
+  depth = 0,
+  parentPath: string[] = [],
+): FlatCategoryOption[] => {
+  const flattened: FlatCategoryOption[] = [];
+
+  items.forEach((item) => {
+    const path = [...parentPath, item.name];
+
+    flattened.push({
+      ...item,
+      depth,
+      path,
+    });
+
+    if (item.children?.length) {
+      flattened.push(...flattenCategories(item.children, depth + 1, path));
+    }
+  });
+
+  return flattened;
+};
+
 interface VariationDraft {
   id: number;
   attributes: {
@@ -69,6 +98,22 @@ export default function NewBookPage() {
     featured: false,
     section: "",
   });
+
+  const flattenedCategories = flattenCategories(categories);
+  const categoryById = new Map(
+    flattenedCategories.map((category) => [category.id, category]),
+  );
+  const categoryOptions = flattenedCategories.filter(
+    (category) => !category.parentId,
+  );
+  const subcategoryOptions = formData.categoryId
+    ? flattenedCategories.filter(
+        (category) => category.parentId === formData.categoryId,
+      )
+    : [];
+  const selectedCategory = formData.categoryId
+    ? categoryById.get(formData.categoryId)
+    : null;
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) {
@@ -312,7 +357,7 @@ export default function NewBookPage() {
               {/* Section */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Section (e.g. Limited, Editor's Choice)
+                  Section (e.g. Limited, Editor&apos;s Choice)
                 </label>
                 <input
                   type="text"
@@ -361,9 +406,7 @@ export default function NewBookPage() {
                     className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 focus:outline-none focus:border-[#e47911] appearance-none"
                   >
                     <option value="">None</option>
-                    {categories
-                      .filter((c) => !c.parentId)
-                      .map((c) => (
+                    {categoryOptions.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
@@ -373,7 +416,7 @@ export default function NewBookPage() {
                 {formData.categoryId && (
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      Subcategory
+                      Subcategory (optional)
                     </label>
                     <select
                       name="subcategoryId"
@@ -382,14 +425,17 @@ export default function NewBookPage() {
                       className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 focus:outline-none focus:border-[#e47911] appearance-none"
                     >
                       <option value="">None</option>
-                      {categories
-                        .find((c) => c.id === formData.categoryId)
-                        ?.children?.map((sub) => (
+                      {subcategoryOptions.map((sub) => (
                           <option key={sub.id} value={sub.id}>
                             {sub.name}
                           </option>
                         ))}
                     </select>
+                    {selectedCategory ? (
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        Direct children of {selectedCategory.path.join(" / ")}
+                      </p>
+                    ) : null}
                   </div>
                 )}
               </div>

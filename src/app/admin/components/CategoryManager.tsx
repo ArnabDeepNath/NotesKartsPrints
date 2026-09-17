@@ -27,6 +27,47 @@ type Category = {
   children?: Category[];
 };
 
+type FlattenedCategory = Category & {
+  depth: number;
+  path: string[];
+};
+
+const walkCategoryTree = (
+  items: Category[],
+  visitor: (item: Category) => void,
+) => {
+  items.forEach((item) => {
+    visitor(item);
+    if (item.children?.length) {
+      walkCategoryTree(item.children, visitor);
+    }
+  });
+};
+
+const flattenCategoryTree = (
+  items: Category[],
+  depth = 0,
+  parentPath: string[] = [],
+): FlattenedCategory[] => {
+  const flattened: FlattenedCategory[] = [];
+
+  items.forEach((item) => {
+    const path = [...parentPath, item.name];
+
+    flattened.push({
+      ...item,
+      depth,
+      path,
+    });
+
+    if (item.children?.length) {
+      flattened.push(...flattenCategoryTree(item.children, depth + 1, path));
+    }
+  });
+
+  return flattened;
+};
+
 const normalizeCategoryTree = (items: Category[]) => {
   const byId = new Map<string, Category>();
 
@@ -39,9 +80,8 @@ const normalizeCategoryTree = (items: Category[]) => {
     });
   };
 
-  items.forEach((item) => {
+  walkCategoryTree(items, (item) => {
     upsert(item);
-    item.children?.forEach((child) => upsert(child));
   });
 
   const normalized = Array.from(byId.values()).sort((left, right) =>
@@ -104,15 +144,51 @@ export default function CategoryManager({
   }, [fetchCategories]);
 
   const topLevels = categories;
-  const subcategoryGroups = useMemo(
-    () =>
-      categories
-        .map((category) => ({
-          ...category,
-          children: category.children || [],
-        }))
-        .filter((category) => category.children.length > 0),
+  const flattenedCategories = useMemo(
+    () => flattenCategoryTree(categories),
     [categories],
+  );
+  const categoryById = useMemo(
+    () => new Map(flattenedCategories.map((category) => [category.id, category])),
+    [flattenedCategories],
+  );
+  const subcategories = useMemo(
+    () => flattenedCategories.filter((category) => Boolean(category.parentId)),
+    [flattenedCategories],
+  );
+  const blockedParentIds = useMemo(() => {
+    if (!editingCategory) {
+      return new Set<string>();
+    }
+
+    const blocked = new Set<string>([editingCategory.id]);
+    const queue: string[] = [editingCategory.id];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      if (!currentId) {
+        continue;
+      }
+
+      flattenedCategories
+        .filter((category) => category.parentId === currentId)
+        .forEach((child) => {
+          if (!blocked.has(child.id)) {
+            blocked.add(child.id);
+            queue.push(child.id);
+          }
+        });
+    }
+
+    return blocked;
+  }, [editingCategory, flattenedCategories]);
+
+  const parentOptions = useMemo(
+    () =>
+      flattenedCategories.filter(
+        (category) => !blockedParentIds.has(category.id),
+      ),
+    [blockedParentIds, flattenedCategories],
   );
 
   const openModal = (category: Category | null = null, parentId = "") => {
@@ -194,9 +270,9 @@ export default function CategoryManager({
     }
   };
 
-  const selectedParent = topLevels.find(
-    (category) => category.id === formData.parentId,
-  );
+  const selectedParent = formData.parentId
+    ? categoryById.get(formData.parentId)
+    : null;
   const slugPreview = slugify(formData.name);
   const pageTitle = mode === "subcategory" ? "Subcategories" : "Categories";
   const addButtonLabel =
@@ -216,7 +292,7 @@ export default function CategoryManager({
             <h1 className="text-3xl font-bold text-[#232f3e]">{pageTitle}</h1>
             <p className="text-sm text-gray-500 mt-2">
               {mode === "subcategory"
-                ? "Create one-level child categories under an existing top-level category."
+                ? "Create nested subcategories under any existing category."
                 : "Create the top-level categories that can be used in books, navbar menus, and homepage boxes."}
             </p>
           </div>
@@ -290,67 +366,53 @@ export default function CategoryManager({
                   category.
                 </div>
               )}
-              {subcategoryGroups.length === 0 ? (
+              {subcategories.length === 0 ? (
                 <div className="text-center text-gray-500">
                   No subcategories found yet.
                 </div>
               ) : (
-                subcategoryGroups.map((category) => (
+                subcategories.map((subcategory) => (
                   <div
-                    key={category.id}
+                    key={subcategory.id}
                     className="rounded-xl border border-gray-200 p-5"
                   >
-                    <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-semibold text-[#232f3e]">
-                          {category.name}
+                          {subcategory.name}
                         </h3>
                         <p className="text-xs text-gray-500">
-                          /{category.slug}
+                          /{subcategory.slug}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Parent: {subcategory.path.slice(0, -1).join(" / ")}
+                        </p>
+                        {subcategory.description ? (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {subcategory.description}
+                          </p>
+                        ) : null}
                       </div>
-                      <button
-                        onClick={() => openModal(null, category.id)}
-                        className="text-sm font-medium text-[#e47911] hover:underline"
-                      >
-                        Add Subcategory
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      {category.children?.map((child) => (
-                        <div
-                          key={child.id}
-                          className="flex items-start justify-between gap-4 rounded border border-gray-100 px-4 py-3 bg-gray-50/70"
+                      <div className="flex gap-3 text-xs">
+                        <button
+                          onClick={() => openModal(null, subcategory.id)}
+                          className="text-[#e47911] hover:underline"
                         >
-                          <div>
-                            <p className="text-sm font-medium text-[#232f3e]">
-                              {child.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              /{child.slug}
-                            </p>
-                            {child.description ? (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {child.description}
-                              </p>
-                            ) : null}
-                          </div>
-                          <div className="flex gap-3 text-xs">
-                            <button
-                              onClick={() => openModal(child)}
-                              className="text-[#146eb4] hover:underline"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(child.id)}
-                              className="text-red-500 hover:underline"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                          Add Child
+                        </button>
+                        <button
+                          onClick={() => openModal(subcategory)}
+                          className="text-[#146eb4] hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(subcategory.id)}
+                          className="text-red-500 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -433,13 +495,10 @@ export default function CategoryManager({
                           ? "Select parent category"
                           : "None (Top-level category)"}
                       </option>
-                      {topLevels
-                        .filter(
-                          (category) => category.id !== editingCategory?.id,
-                        )
+                      {parentOptions
                         .map((category) => (
                           <option key={category.id} value={category.id}>
-                            {category.name}
+                            {`${"— ".repeat(category.depth)}${category.name}`}
                           </option>
                         ))}
                     </select>

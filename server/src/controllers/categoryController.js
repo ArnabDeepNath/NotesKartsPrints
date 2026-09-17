@@ -9,6 +9,15 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const buildCategoryTree = (items, parentId = null) =>
+  items
+    .filter((item) => item.parentId === parentId)
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((item) => ({
+      ...item,
+      children: buildCategoryTree(items, item.id),
+    }));
+
 const ensureParentCategory = async (parentId, currentCategoryId) => {
   if (!parentId) {
     return null;
@@ -30,8 +39,35 @@ const ensureParentCategory = async (parentId, currentCategoryId) => {
     throw new AppError("Parent category not found", 404);
   }
 
-  if (parentCategory.parentId) {
-    throw new AppError("Only one level of subcategories is supported", 400);
+  if (currentCategoryId) {
+    let cursor = parentCategory;
+    const visited = new Set();
+
+    while (cursor) {
+      if (visited.has(cursor.id)) {
+        throw new AppError("Invalid category hierarchy detected", 400);
+      }
+      visited.add(cursor.id);
+
+      if (cursor.id === currentCategoryId) {
+        throw new AppError(
+          "A category cannot be moved inside its own subcategory tree",
+          400,
+        );
+      }
+
+      if (!cursor.parentId) {
+        break;
+      }
+
+      cursor = await prisma.category.findUnique({
+        where: { id: cursor.parentId },
+        select: {
+          id: true,
+          parentId: true,
+        },
+      });
+    }
   }
 
   return parentCategory.id;
@@ -48,29 +84,6 @@ const buildCategoryData = async (payload, currentCategoryId = null) => {
     payload.parentId || null,
     currentCategoryId,
   );
-
-  if (currentCategoryId && parentId) {
-    const existingCategory = await prisma.category.findUnique({
-      where: { id: currentCategoryId },
-      select: {
-        id: true,
-        children: {
-          select: { id: true },
-        },
-      },
-    });
-
-    if (!existingCategory) {
-      throw new AppError("Category not found", 404);
-    }
-
-    if (existingCategory.children.length > 0) {
-      throw new AppError(
-        "Move or delete the existing subcategories before nesting this category",
-        400,
-      );
-    }
-  }
 
   const slug = slugify(name);
 
@@ -94,13 +107,9 @@ const getCategories = async (req, res, next) => {
   try {
     const categories = await prisma.category.findMany({
       orderBy: [{ name: "asc" }],
-      include: {
-        children: {
-          orderBy: [{ name: "asc" }],
-        },
-      },
     });
-    res.json(categories);
+
+    res.json(buildCategoryTree(categories));
   } catch (err) {
     if (err.code === "P2021") {
       console.warn(

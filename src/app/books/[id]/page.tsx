@@ -2,10 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, getImageUrl } from "@/lib/api";
+import { api, Book, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -36,6 +35,32 @@ function StarRating({
   );
 }
 
+interface CategoryReference {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string | null;
+}
+
+interface BookVariation {
+  id: string;
+  attributes?: {
+    type?: string;
+    value?: string;
+  };
+  price: number;
+  comparePrice?: number | null;
+  stock: number;
+  sku?: string | null;
+  image?: string | null;
+}
+
+type BookDetail = Book & {
+  category?: CategoryReference | null;
+  subcategory?: CategoryReference | null;
+  variations?: BookVariation[];
+};
+
 export default function BookDetailPage({
   params,
 }: {
@@ -45,12 +70,18 @@ export default function BookDetailPage({
   const { user } = useAuth();
   const { addToCart } = useAuth();
   const { toast } = useToast();
-  const [book, setBook] = useState<any>(null);
+  const [book, setBook] = useState<BookDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [added, setAdded] = useState(false);
-  const [selectedVariation, setSelectedVariation] = useState<any>(null);
+  const [selectedVariation, setSelectedVariation] =
+    useState<BookVariation | null>(null);
+  const [activeContentTab, setActiveContentTab] = useState<
+    "about" | "suggested"
+  >("about");
+  const [suggestedBooks, setSuggestedBooks] = useState<Book[]>([]);
+  const [suggestedLoading, setSuggestedLoading] = useState(false);
 
   // Review form
   const [reviewRating, setReviewRating] = useState(5);
@@ -61,16 +92,96 @@ export default function BookDetailPage({
   useEffect(() => {
     api.books
       .get(unwrappedParams.id)
-      .then((data: any) => {
-        setBook(data.book);
-        setInWishlist(data.book?.inWishlist ?? false);
-        if (data.book?.variations && data.book.variations.length > 0) {
-          setSelectedVariation(data.book.variations[0]);
+      .then((data) => {
+        const fetchedBook = data.book as BookDetail;
+        setBook(fetchedBook);
+        setInWishlist(fetchedBook?.inWishlist ?? false);
+        if (fetchedBook?.variations && fetchedBook.variations.length > 0) {
+          setSelectedVariation(fetchedBook.variations[0]);
         }
       })
       .catch(() => setBook(null))
       .finally(() => setLoading(false));
   }, [unwrappedParams.id]);
+
+  useEffect(() => {
+    setActiveContentTab("about");
+  }, [book?.id]);
+
+  useEffect(() => {
+    if (!book?.id) {
+      setSuggestedBooks([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSuggestedBooks = async () => {
+      setSuggestedLoading(true);
+
+      try {
+        const primaryParams: Record<string, string | number> = {
+          limit: 10,
+          sort: "rating",
+          order: "desc",
+        };
+
+        if (book?.subcategory?.slug) {
+          primaryParams.subcategory = book.subcategory.slug;
+        } else if (book?.category?.slug) {
+          primaryParams.category = book.category.slug;
+        } else if (book?.genre?.slug) {
+          primaryParams.genre = book.genre.slug;
+        }
+
+        const primaryResponse = await api.books.list(primaryParams);
+
+        let collected = (primaryResponse.books || []).filter(
+          (item) => item.id !== book.id,
+        );
+
+        if (collected.length < 6 && book?.genre?.slug) {
+          const fallbackResponse = await api.books.list({
+            limit: 14,
+            sort: "sold",
+            order: "desc",
+            genre: book.genre.slug,
+          });
+
+          const byId = new Map<string, Book>();
+          [...collected, ...(fallbackResponse.books || [])].forEach((item) => {
+            if (item.id !== book.id && !byId.has(item.id)) {
+              byId.set(item.id, item);
+            }
+          });
+          collected = Array.from(byId.values());
+        }
+
+        if (!cancelled) {
+          setSuggestedBooks(collected.slice(0, 6));
+        }
+      } catch {
+        if (!cancelled) {
+          setSuggestedBooks([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setSuggestedLoading(false);
+        }
+      }
+    };
+
+    loadSuggestedBooks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    book?.id,
+    book?.genre?.slug,
+    book?.category?.slug,
+    book?.subcategory?.slug,
+  ]);
 
   const handleAddToCart = () => {
     if (!book) return;
@@ -94,13 +205,14 @@ export default function BookDetailPage({
   };
 
   const handleWishlist = async () => {
+    if (!book) return;
     if (!user) {
       toast("Sign in to save books", "error");
       return;
     }
     setWishlistLoading(true);
     try {
-      const data: any = await api.wishlist.toggle(book.id);
+      const data = await api.wishlist.toggle(book.id);
       setInWishlist(data.inWishlist);
       toast(data.message, "success");
     } catch {
@@ -112,6 +224,7 @@ export default function BookDetailPage({
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!book) return;
     if (!user) {
       toast("Sign in to leave a review", "error");
       return;
@@ -128,10 +241,12 @@ export default function BookDetailPage({
       setReviewComment("");
       setReviewRating(5);
       // Refresh book to update reviews
-      const data: any = await api.books.get(unwrappedParams.id);
+      const data = (await api.books.get(unwrappedParams.id)) as {
+        book: BookDetail;
+      };
       setBook(data.book);
-    } catch (err: any) {
-      toast(err.message, "error");
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : "Failed to submit review", "error");
     } finally {
       setSubmittingReview(false);
     }
@@ -174,6 +289,7 @@ export default function BookDetailPage({
   const discount = book.comparePrice
     ? Math.round((1 - book.price / book.comparePrice) * 100)
     : 0;
+  const reviews = book.reviews ?? [];
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -290,7 +406,7 @@ export default function BookDetailPage({
                   Options
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  {book.variations.map((v: any) => (
+                  {book.variations.map((v) => (
                     <button
                       key={v.id}
                       onClick={() => setSelectedVariation(v)}
@@ -404,24 +520,121 @@ export default function BookDetailPage({
           </div>
         </motion.div>
 
-        {/* Description */}
-        {book.description && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-12"
-          >
-            <h2 className="text-xl font-bold text-[#232f3e] mb-4">
-              About this Book
-            </h2>
-            <div className="bg-white border border-gray-200 rounded-md p-6">
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                {book.description}
-              </p>
-            </div>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-12"
+        >
+          <div className="flex gap-1 mb-4 border-b border-gray-200">
+            {[
+              { id: "about", label: "About this Book" },
+              { id: "suggested", label: "Suggested Books" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() =>
+                  setActiveContentTab(tab.id as "about" | "suggested")
+                }
+                className={`px-5 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
+                  activeContentTab === tab.id
+                    ? "border-[#e47911] text-[#e47911]"
+                    : "border-transparent text-gray-500 hover:text-[#232f3e]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {activeContentTab === "about" ? (
+              <motion.div
+                key="about"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="bg-white border border-gray-200 rounded-md p-6"
+              >
+                {book.description ? (
+                  <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                    {book.description}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Description is not available for this book yet.
+                  </p>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="suggested"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="bg-white border border-gray-200 rounded-md p-6"
+              >
+                {suggestedLoading ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="rounded border border-gray-100 p-3 animate-pulse"
+                      >
+                        <div className="h-36 rounded bg-gray-200" />
+                        <div className="h-3 mt-3 rounded bg-gray-200" />
+                        <div className="h-3 mt-2 w-2/3 rounded bg-gray-200" />
+                      </div>
+                    ))}
+                  </div>
+                ) : suggestedBooks.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {suggestedBooks.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/books/${item.id}`}
+                        className="rounded border border-gray-100 p-3 hover:border-[#e47911] hover:shadow-sm transition-all"
+                      >
+                        <div className="h-36 rounded overflow-hidden bg-gray-100">
+                          {item.coverImage ? (
+                            <img
+                              src={getImageUrl(item.coverImage)}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-4xl">
+                              📘
+                            </div>
+                          )}
+                        </div>
+                        <p className="mt-3 text-sm font-semibold text-[#232f3e] line-clamp-2">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                          {item.author}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <p className="text-sm font-bold text-[#232f3e]">
+                            Rs. {Number(item.price || 0).toFixed(0)}
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            ★ {Number(item.rating || 0).toFixed(1)}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Suggested books will appear here once similar titles are
+                    available.
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Reviews */}
         <motion.div
@@ -433,9 +646,9 @@ export default function BookDetailPage({
             Customer Reviews
           </h2>
 
-          {book.reviews?.length > 0 ? (
+          {reviews.length > 0 ? (
             <div className="space-y-4 mb-8">
-              {book.reviews.map((review: any) => (
+              {reviews.map((review) => (
                 <div
                   key={review.id}
                   className="bg-white border border-gray-200 rounded-md p-5"

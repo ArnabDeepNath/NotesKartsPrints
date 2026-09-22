@@ -19,6 +19,45 @@ interface Stats {
   revenue: number;
 }
 
+interface CategoryOption {
+  id: string;
+  name: string;
+  parentId: string | null;
+  children?: CategoryOption[];
+}
+
+type FlatCategoryOption = CategoryOption & {
+  depth: number;
+  path: string[];
+};
+
+const flattenCategories = (
+  items: CategoryOption[],
+  depth = 0,
+  parentPath: string[] = [],
+): FlatCategoryOption[] => {
+  const flattened: FlatCategoryOption[] = [];
+
+  items.forEach((item) => {
+    const path = [...parentPath, item.name];
+
+    flattened.push({
+      ...item,
+      depth,
+      path,
+    });
+
+    if (item.children?.length) {
+      flattened.push(...flattenCategories(item.children, depth + 1, path));
+    }
+  });
+
+  return flattened;
+};
+
+const getCategoryOptionLabel = (category: FlatCategoryOption) =>
+  `${category.depth > 0 ? `${"— ".repeat(category.depth)}` : ""}${category.name}`;
+
 const ADMIN_TABS = [
   { id: "overview", label: "Overview", icon: "◎" },
   { id: "books", label: "Books", icon: "📚" },
@@ -70,6 +109,7 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [bookModal, setBookModal] = useState<{ open: boolean; book?: any }>({
@@ -84,6 +124,20 @@ export default function AdminPanel() {
     discountType: 'PERCENTAGE',
     isActive: true,
   });
+
+  const flattenedCategories = flattenCategories(categories);
+  const categoryById = new Map(
+    flattenedCategories.map((category) => [category.id, category]),
+  );
+  const categoryOptions = flattenedCategories;
+  const subcategoryOptions = bookForm.categoryId
+    ? flattenedCategories.filter(
+        (category) => category.parentId === bookForm.categoryId,
+      )
+    : [];
+  const selectedCategory = bookForm.categoryId
+    ? categoryById.get(bookForm.categoryId)
+    : null;
 
   const formatLocation = (log: AdminLoginLog) => {
     const namedLocation = [log.city, log.region, log.country]
@@ -176,6 +230,15 @@ export default function AdminPanel() {
     }
   }, [toast]);
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const data = await api.categories.getAll();
+      setCategories(Array.isArray(data) ? (data as CategoryOption[]) : []);
+    } catch {
+      toast("Failed to load categories", "error");
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "ADMIN")) router.push("/");
   }, [user, authLoading, router]);
@@ -195,7 +258,15 @@ export default function AdminPanel() {
     if (tab === "orders") fetchOrders();
     if (tab === "coupons") fetchCoupons();
     if (tab === "loginLogs") fetchLoginLogs();
-  }, [tab, fetchUsers, fetchOrders, fetchCoupons, fetchLoginLogs]);
+    if (tab === "books") fetchCategories();
+  }, [
+    tab,
+    fetchUsers,
+    fetchOrders,
+    fetchCoupons,
+    fetchLoginLogs,
+    fetchCategories,
+  ]);
 
   const handleDeleteBook = async (id: string) => {
     if (!confirm("Delete this book?")) return;
@@ -1507,6 +1578,61 @@ export default function AdminPanel() {
                     />
                   </div>
                 ))}
+
+                <div className="col-span-2 grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                      Primary Category
+                    </label>
+                    <select
+                      value={bookForm.categoryId || ""}
+                      onChange={(e) =>
+                        setBookForm((prev: any) => ({
+                          ...prev,
+                          categoryId: e.target.value,
+                          subcategoryId: "",
+                        }))
+                      }
+                      className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] appearance-none"
+                    >
+                      <option value="">None</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {getCategoryOptionLabel(category)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                      Subcategory (optional)
+                    </label>
+                    <select
+                      value={bookForm.subcategoryId || ""}
+                      onChange={(e) =>
+                        setBookForm((prev: any) => ({
+                          ...prev,
+                          subcategoryId: e.target.value,
+                        }))
+                      }
+                      disabled={!bookForm.categoryId}
+                      className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] appearance-none disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    >
+                      <option value="">None</option>
+                      {subcategoryOptions.map((subcategory) => (
+                        <option key={subcategory.id} value={subcategory.id}>
+                          {subcategory.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedCategory ? (
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        Direct children of {selectedCategory.path.join(" / ")}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
 
                 <div className="col-span-2">
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">

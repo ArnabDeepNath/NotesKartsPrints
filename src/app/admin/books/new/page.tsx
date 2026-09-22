@@ -47,6 +47,9 @@ const flattenCategories = (
   return flattened;
 };
 
+const getCategoryOptionLabel = (category: FlatCategoryOption) =>
+  `${category.depth > 0 ? `${"— ".repeat(category.depth)}` : ""}${category.name}`;
+
 interface VariationDraft {
   id: number;
   attributes: {
@@ -103,9 +106,7 @@ export default function NewBookPage() {
   const categoryById = new Map(
     flattenedCategories.map((category) => [category.id, category]),
   );
-  const categoryOptions = flattenedCategories.filter(
-    (category) => !category.parentId,
-  );
+  const categoryOptions = flattenedCategories;
   const subcategoryOptions = formData.categoryId
     ? flattenedCategories.filter(
         (category) => category.parentId === formData.categoryId,
@@ -407,10 +408,10 @@ export default function NewBookPage() {
                   >
                     <option value="">None</option>
                     {categoryOptions.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
+                      <option key={c.id} value={c.id}>
+                        {getCategoryOptionLabel(c)}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 {formData.categoryId && (

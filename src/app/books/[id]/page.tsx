@@ -61,6 +61,77 @@ type BookDetail = Book & {
   variations?: BookVariation[];
 };
 
+const SuggestedBooksGrid = ({
+  suggestedBooks,
+  suggestedLoading,
+}: {
+  suggestedBooks: Book[];
+  suggestedLoading: boolean;
+}) => {
+  if (suggestedLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            key={index}
+            className="rounded border border-gray-100 p-3 animate-pulse"
+          >
+            <div className="h-36 rounded bg-gray-200" />
+            <div className="h-3 mt-3 rounded bg-gray-200" />
+            <div className="h-3 mt-2 w-2/3 rounded bg-gray-200" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (suggestedBooks.length === 0) {
+    return (
+      <p className="text-sm text-gray-500">
+        Suggested books will appear here once similar titles are available.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {suggestedBooks.map((item) => (
+        <Link
+          key={item.id}
+          href={`/books/${item.id}`}
+          className="rounded border border-gray-100 p-3 hover:border-[#e47911] hover:shadow-sm transition-all"
+        >
+          <div className="h-36 rounded overflow-hidden bg-gray-100">
+            {item.coverImage ? (
+              <img
+                src={getImageUrl(item.coverImage)}
+                alt={item.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-4xl">
+                📘
+              </div>
+            )}
+          </div>
+          <p className="mt-3 text-sm font-semibold text-[#232f3e] line-clamp-2">
+            {item.title}
+          </p>
+          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{item.author}</p>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-sm font-bold text-[#232f3e]">
+              Rs. {Number(item.price || 0).toFixed(0)}
+            </p>
+            <p className="text-[11px] text-gray-500">
+              ★ {Number(item.rating || 0).toFixed(1)}
+            </p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 export default function BookDetailPage({
   params,
 }: {
@@ -574,63 +645,10 @@ export default function BookDetailPage({
                 exit={{ opacity: 0, x: -10 }}
                 className="bg-white border border-gray-200 rounded-md p-6"
               >
-                {suggestedLoading ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="rounded border border-gray-100 p-3 animate-pulse"
-                      >
-                        <div className="h-36 rounded bg-gray-200" />
-                        <div className="h-3 mt-3 rounded bg-gray-200" />
-                        <div className="h-3 mt-2 w-2/3 rounded bg-gray-200" />
-                      </div>
-                    ))}
-                  </div>
-                ) : suggestedBooks.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {suggestedBooks.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/books/${item.id}`}
-                        className="rounded border border-gray-100 p-3 hover:border-[#e47911] hover:shadow-sm transition-all"
-                      >
-                        <div className="h-36 rounded overflow-hidden bg-gray-100">
-                          {item.coverImage ? (
-                            <img
-                              src={getImageUrl(item.coverImage)}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl">
-                              📘
-                            </div>
-                          )}
-                        </div>
-                        <p className="mt-3 text-sm font-semibold text-[#232f3e] line-clamp-2">
-                          {item.title}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-                          {item.author}
-                        </p>
-                        <div className="mt-2 flex items-center justify-between">
-                          <p className="text-sm font-bold text-[#232f3e]">
-                            Rs. {Number(item.price || 0).toFixed(0)}
-                          </p>
-                          <p className="text-[11px] text-gray-500">
-                            ★ {Number(item.rating || 0).toFixed(1)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Suggested books will appear here once similar titles are
-                    available.
-                  </p>
-                )}
+                <SuggestedBooksGrid
+                  suggestedBooks={suggestedBooks}
+                  suggestedLoading={suggestedLoading}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -759,6 +777,30 @@ export default function BookDetailPage({
               </Link>
             </div>
           )}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.17 }}
+          className="mb-12"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-[#232f3e]">Suggested Books</h2>
+            <button
+              type="button"
+              onClick={() => setActiveContentTab("suggested")}
+              className="text-sm font-medium text-[#146eb4] hover:underline"
+            >
+              View in tab
+            </button>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-md p-6">
+            <SuggestedBooksGrid
+              suggestedBooks={suggestedBooks}
+              suggestedLoading={suggestedLoading}
+            />
+          </div>
         </motion.div>
       </div>
 

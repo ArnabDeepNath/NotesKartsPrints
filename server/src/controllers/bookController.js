@@ -22,7 +22,8 @@ let _hasCategoryColumns = null;
 async function hasCategoryColumns() {
   if (_hasCategoryColumns !== null) return _hasCategoryColumns;
   try {
-    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books LIKE 'categoryId'`;
+    // Check for both 'categoryId' and 'category_id' column names
+    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books LIKE 'categoryId' OR SHOW COLUMNS FROM books LIKE 'category_id'`;
     _hasCategoryColumns = columns.length > 0;
   } catch {
     _hasCategoryColumns = false;
@@ -35,7 +36,8 @@ let _hasVariationsTable = null;
 async function hasVariationsTable() {
   if (_hasVariationsTable !== null) return _hasVariationsTable;
   try {
-    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+    // Check for both 'book_variations' and 'BookVariation' table names
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations' OR SHOW TABLES LIKE 'BookVariation'`;
     _hasVariationsTable = tables.length > 0;
   } catch {
     _hasVariationsTable = false;

@@ -43,6 +43,10 @@ type CategoryTab = {
   slug: string;
   kind: "category" | "subcategory" | "all";
   parentSlug?: string;
+  // Explicit navigation targets so deep (sub-sub) categories can drop the
+  // top-level "category" param instead of AND-ing mismatched ids on the server.
+  targetCategory?: string;
+  targetSubcategory?: string;
 };
 
 const flattenCategories = (items: CategoryNode[]): CategoryNode[] => {
@@ -165,7 +169,74 @@ function BooksPageInner() {
     return category ? categoryBySlug.get(category) || null : null;
   }, [activeSubcategory, category, categoryBySlug, categoryList]);
 
+  const getRootCategory = useCallback(
+    (node: CategoryNode): CategoryNode => {
+      let current = node;
+      const seen = new Set<string>([node.id]);
+
+      while (current.parentId && !seen.has(current.parentId)) {
+        const parent = categoryList.find(
+          (item) => item.id === current.parentId,
+        );
+        if (!parent) break;
+        seen.add(parent.id);
+        current = parent;
+      }
+
+      return current;
+    },
+    [categoryList],
+  );
+
   const categoryTabs = useMemo<CategoryTab[]>(() => {
+    // The selected subcategory has its own children: drill down and show the
+    // sub-sub categories instead of repeating the parent's children.
+    if (activeSubcategory?.children?.length) {
+      const tabs: CategoryTab[] = [];
+
+      if (activeCategory) {
+        const parentIsTopLevel = !activeCategory.parentId;
+        tabs.push({
+          id: `${activeSubcategory.id}-back`,
+          label: `← ${activeCategory.name}`,
+          slug: activeCategory.slug,
+          kind: "all",
+          targetCategory: parentIsTopLevel
+            ? activeCategory.slug
+            : getRootCategory(activeCategory).slug,
+          targetSubcategory: parentIsTopLevel ? "" : activeCategory.slug,
+        });
+      }
+
+      tabs.push({
+        id: `${activeSubcategory.id}-all`,
+        label: `All in ${activeSubcategory.name}`,
+        slug: activeSubcategory.slug,
+        kind: "all",
+        targetCategory:
+          activeCategory && !activeCategory.parentId
+            ? activeCategory.slug
+            : "",
+        targetSubcategory: activeSubcategory.slug,
+      });
+
+      activeSubcategory.children.forEach((item) => {
+        tabs.push({
+          id: item.id,
+          label: item.name,
+          slug: item.slug,
+          kind: "subcategory",
+          parentSlug: activeSubcategory.slug,
+          // Only filter by the sub-sub category slug. Books under it are
+          // stored with a different categoryId, so sending a top-level
+          // category param would AND-match nothing on the server.
+          targetCategory: "",
+        });
+      });
+
+      return tabs;
+    }
+
     if (activeSubcategory && activeCategory) {
       return [
         {
@@ -200,7 +271,7 @@ function BooksPageInner() {
       slug: item.slug,
       kind: "category" as const,
     }));
-  }, [activeCategory, activeSubcategory, categories]);
+  }, [activeCategory, activeSubcategory, categories, getRootCategory]);
 
   const headerTitle =
     activeSubcategory?.name ||
@@ -400,11 +471,13 @@ function BooksPageInner() {
                     : "Browse Categories"}
                 </p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {activeSubcategory
-                    ? "Switch between sibling subcategories or jump back to the parent collection."
-                    : activeCategory
-                      ? "Move across the subcategories inside this collection."
-                      : "Jump directly into a top-level category."}
+                  {activeSubcategory?.children?.length
+                    ? "This subcategory has its own nested subcategories. Drill into them or step back up a level."
+                    : activeSubcategory
+                      ? "Switch between sibling subcategories or jump back to the parent collection."
+                      : activeCategory
+                        ? "Move across the subcategories inside this collection."
+                        : "Jump directly into a top-level category."}
                 </p>
               </div>
               {activeCategory || activeSubcategory ? (
@@ -426,8 +499,8 @@ function BooksPageInner() {
                     !subcategory) ||
                   (tab.kind === "subcategory" && subcategory === tab.slug) ||
                   (tab.kind === "all" &&
-                    activeCategory?.slug === tab.slug &&
-                    !subcategory);
+                    (activeSubcategory?.slug === tab.slug ||
+                      (activeCategory?.slug === tab.slug && !subcategory)));
 
                 return (
                   <button
@@ -435,18 +508,23 @@ function BooksPageInner() {
                     onClick={() => {
                       if (tab.kind === "subcategory") {
                         applyFilters({
-                          category: tab.parentSlug || "",
+                          category: tab.targetCategory ?? tab.parentSlug ?? "",
                           subcategory: tab.slug,
                           page: 1,
                         });
                         return;
                       }
 
-                      applyFilters({
-                        category: tab.slug,
-                        subcategory: "",
-                        page: 1,
-                      });
+                      if (tab.kind === "all") {
+                        applyFilters({
+                          category: tab.targetCategory ?? tab.slug,
+                          subcategory: tab.targetSubcategory ?? "",
+                          page: 1,
+                        });
+                        return;
+                      }
+
+                      applyFilters({ category: tab.slug, subcategory: "", page: 1 });
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${isActive ? "bg-[#17233b] text-white shadow-[0_10px_30px_rgba(23,35,59,0.18)]" : "border border-gray-200 bg-[#f8fafc] text-gray-600 hover:border-[#146eb4] hover:text-[#146eb4]"}`}
                   >

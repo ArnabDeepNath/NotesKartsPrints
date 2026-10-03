@@ -154,6 +154,21 @@ function BooksPageInner() {
     () => new Map(categoryList.map((item) => [item.slug, item])),
     [categoryList],
   );
+  const categoryChildrenByParentId = useMemo(() => {
+    const childrenByParent = new Map<string, CategoryNode[]>();
+
+    categoryList.forEach((item) => {
+      if (!item.parentId) return;
+      const siblings = childrenByParent.get(item.parentId) || [];
+      if (!siblings.some((sibling) => sibling.id === item.id)) {
+        siblings.push(item);
+        siblings.sort((left, right) => left.name.localeCompare(right.name));
+        childrenByParent.set(item.parentId, siblings);
+      }
+    });
+
+    return childrenByParent;
+  }, [categoryList]);
 
   const activeSubcategory = subcategory
     ? categoryBySlug.get(subcategory) || null
@@ -168,6 +183,13 @@ function BooksPageInner() {
 
     return category ? categoryBySlug.get(category) || null : null;
   }, [activeSubcategory, category, categoryBySlug, categoryList]);
+  const activeSubcategoryChildren = useMemo(
+    () =>
+      activeSubcategory
+        ? categoryChildrenByParentId.get(activeSubcategory.id) || []
+        : [],
+    [activeSubcategory, categoryChildrenByParentId],
+  );
 
   const getRootCategory = useCallback(
     (node: CategoryNode): CategoryNode => {
@@ -191,7 +213,7 @@ function BooksPageInner() {
   const categoryTabs = useMemo<CategoryTab[]>(() => {
     // The selected subcategory has its own children: drill down and show the
     // sub-sub categories instead of repeating the parent's children.
-    if (activeSubcategory?.children?.length) {
+    if (activeSubcategory && activeSubcategoryChildren.length > 0) {
       const tabs: CategoryTab[] = [];
 
       if (activeCategory) {
@@ -220,7 +242,7 @@ function BooksPageInner() {
         targetSubcategory: activeSubcategory.slug,
       });
 
-      activeSubcategory.children.forEach((item) => {
+      activeSubcategoryChildren.forEach((item) => {
         tabs.push({
           id: item.id,
           label: item.name,
@@ -245,33 +267,46 @@ function BooksPageInner() {
           slug: activeCategory.slug,
           kind: "all",
         },
-        ...((activeCategory.children || []).map((item) => ({
+        ...(categoryChildrenByParentId.get(activeCategory.id) || []).map(
+          (item) => ({
+            id: item.id,
+            label: item.name,
+            slug: item.slug,
+            kind: "subcategory" as const,
+            parentSlug: activeCategory.slug,
+          }),
+        ),
+      ];
+    }
+
+    if (activeCategory) {
+      return (categoryChildrenByParentId.get(activeCategory.id) || []).map(
+        (item) => ({
           id: item.id,
           label: item.name,
           slug: item.slug,
           kind: "subcategory" as const,
           parentSlug: activeCategory.slug,
-        })) || []),
-      ];
+        }),
+      );
     }
 
-    if (activeCategory) {
-      return (activeCategory.children || []).map((item) => ({
+    return categoryList
+      .filter((item) => !item.parentId)
+      .map((item) => ({
         id: item.id,
         label: item.name,
         slug: item.slug,
-        kind: "subcategory" as const,
-        parentSlug: activeCategory.slug,
+        kind: "category" as const,
       }));
-    }
-
-    return categories.map((item) => ({
-      id: item.id,
-      label: item.name,
-      slug: item.slug,
-      kind: "category" as const,
-    }));
-  }, [activeCategory, activeSubcategory, categories, getRootCategory]);
+  }, [
+    activeCategory,
+    activeSubcategory,
+    activeSubcategoryChildren,
+    categoryChildrenByParentId,
+    categoryList,
+    getRootCategory,
+  ]);
 
   const headerTitle =
     activeSubcategory?.name ||
@@ -471,7 +506,7 @@ function BooksPageInner() {
                     : "Browse Categories"}
                 </p>
                 <p className="mt-1 text-sm text-gray-500">
-                  {activeSubcategory?.children?.length
+                  {activeSubcategoryChildren.length > 0
                     ? "This subcategory has its own nested subcategories. Drill into them or step back up a level."
                     : activeSubcategory
                       ? "Switch between sibling subcategories or jump back to the parent collection."

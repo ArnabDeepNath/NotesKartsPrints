@@ -43,8 +43,7 @@ type CategoryTab = {
   slug: string;
   kind: "category" | "subcategory" | "all";
   parentSlug?: string;
-  // Explicit navigation targets so deep (sub-sub) categories can drop the
-  // top-level "category" param instead of AND-ing mismatched ids on the server.
+  // Explicit navigation targets for drilling down or stepping up the tree.
   targetCategory?: string;
   targetSubcategory?: string;
 };
@@ -249,9 +248,7 @@ function BooksPageInner() {
           slug: item.slug,
           kind: "subcategory",
           parentSlug: activeSubcategory.slug,
-          // Only filter by the sub-sub category slug. Books under it are
-          // stored with a different categoryId, so sending a top-level
-          // category param would AND-match nothing on the server.
+          // The selected slug identifies its complete branch on the server.
           targetCategory: "",
         });
       });
@@ -365,36 +362,46 @@ function BooksPageInner() {
     [category, featured, genre, page, router, search, subcategory],
   );
 
-  const fetchBooks = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [sortField, sortOrder] = sort.split(":");
-      const params: Record<string, string | number> = {
-        page,
-        limit: 12,
-        sort: sortField,
-        order: sortOrder,
-      };
-      if (search) params.search = search;
-      if (genre) params.genre = genre;
-      if (category) params.category = category;
-      if (subcategory) params.subcategory = subcategory;
-      if (featured) params.featured = "true";
-
-      const { books: b, pagination } = await api.books.list(params);
-      setBooks(b);
-      setTotal(pagination.total);
-      setTotalPages(pagination.totalPages);
-    } catch {
-      toast("Failed to load books", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, genre, category, subcategory, sort, featured]);
-
   useEffect(() => {
+    let cancelled = false;
+    const fetchBooks = async () => {
+      setLoading(true);
+      try {
+        const [sortField, sortOrder] = sort.split(":");
+        const params: Record<string, string | number> = {
+          page,
+          limit: 12,
+          sort: sortField,
+          order: sortOrder,
+        };
+        if (search) params.search = search;
+        if (genre) params.genre = genre;
+        if (category) params.category = category;
+        if (subcategory) params.subcategory = subcategory;
+        if (featured) params.featured = "true";
+
+        const { books: b, pagination } = await api.books.list(params);
+        if (cancelled) return;
+        setBooks(b);
+        setTotal(pagination.total);
+        setTotalPages(pagination.totalPages);
+      } catch {
+        if (cancelled) return;
+        setBooks([]);
+        setTotal(0);
+        setTotalPages(0);
+        toast("Failed to load books", "error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     fetchBooks();
-  }, [fetchBooks]);
+    // Ignore older responses when the user switches categories quickly.
+    return () => {
+      cancelled = true;
+    };
+  }, [page, search, genre, category, subcategory, sort, featured, toast]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

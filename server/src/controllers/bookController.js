@@ -21,13 +21,10 @@ function serializeBook(book) {
 let _hasCategoryColumns = null;
 async function hasCategoryColumns() {
   if (_hasCategoryColumns !== null) return _hasCategoryColumns;
-  try {
-    // Check for both 'categoryId' and 'category_id' column names
-    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books LIKE 'categoryId' OR SHOW COLUMNS FROM books LIKE 'category_id'`;
-    _hasCategoryColumns = columns.length > 0;
-  } catch {
-    _hasCategoryColumns = false;
-  }
+  // These are the exact column names mapped by the Prisma Book model.
+  // Unexpected database errors must not silently disable category filtering.
+  const columns = await prisma.$queryRaw`SHOW COLUMNS FROM books WHERE Field IN ('categoryId', 'subcategoryId')`;
+  _hasCategoryColumns = columns.length === 2;
   return _hasCategoryColumns;
 }
 
@@ -36,8 +33,7 @@ let _hasVariationsTable = null;
 async function hasVariationsTable() {
   if (_hasVariationsTable !== null) return _hasVariationsTable;
   try {
-    // Check for both 'book_variations' and 'BookVariation' table names
-    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations' OR SHOW TABLES LIKE 'BookVariation'`;
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
     _hasVariationsTable = tables.length > 0;
   } catch {
     _hasVariationsTable = false;
@@ -62,6 +58,30 @@ const SAFE_BOOK_SELECT = {
   createdAt: true, updatedAt: true,
   genre: true,
 };
+
+// Books can be assigned to any depth through either category field.
+// Resolve the selected node and all descendants without including its siblings.
+function getCategoryBranchIds(categories, slug) {
+  const selected = categories.find((item) => item.slug === String(slug));
+  if (!selected) return [];
+
+  const childrenByParent = new Map();
+  for (const item of categories) {
+    const children = childrenByParent.get(item.parentId) || [];
+    children.push(item.id);
+    childrenByParent.set(item.parentId, children);
+  }
+
+  const ids = new Set();
+  const pending = [selected.id];
+  while (pending.length) {
+    const id = pending.pop();
+    if (ids.has(id)) continue;
+    ids.add(id);
+    pending.push(...(childrenByParent.get(id) || []));
+  }
+  return [...ids];
+}
 
 const getBooks = async (req, res, next) => {
   try {
@@ -104,15 +124,24 @@ const getBooks = async (req, res, next) => {
     }
 
     const catColumnsExist = await hasCategoryColumns();
-    if (category && catColumnsExist) {
-      const catRecord = await prisma.category.findUnique({ where: { slug: String(category) } });
-      if (catRecord) where.categoryId = catRecord.id;
-      else where.categoryId = "___none___";
-    }
-    if (subcategory && catColumnsExist) {
-      const subRecord = await prisma.category.findUnique({ where: { slug: String(subcategory) } });
-      if (subRecord) where.subcategoryId = subRecord.id;
-      else where.subcategoryId = "___none___";
+    if (category || subcategory) {
+      if (!catColumnsExist) {
+        throw new AppError("Category filtering is unavailable. Please update the database schema.", 503);
+      }
+
+      const categories = await prisma.category.findMany({
+        select: { id: true, slug: true, parentId: true },
+      });
+      // Keep search's OR separate and intersect category/subcategory branches.
+      where.AND = [category, subcategory].filter(Boolean).map((slug) => {
+        const ids = getCategoryBranchIds(categories, slug);
+        return {
+          OR: [
+            { categoryId: { in: ids } },
+            { subcategoryId: { in: ids } },
+          ],
+        };
+      });
     }
     if (featured === "true") where.featured = true;
     if (section) where.section = String(section);
@@ -155,10 +184,11 @@ const getBooks = async (req, res, next) => {
       if (queryErr.code === "P2022" || queryErr.code === "P2021") {
         console.warn(`[getBooks] Schema missing (${queryErr.code}), falling back to safe select...`);
         resetCategoryColumnsCache();
-        // Remove any category filters from where clause
-        delete where.categoryId;
-        delete where.subcategoryId;
-        
+        // Never broaden a filtered request into the full catalog.
+        if ((category || subcategory) && !(await hasCategoryColumns())) {
+          throw new AppError("Category filtering is unavailable. Please update the database schema.", 503);
+        }
+
         const fallbackSelect = { ...SAFE_BOOK_SELECT };
         if (await hasVariationsTable()) {
           fallbackSelect.variations = true;
@@ -196,8 +226,8 @@ const getBooks = async (req, res, next) => {
     console.error("[getBooks] Code:", err.code);
     console.error("[getBooks] Stack:", err.stack);
     // Return real error for debugging
-    res.status(500).json({ 
-      message: "Failed to load books", 
+    res.status(err.statusCode || 500).json({
+      message: err instanceof AppError ? err.message : "Failed to load books",
       debug: err.message,
       code: err.code,
     });

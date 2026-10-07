@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -196,28 +197,22 @@ export default function NewBookPage() {
     });
   };
 
-  const handleVariationImage = async (idx: number, file: File) => {
+  const handleVariationImage = async (id: number, file: File) => {
     try {
       const uploadData = new FormData();
       uploadData.append("image", file);
       const uploadRes = await api.upload.image(uploadData);
 
-      setVariations((prev) => {
-        const next = [...prev];
-        next[idx].image = uploadRes.url;
-        return next;
-      });
+      setVariations((prev) => prev.map((variation) =>
+        variation.id === id ? { ...variation, image: uploadRes.url } : variation));
       toast("Variation image uploaded", "success");
     } catch (err: unknown) {
       toast(getErrorMessage(err, "Image upload failed"), "error");
+      throw err;
     }
   };
 
-  const handleCoverImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
+  const handleCoverImageUpload = async (file: File) => {
     try {
       setIsUploadingCover(true);
       const uploadData = new FormData();
@@ -228,6 +223,7 @@ export default function NewBookPage() {
       toast("Cover image uploaded", "success");
     } catch (err: unknown) {
       toast(getErrorMessage(err, "Image upload failed"), "error");
+      throw err;
     } finally {
       setIsUploadingCover(false);
     }
@@ -490,16 +486,7 @@ export default function NewBookPage() {
                   />
                 </div>
                 <div className="flex-shrink-0">
-                  <div className="relative overflow-hidden inline-block border border-gray-300 bg-white hover:bg-gray-50 rounded px-4 py-3 text-sm text-gray-700 font-medium cursor-pointer transition-colors">
-                    {isUploadingCover ? "Uploading..." : "Upload File"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={isUploadingCover}
-                      onChange={handleCoverImageUpload}
-                      className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                    />
-                  </div>
+                  <ImageUploadInput disabled={isUploadingCover || isSubmitting} onReady={handleCoverImageUpload} label={isUploadingCover ? "Uploading..." : "Upload & Adjust"} />
                 </div>
               </div>
               {formData.coverImage && (
@@ -659,15 +646,7 @@ export default function NewBookPage() {
                         Specific Image
                       </label>
                       <div className="flex items-center gap-4">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0])
-                              handleVariationImage(idx, e.target.files[0]);
-                          }}
-                          className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
-                        />
+                        <ImageUploadInput disabled={isSubmitting} onReady={(file) => handleVariationImage(v.id, file)} label="Upload & Adjust Variation" />
                         {v.image && (
                           <img
                             src={getImageUrl(v.image)}

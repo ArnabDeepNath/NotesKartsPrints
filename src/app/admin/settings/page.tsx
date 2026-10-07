@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { createMenuItemId } from "@/lib/category-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
@@ -17,6 +17,7 @@ import {
   type PolicyPage,
 } from "@/lib/site-settings";
 import RichTextEditor from "@/app/components/RichTextEditor";
+import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 
 const SOCIAL_FIELDS = [
   { key: "facebook", label: "Facebook URL" },
@@ -374,6 +375,7 @@ export default function AdminSettingsPage() {
       toast("Slide image uploaded", "success");
     } catch (err: unknown) {
       toast(getErrorMessage(err, "Image upload failed"), "error");
+      throw err;
     } finally {
       setUploadingSlideIndex(null);
     }
@@ -1011,25 +1013,14 @@ export default function AdminSettingsPage() {
                               updateHeroSlide(index, "image", value)
                             }
                           />
-                          <label className="inline-flex items-center gap-3 rounded border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  uploadHeroImage(index, file);
-                                }
-                              }}
-                            />
-                            {uploadingSlideIndex === index
-                              ? "Uploading..."
-                              : "Upload Slide Image"}
-                          </label>
+                          <ImageUploadInput
+                            disabled={uploadingSlideIndex !== null}
+                            onReady={(file) => uploadHeroImage(index, file)}
+                            label={uploadingSlideIndex === index ? "Uploading..." : "Upload & Adjust Slide"}
+                          />
                           {slide.image && (
                             <img
-                              src={slide.image}
+                              src={getImageUrl(slide.image)}
                               alt={slide.title || `Slide ${index + 1}`}
                               className="h-24 w-full rounded object-cover border border-gray-200"
                             />

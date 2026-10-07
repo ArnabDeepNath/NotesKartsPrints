@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
+import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -527,17 +528,11 @@ export default function CategoryManager({
                   />
                 </label>
 
-                <label className="block text-sm font-medium text-[#232f3e]">
+                <div className="block text-sm font-medium text-[#232f3e]">
                   <span className="block mb-2">Image (Optional)</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) =>
-                      setImageFile(event.target.files?.[0] || null)
-                    }
-                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
-                  />
-                </label>
+                  <ImageUploadInput disabled={isSubmitting} onReady={(file) => setImageFile(file)} label="Choose & Adjust Image" />
+                  {imageFile && <p className="mt-2 text-xs text-gray-500">{imageFile.name} · {(imageFile.size / 1024).toFixed(0)} KB · Ready to upload when saved</p>}
+                </div>
 
                 <div className="pt-4 flex justify-end gap-3">
                   <button

@@ -14,6 +14,33 @@ export type ImageExportFormat = "image/jpeg" | "image/png" | "image/webp";
 export const MAX_IMAGE_DIMENSION = 4096;
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
+// Fetch saved images as blobs so the editor uses an origin-clean canvas, just
+// like a local upload. Do not use no-cors: opaque responses cannot be exported.
+export async function loadImageFile(url: string, signal?: AbortSignal): Promise<File> {
+  let response: Response;
+  try {
+    response = await fetch(url, { signal });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new Error("Unable to load the existing image. Check the URL; external image hosts must allow browser access (CORS). You can also download it and use Upload & Adjust.");
+  }
+  if (!response.ok) {
+    throw new Error(`Unable to load the existing image (HTTP ${response.status}). Check the image URL or upload a local copy.`);
+  }
+  const blob = await response.blob();
+  if (!blob.size || (blob.type && !blob.type.startsWith("image/") && blob.type !== "application/octet-stream")) {
+    throw new Error("This URL does not contain an image. Check the image URL or upload a local copy.");
+  }
+  let name = "existing-image";
+  try {
+    const pathname = new URL(url, "http://localhost").pathname;
+    name = decodeURIComponent(pathname.split("/").pop() || name);
+  } catch {
+    // A malformed encoded filename should not prevent editing valid bytes.
+  }
+  return new File([blob], name, { type: blob.type });
+}
+
 export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }

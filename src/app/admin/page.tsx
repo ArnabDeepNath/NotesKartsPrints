@@ -1636,7 +1636,7 @@ export default function AdminPanel() {
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                     Cover Image
                   </label>
-                  <div className="flex gap-4 items-end">
+                  <div className="flex flex-wrap gap-4 items-end">
                     <div className="flex-1">
                       <input
                         type="text"
@@ -1652,7 +1652,7 @@ export default function AdminPanel() {
                       />
                     </div>
                     <div className="flex-shrink-0">
-                      <ImageUploadInput disabled={isUploadingCover} onReady={handleModalCoverImageUpload} label={isUploadingCover ? "Uploading..." : "Upload & Adjust"} />
+                      <ImageUploadInput existingImage={getImageUrl(bookForm.coverImage)} disabled={isUploadingCover} onReady={handleModalCoverImageUpload} label={isUploadingCover ? "Uploading..." : "Upload & Adjust"} />
                     </div>
                   </div>
                   {bookForm.coverImage && (
@@ -1664,6 +1664,7 @@ export default function AdminPanel() {
                       />
                     </div>
                   )}
+                  <p className="mt-2 text-xs text-gray-500">Crop, adjust, or resize the current image without uploading the original again. Save the book to publish your changes.</p>
                 </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">

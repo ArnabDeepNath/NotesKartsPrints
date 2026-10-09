@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   drawAdjustedImage, exportAdjustedImage, fitImageSize, getCropRect,
-  getRotatedSize, MAX_IMAGE_DIMENSION, moveCrop, resizeImageSize,
+  getRotatedSize, loadImageFile, MAX_IMAGE_DIMENSION, moveCrop, resizeImageSize,
   type ImageAdjustments, type ImageExportFormat, type ImageSize,
 } from "@/lib/image-adjuster";
 
@@ -25,39 +25,45 @@ function initialAdjustments(aspect: number): ImageAdjustments {
 }
 
 export default function ImageUploadInput({
-  onReady, disabled = false, label = "Upload & Adjust", className = "",
+  onReady, disabled = false, label = "Upload & Adjust", className = "", existingImage,
 }: {
   onReady: (file: File) => void | Promise<void>;
   disabled?: boolean;
   label?: string;
   className?: string;
+  existingImage?: string | File | null;
 }) {
-  const [file, setFile] = useState<File | null>(null);
-  const close = useCallback(() => setFile(null), []);
+  const [source, setSource] = useState<File | string | null>(null);
+  const close = useCallback(() => setSource(null), []);
   return (
-    <>
+    <span className="inline-flex flex-wrap items-center gap-2">
       <label className={`relative inline-flex cursor-pointer items-center rounded border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 ${disabled ? "pointer-events-none opacity-50" : ""} ${className}`}>
         {label}
         <input
           type="file"
           accept="image/*"
-          disabled={disabled || !!file}
+          disabled={disabled || !!source}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           aria-label={label}
           onChange={(event) => {
             const selected = event.target.files?.[0];
             event.target.value = "";
-            if (selected) setFile(selected);
+            if (selected) setSource(selected);
           }}
         />
       </label>
-      {file && <ImageAdjuster key={`${file.name}-${file.lastModified}`} file={file} onCancel={close} onReady={onReady} />}
-    </>
+      {existingImage && <button type="button" disabled={disabled || !!source}
+        onClick={() => setSource(existingImage)}
+        className={`rounded border border-[#e47911] bg-white px-4 py-2.5 text-sm font-medium text-[#c45500] hover:bg-orange-50 disabled:opacity-50 ${className}`}>
+        Edit existing image
+      </button>}
+      {source && <ImageAdjuster source={source} onCancel={close} onReady={onReady} />}
+    </span>
   );
 }
 
-function ImageAdjuster({ file, onCancel, onReady }: {
-  file: File;
+function ImageAdjuster({ source, onCancel, onReady }: {
+  source: File | string;
   onCancel: () => void;
   onReady: (file: File) => void | Promise<void>;
 }) {
@@ -65,38 +71,54 @@ function ImageAdjuster({ file, onCancel, onReady }: {
   const dialogRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [adjustments, setAdjustments] = useState(initialAdjustments(1));
   const [preset, setPreset] = useState("original");
   const [customRatio, setCustomRatio] = useState({ width: 1, height: 1 });
   const [output, setOutput] = useState<ImageSize>({ width: 1, height: 1 });
   const [lockAspect, setLockAspect] = useState(true);
-  const [format, setFormat] = useState<ImageExportFormat>(file.type === "image/jpeg" ? "image/jpeg" : file.type === "image/webp" ? "image/webp" : "image/png");
+  const [format, setFormat] = useState<ImageExportFormat>("image/png");
   const [quality, setQuality] = useState(0.9);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    const url = URL.createObjectURL(file);
-    const source = new Image();
-    source.onload = () => {
-      if (cancelled) return;
-      setImage(source);
-      setAdjustments(initialAdjustments(source.naturalWidth / source.naturalHeight));
-      setOutput(fitImageSize({ width: source.naturalWidth, height: source.naturalHeight }));
+    const controller = new AbortController();
+    let url: string | undefined;
+    const image = new Image();
+    const load = async () => {
+      try {
+        const loadedFile = typeof source === "string" ? await loadImageFile(source, controller.signal) : source;
+        if (cancelled) return;
+        url = URL.createObjectURL(loadedFile);
+        image.onload = () => {
+          if (cancelled) return;
+          setFile(loadedFile);
+          setImage(image);
+          setFormat(loadedFile.type === "image/jpeg" ? "image/jpeg" : loadedFile.type === "image/webp" ? "image/webp" : "image/png");
+          setAdjustments(initialAdjustments(image.naturalWidth / image.naturalHeight));
+          setOutput(fitImageSize({ width: image.naturalWidth, height: image.naturalHeight }));
+        };
+        image.onerror = () => {
+          if (!cancelled) setError("This image cannot be opened. Please choose a JPEG, PNG, or WebP image.");
+        };
+        image.src = url;
+      } catch (error) {
+        if (!cancelled) setError(error instanceof Error ? error.message : "Unable to load the existing image.");
+      }
     };
-    source.onerror = () => {
-      if (!cancelled) setError("This image cannot be opened. Please choose a JPEG, PNG, or WebP image.");
-    };
-    source.src = url;
+    void load();
     return () => {
       cancelled = true;
-      source.onload = null;
-      source.onerror = null;
-      URL.revokeObjectURL(url);
+      controller.abort();
+      image.onload = null;
+      image.onerror = null;
+      if (url) URL.revokeObjectURL(url);
     };
-  }, [file]);
+  }, [source, loadAttempt]);
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -148,7 +170,7 @@ function ImageAdjuster({ file, onCancel, onReady }: {
   };
 
   const confirm = async () => {
-    if (!image || busy) return;
+    if (!image || !file || busy) return;
     setBusy(true);
     setError("");
     try {
@@ -223,9 +245,9 @@ function ImageAdjuster({ file, onCancel, onReady }: {
               ) : <p className="text-sm text-white" role="status">{error ? "Preview unavailable" : "Loading image..."}</p>}
             </div>
             <p className="mt-3 text-xs text-gray-500">Drag the preview or use the position sliders. Zoom in to crop more closely.</p>
-            {sourceSize && <p className="mt-2 text-xs text-gray-500">Original: {sourceSize.width} × {sourceSize.height} px · {(file.size / 1024 / 1024).toFixed(2)} MB</p>}
+            {sourceSize && file && <p className="mt-2 text-xs text-gray-500">Original: {sourceSize.width} × {sourceSize.height} px · {(file.size / 1024 / 1024).toFixed(2)} MB</p>}
             <p className="mt-2 text-sm font-semibold text-[#232f3e]">Output: {output.width} × {output.height} px</p>
-            {file.type === "image/gif" && <p className="mt-2 text-xs text-amber-700">Animated images are exported as a single still frame.</p>}
+            {file?.type === "image/gif" && <p className="mt-2 text-xs text-amber-700">Animated images are exported as a single still frame.</p>}
           </div>
 
           <fieldset disabled={!image || busy} className="min-w-0 space-y-4 disabled:opacity-60">
@@ -274,6 +296,7 @@ function ImageAdjuster({ file, onCancel, onReady }: {
         <div className="border-t border-gray-200 px-5 py-4">
           {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
           <div className="flex justify-end gap-3">
+            {error && !image && typeof source === "string" && <button type="button" onClick={() => { setError(""); setLoadAttempt((attempt) => attempt + 1); }} className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-600">Retry loading</button>}
             <button type="button" onClick={onCancel} disabled={busy} className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-600 disabled:opacity-50">Cancel</button>
             <button type="button" onClick={confirm} disabled={!image || busy} className="rounded bg-[#e47911] px-5 py-2 text-sm font-semibold text-white hover:bg-[#c45500] disabled:opacity-50">{busy ? "Saving image..." : "Use adjusted image"}</button>
           </div>

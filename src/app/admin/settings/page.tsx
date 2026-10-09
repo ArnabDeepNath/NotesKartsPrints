@@ -1014,6 +1014,7 @@ export default function AdminSettingsPage() {
                             }
                           />
                           <ImageUploadInput
+                            existingImage={getImageUrl(slide.image)}
                             disabled={uploadingSlideIndex !== null}
                             onReady={(file) => uploadHeroImage(index, file)}
                             label={uploadingSlideIndex === index ? "Uploading..." : "Upload & Adjust Slide"}

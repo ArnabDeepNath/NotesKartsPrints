@@ -473,7 +473,7 @@ export default function NewBookPage() {
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Cover Image *
               </label>
-              <div className="flex gap-4 items-end">
+              <div className="flex flex-wrap gap-4 items-end">
                 <div className="flex-1">
                   <input
                     type="text"
@@ -486,7 +486,7 @@ export default function NewBookPage() {
                   />
                 </div>
                 <div className="flex-shrink-0">
-                  <ImageUploadInput disabled={isUploadingCover || isSubmitting} onReady={handleCoverImageUpload} label={isUploadingCover ? "Uploading..." : "Upload & Adjust"} />
+                  <ImageUploadInput existingImage={getImageUrl(formData.coverImage)} disabled={isUploadingCover || isSubmitting} onReady={handleCoverImageUpload} label={isUploadingCover ? "Uploading..." : "Upload & Adjust"} />
                 </div>
               </div>
               {formData.coverImage && (
@@ -646,7 +646,7 @@ export default function NewBookPage() {
                         Specific Image
                       </label>
                       <div className="flex items-center gap-4">
-                        <ImageUploadInput disabled={isSubmitting} onReady={(file) => handleVariationImage(v.id, file)} label="Upload & Adjust Variation" />
+                        <ImageUploadInput existingImage={getImageUrl(v.image)} disabled={isSubmitting} onReady={(file) => handleVariationImage(v.id, file)} label="Upload & Adjust Variation" />
                         {v.image && (
                           <img
                             src={getImageUrl(v.image)}

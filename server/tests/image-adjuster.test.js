@@ -10,11 +10,11 @@ const javascript = ts.transpileModule(readFileSync(sourcePath, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
 const exportsObject = {};
-const browser = { exports: exportsObject, File, Blob, Math, Number, Promise, Error, Set };
+const browser = { exports: exportsObject, File, Blob, URL, Math, Number, Promise, Error, Set };
 vm.runInNewContext(javascript, browser, { filename: sourcePath });
 const {
   getCropRect, getRotatedSize, fitImageSize, resizeImageSize, moveCrop,
-  drawAdjustedImage, exportAdjustedImage, MAX_IMAGE_DIMENSION, MAX_UPLOAD_BYTES,
+  drawAdjustedImage, exportAdjustedImage, loadImageFile, MAX_IMAGE_DIMENSION, MAX_UPLOAD_BYTES,
 } = exportsObject;
 
 function adjustments(overrides = {}) {
@@ -23,6 +23,43 @@ function adjustments(overrides = {}) {
 }
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
+
+test("existing image loader preserves bytes, type and decoded filename without query parameters", async () => {
+  const controller = new AbortController();
+  browser.fetch = async (url, options) => {
+    assert.equal(url, "https://example.com/uploads/old%20cover.png?v=1");
+    assert.equal(options.signal, controller.signal);
+    return new Response(new Blob(["original bytes"], { type: "image/png" }));
+  };
+  const file = await loadImageFile("https://example.com/uploads/old%20cover.png?v=1", controller.signal);
+  assert.equal(file.name, "old cover.png");
+  assert.equal(file.type, "image/png");
+  assert.equal(await file.text(), "original bytes");
+});
+
+test("existing image loader supports relative URLs and generic image responses", async () => {
+  browser.fetch = async () => new Response(new Blob(["bytes"], { type: "application/octet-stream" }));
+  assert.equal((await loadImageFile("/uploads/images/cover.jpg")).name, "cover.jpg");
+  assert.equal((await loadImageFile("/uploads/images/bad%name.png")).name, "existing-image");
+});
+
+test("existing image loader reports missing, empty and non-image URLs", async () => {
+  browser.fetch = async () => new Response(null, { status: 404 });
+  await assert.rejects(loadImageFile("/missing.png"), /HTTP 404/);
+  browser.fetch = async () => new Response(new Blob([], { type: "image/png" }));
+  await assert.rejects(loadImageFile("/empty.png"), /does not contain an image/);
+  browser.fetch = async () => new Response("<html>Not an image</html>", { headers: { "Content-Type": "text/html" } });
+  await assert.rejects(loadImageFile("/page"), /does not contain an image/);
+});
+
+test("existing image loader explains CORS failures and preserves cancellation", async () => {
+  browser.fetch = async () => { throw new TypeError("Failed to fetch"); };
+  await assert.rejects(loadImageFile("https://external.example/cover.png"), /CORS.*Upload & Adjust/);
+  const controller = new AbortController();
+  controller.abort();
+  browser.fetch = async () => { throw controller.signal.reason; };
+  await assert.rejects(loadImageFile("/cover.png", controller.signal), (error) => error === controller.signal.reason);
+});
 
 function canvasMock(blob = new Blob(["image"], { type: "image/png" })) {
   const calls = [];

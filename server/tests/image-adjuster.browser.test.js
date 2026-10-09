@@ -3,7 +3,7 @@ const { test } = require("node:test");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
+const http = require("node:http");
 const { spawn } = require("node:child_process");
 const ts = require("typescript");
 const { webpack } = require("next/dist/compiled/webpack/webpack");
@@ -19,6 +19,7 @@ const root = path.resolve(__dirname, "../..");
 // admin credentials, browser automation dependency, or changes to app routes.
 test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "basak-image-browser-"));
+  let server;
   try {
     const transpile = (relative, output) => {
       const source = fs.readFileSync(path.join(root, relative), "utf8")
@@ -66,12 +67,15 @@ test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async
       }
       let submitted = [];
       let rejectUpload = false;
-      createRoot(document.getElementById('root')).render(React.createElement(ImageUploadInput, {
+      const root = createRoot(document.getElementById('root'));
+      const render = (existingImage, disabled = false) => root.render(React.createElement(ImageUploadInput, {
+        existingImage, disabled,
         onReady: async file => {
           if (rejectUpload) throw new Error('Test upload failed');
           submitted.push(file);
         }
       }));
+      render();
       async function run() {
         await waitFor(() => document.querySelector('input[type=file]'), 'file picker');
         const originalCanvas = document.createElement('canvas');
@@ -129,7 +133,66 @@ test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async
         check(document.body.style.overflow === '', 'Page scrolling not restored');
         await open(original);
         button('Cancel').click(); await pause();
-        check(!document.querySelector('[role=dialog]') && submitted.length === 1, 'Cancel changed the image');
+        // Exercise saved images over real HTTP, including cross-origin CORS.
+        await fetch('/saved-cover.png', { method: 'POST', body: blob });
+        render('/saved-cover.png'); await pause();
+        button('Edit existing image').focus();
+        button('Edit existing image').click();
+        await waitFor(() => document.querySelector('canvas'), 'saved image decode');
+        check(control('width (px)').value === '120' && control('height (px)').value === '80', 'Saved image dimensions incorrect');
+        await change(control('Crop ratio'), '1');
+        await change(control('Horizontal position'), '1');
+        await change(control('Brightness'), '50');
+        await change(control('Contrast'), '100');
+        await change(control('width (px)'), '40');
+        pixel = document.querySelector('canvas').getContext('2d').getImageData(35, 20, 1, 1).data;
+        check(pixel[2] >= 125 && pixel[2] <= 130 && pixel[0] < 10, 'Saved image crop or brightness preview incorrect');
+        await change(control('Contrast'), '50');
+        pixel = document.querySelector('canvas').getContext('2d').getImageData(35, 20, 1, 1).data;
+        check(pixel[0] >= 60 && pixel[0] <= 65, 'Saved image contrast adjustment incorrect');
+        await change(control('Contrast'), '100');
+        button('Use adjusted image').click();
+        await waitFor(() => !document.querySelector('[role=dialog]'), 'saved image export');
+        check(submitted.length === 2 && submitted[1].name === 'saved-cover-adjusted.png', 'Saved image not exported');
+        const saved = await createImageBitmap(submitted[1]);
+        check(saved.width === 40 && saved.height === 40, 'Saved image crop/resize export incorrect');
+        const exportedCanvas = document.createElement('canvas'); exportedCanvas.width = 40; exportedCanvas.height = 40;
+        exportedCanvas.getContext('2d').drawImage(saved, 0, 0); saved.close();
+        pixel = exportedCanvas.getContext('2d').getImageData(35, 20, 1, 1).data;
+        check(pixel[2] >= 125 && pixel[2] <= 130 && pixel[0] < 10, 'Saved export does not match preview');
+        check(document.activeElement === button('Edit existing image'), 'Saved image editor did not restore focus');
+        render(location.origin.replace('127.0.0.1', 'localhost') + '/saved-cover.png'); await pause();
+        button('Edit existing image').click();
+        await waitFor(() => document.querySelector('canvas'), 'cross-origin saved image');
+        button('Use adjusted image').click();
+        await waitFor(() => !document.querySelector('[role=dialog]'), 'cross-origin export');
+        check(submitted.length === 3, 'CORS image could not be exported');
+        render('/retry-cover.png'); await pause();
+        button('Edit existing image').click();
+        await waitFor(() => document.querySelector('[role=alert]'), 'saved image fetch error');
+        check(document.querySelector('[role=alert]').textContent.includes('HTTP 404'), 'Saved image error missing');
+        check(button('Use adjusted image').disabled, 'Failed saved image can be submitted');
+        button('Retry loading').click();
+        await waitFor(() => document.querySelector('canvas'), 'saved image retry');
+        button('Cancel').click(); await pause();
+        check(submitted.length === 3, 'Saved image cancel changed the image');
+        render('/not-an-image'); await pause(); button('Edit existing image').click();
+        await waitFor(() => document.querySelector('[role=alert]'), 'non-image URL');
+        check(document.querySelector('[role=alert]').textContent.includes('does not contain an image'), 'Non-image URL error missing');
+        button('Cancel').click(); await pause();
+        render('/slow-cover.png'); await pause(); button('Edit existing image').click();
+        await waitFor(() => document.querySelector('[role=dialog]'), 'pending saved image');
+        check(button('Use adjusted image').disabled, 'Loading image can be submitted');
+        button('Cancel').click(); await pause();
+        check(!document.querySelector('[role=dialog]') && document.body.style.overflow === '', 'Loading cancel failed');
+        render(original); await pause(); button('Edit existing image').click();
+        await waitFor(() => document.querySelector('canvas'), 'pending local category image');
+        button('Cancel').click(); await pause();
+        render('/saved-cover.png', true); await pause();
+        check(button('Edit existing image').disabled && document.querySelector('input[type=file]').disabled, 'Disabled controls still editable');
+        render(''); await pause();
+        check(![...document.querySelectorAll('button')].some(item => item.textContent === 'Edit existing image'), 'Empty URL has an edit button');
+        check(!document.querySelector('[role=dialog]') && submitted.length === 3, 'Cancel changed the image');
         await open(original);
         rejectUpload = true;
         button('Use adjusted image').click();
@@ -139,16 +202,16 @@ test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async
         rejectUpload = false;
         button('Use adjusted image').click();
         await waitFor(() => !document.querySelector('[role=dialog]'), 'upload retry');
-        check(submitted.length === 2 && submitted[1].type === 'image/png', 'PNG retry failed');
+        check(submitted.length === 4 && submitted[3].type === 'image/png', 'PNG retry failed');
         await open(original);
         await change(control('File format'), 'image/webp');
         button('Use adjusted image').click();
         await waitFor(() => !document.querySelector('[role=dialog]'), 'WebP export');
-        check(submitted.length === 3 && submitted[2].type === 'image/webp', 'WebP export failed');
+        check(submitted.length === 5 && submitted[4].type === 'image/webp', 'WebP export failed');
         await open(original);
         document.querySelector('[role=dialog]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         await pause();
-        check(!document.querySelector('[role=dialog]') && submitted.length === 3, 'Escape did not cancel editing');
+        check(!document.querySelector('[role=dialog]') && submitted.length === 5, 'Escape did not cancel editing');
         await open(new File(['not an image'], 'broken.png', { type: 'image/png' }));
         check(document.querySelector('[role=alert]').textContent.includes('cannot be opened'), 'Invalid image error missing');
         check(button('Use adjusted image').disabled, 'Invalid image can be submitted');
@@ -164,7 +227,7 @@ test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async
         pixel = result.getContext('2d').getImageData(10, 40, 1, 1).data;
         check(pixel[2] > 240 && pixel[0] < 10, 'Real canvas flip incorrect');
         check(errors.length === 0, 'Browser errors: ' + errors.join('; '));
-        document.getElementById('result').textContent = 'PASS: crop, zoom, resize, rotate, flip, custom ratio, JPEG/PNG/WebP export, cancel, Escape, reselection, retry, invalid file';
+        document.getElementById('result').textContent = 'PASS: new and saved images, crop, zoom, resize, brightness, contrast, rotate, flip, custom ratio, JPEG/PNG/WebP export, CORS export, cancel, Escape, reselection, upload/load retry, invalid file/URL, loading cancellation, disabled controls';
       }
       run().catch(error => { document.getElementById('result').textContent = 'FAIL: ' + error.stack; });
     `);
@@ -185,9 +248,31 @@ test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async
     }
     const html = path.join(temp, "test.html");
     fs.writeFileSync(html, '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="root"></div><pre id="result">RUNNING</pre><script src="bundle.js"></script></body></html>');
+    let fixture;
+    let retryCount = 0;
+    server = http.createServer(async (req, res) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      if (req.method === "POST" && req.url === "/saved-cover.png") {
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        fixture = Buffer.concat(chunks);
+        res.end("OK");
+      } else if (req.url === "/retry-cover.png" && retryCount++ === 0) {
+        res.writeHead(404); res.end("Missing image");
+      } else if (["/saved-cover.png", "/retry-cover.png", "/slow-cover.png"].includes(req.url)) {
+        res.setHeader("Content-Type", "image/png");
+        if (req.url === "/slow-cover.png") setTimeout(() => res.end(fixture), 500);
+        else res.end(fixture);
+      } else if (req.url === "/bundle.js") {
+        res.setHeader("Content-Type", "application/javascript"); res.end(fs.readFileSync(path.join(temp, "bundle.js")));
+      } else {
+        res.setHeader("Content-Type", "text/html"); res.end(fs.readFileSync(html));
+      }
+    });
+    await new Promise(resolve => server.listen(0, resolve));
     const profile = path.join(temp, "profile");
     const child = spawn(chrome, ["--headless=new", "--no-first-run", "--disable-gpu",
-      `--user-data-dir=${profile}`, "--remote-debugging-port=0", pathToFileURL(html).href], { stdio: "ignore" });
+      `--user-data-dir=${profile}`, "--remote-debugging-port=0", `http://127.0.0.1:${server.address().port}`], { stdio: "ignore" });
     const closed = new Promise((resolve) => child.once("close", resolve));
     let socket;
     try {
@@ -238,6 +323,7 @@ test("image adjuster browser workflow", { skip: !chrome, timeout: 90000 }, async
       await closed;
     }
   } finally {
+    if (server) await new Promise(resolve => server.close(resolve));
     fs.rmSync(temp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
 });

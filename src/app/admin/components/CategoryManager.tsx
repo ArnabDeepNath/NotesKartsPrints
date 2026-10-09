@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 
@@ -530,7 +530,8 @@ export default function CategoryManager({
 
                 <div className="block text-sm font-medium text-[#232f3e]">
                   <span className="block mb-2">Image (Optional)</span>
-                  <ImageUploadInput disabled={isSubmitting} onReady={(file) => setImageFile(file)} label="Choose & Adjust Image" />
+                  <ImageUploadInput existingImage={imageFile || getImageUrl(editingCategory?.image)} disabled={isSubmitting} onReady={(file) => setImageFile(file)} label="Choose & Adjust Image" />
+                  {!imageFile && editingCategory?.image && <img src={getImageUrl(editingCategory.image)} alt={`${editingCategory.name} current image`} className="mt-3 h-24 max-w-full rounded border border-gray-200 object-contain" />}
                   {imageFile && <p className="mt-2 text-xs text-gray-500">{imageFile.name} · {(imageFile.size / 1024).toFixed(0)} KB · Ready to upload when saved</p>}
                 </div>
 

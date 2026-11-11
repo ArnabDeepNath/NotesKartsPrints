@@ -12,6 +12,8 @@ import Navbar from "@/app/components/Navbar";
 import gsap from "gsap";
 import type { Coupon } from "@/lib/api";
 import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
+import ProductImagesInput from "@/app/admin/components/ProductImagesInput";
+import { parseProductImages } from "@/lib/product-images";
 
 interface Stats {
   totalBooks: number;
@@ -112,6 +114,7 @@ export default function AdminPanel() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   const [bookModal, setBookModal] = useState<{ open: boolean; book?: any }>({
     open: false,
@@ -297,6 +300,7 @@ export default function AdminPanel() {
         publisher: bookForm.publisher || null,
         section: bookForm.section || null,
         coverImage: bookForm.coverImage || null,
+        images: parseProductImages(bookForm.images),
         featured: bookForm.featured === true || bookForm.featured === "true",
         genreId: bookForm.genreId || null,
         categoryId: bookForm.categoryId || null,
@@ -776,6 +780,7 @@ export default function AdminPanel() {
                                       publisher: b.publisher || "",
                                       section: b.section || "",
                                       coverImage: b.coverImage || "",
+                                      images: parseProductImages(b.images),
                                       featured: b.featured || false,
                                       genreId: b.genreId || "",
                                       categoryId: b.categoryId || "",
@@ -1668,6 +1673,20 @@ export default function AdminPanel() {
                 </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                    Additional Product Images
+                  </label>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Add, reorder, or replace gallery images. The cover remains the primary listing image.
+                  </p>
+                  <ProductImagesInput
+                    value={parseProductImages(bookForm.images)}
+                    disabled={isUploadingCover}
+                    onBusyChange={setIsUploadingImages}
+                    onChange={(images) => setBookForm((prev: typeof bookForm) => ({ ...prev, images }))}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                     Description
                   </label>
                   <textarea
@@ -1708,9 +1727,10 @@ export default function AdminPanel() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded bg-[#e47911] hover:bg-[#c45500] text-white text-sm font-semibold transition-colors"
+                    disabled={isUploadingCover || isUploadingImages}
+                    className="px-6 py-2.5 rounded bg-[#e47911] hover:bg-[#c45500] text-white text-sm font-semibold transition-colors disabled:opacity-50"
                   >
-                    {bookModal.book ? "Update Book" : "Create Book"}
+                    {isUploadingCover || isUploadingImages ? "Uploading images..." : bookModal.book ? "Update Book" : "Create Book"}
                   </button>
                 </div>
               </form>

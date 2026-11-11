@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
+const { parseBookImages, serializeBookImages } = require("../utils/bookImages");
 
 // Helper: convert Prisma Decimal fields to plain numbers for JSON serialization
 function serializeBook(book) {
@@ -7,6 +8,7 @@ function serializeBook(book) {
   const b = { ...book };
   if (b.price != null) b.price = Number(b.price);
   if (b.comparePrice != null) b.comparePrice = Number(b.comparePrice);
+  b.images = parseBookImages(b.images);
   if (b.variations && Array.isArray(b.variations)) {
     b.variations = b.variations.map(v => ({
       ...v,
@@ -358,7 +360,7 @@ const createBook = async (req, res, next) => {
         price: Number(price),
         comparePrice: comparePrice ? Number(comparePrice) : null,
         coverImage,
-        images,
+        images: serializeBookImages(images),
         isbn,
         publisher,
         publishedAt: publishedAt ? new Date(publishedAt) : null,
@@ -405,7 +407,7 @@ const createBook = async (req, res, next) => {
       ...(catColumnsExist ? { include: selectFields } : { select: selectFields }),
     });
 
-    res.status(201).json({ message: "Book created", book });
+    res.status(201).json({ message: "Book created", book: serializeBook(book) });
   } catch (err) {
     next(err);
   }
@@ -426,6 +428,7 @@ const updateBook = async (req, res, next) => {
       data.featured = data.featured === true || data.featured === "true";
     if (data.section != null) data.section = data.section.trim() || null;
     if (data.publishedAt) data.publishedAt = new Date(data.publishedAt);
+    if (data.images !== undefined) data.images = serializeBookImages(data.images);
     const catColumnsExist = await hasCategoryColumns();
     if (catColumnsExist) {
       if (data.categoryId === "") data.categoryId = null;

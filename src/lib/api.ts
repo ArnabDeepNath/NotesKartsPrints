@@ -322,6 +322,7 @@ export interface Book {
     price: number;
     comparePrice?: number;
     coverImage?: string;
+    images?: string[];
     isbn?: string;
     publisher?: string;
     publishedAt?: string;

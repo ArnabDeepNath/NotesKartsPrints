@@ -72,6 +72,172 @@ body {
   margin: 0;
 }
 
+/* Admin-managed policy pages */
+.policy-content {
+  color: #454b52;
+  font-size: 1rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.policy-content > :first-child {
+  margin-top: 0;
+}
+
+.policy-content > :last-child {
+  margin-bottom: 0;
+}
+
+.policy-content h1,
+.policy-content h2,
+.policy-content h3,
+.policy-content h4 {
+  color: #232f3e;
+  font-weight: 700;
+  line-height: 1.35;
+  scroll-margin-top: 2rem;
+}
+
+.policy-content h1 {
+  margin: 2.25rem 0 1rem;
+  font-size: 1.75rem;
+}
+
+.policy-content h2 {
+  margin: 2rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e3e6ea;
+  font-size: 1.4rem;
+}
+
+.policy-content h3 {
+  margin: 1.65rem 0 0.65rem;
+  font-size: 1.15rem;
+}
+
+.policy-content h4 {
+  margin: 1.4rem 0 0.55rem;
+  font-size: 1rem;
+}
+
+.policy-content p,
+.policy-content div {
+  margin-bottom: 1.1rem;
+}
+
+.policy-content ul,
+.policy-content ol {
+  margin: 0 0 1.35rem;
+  padding-left: 1.6rem;
+}
+
+.policy-content ul {
+  list-style-type: disc;
+}
+
+.policy-content ol {
+  list-style-type: decimal;
+}
+
+.policy-content ul ul {
+  list-style-type: circle;
+}
+
+.policy-content ol ol {
+  list-style-type: lower-alpha;
+}
+
+.policy-content li {
+  padding-left: 0.25rem;
+}
+
+.policy-content li + li {
+  margin-top: 0.45rem;
+}
+
+.policy-content li > ul,
+.policy-content li > ol {
+  margin-top: 0.45rem;
+  margin-bottom: 0;
+}
+
+.policy-content strong,
+.policy-content b {
+  color: #232f3e;
+  font-weight: 650;
+}
+
+.policy-content a {
+  color: #146eb4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.policy-content a:hover {
+  color: #c45500;
+}
+
+.policy-content blockquote {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #e47911;
+  background: #f7f8fa;
+  color: #565959;
+}
+
+.policy-content hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #e3e6ea;
+}
+
+.policy-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  border-radius: 0.5rem;
+}
+
+.policy-content table {
+  display: block;
+  width: 100%;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.policy-content th,
+.policy-content td {
+  min-width: 8rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #dfe3e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.policy-content th {
+  background: #f7f8fa;
+  color: #232f3e;
+  font-weight: 700;
+}
+
+.policy-content pre {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 0.375rem;
+  background: #f7f8fa;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+@media (min-width: 768px) {
+  .policy-content {
+    font-size: 1.0625rem;
+  }
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

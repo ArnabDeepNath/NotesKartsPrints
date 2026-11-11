@@ -8,6 +8,7 @@ import { api, Book, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import { getProductGalleryImages, parseProductImages } from "@/lib/product-images";
 
 function StarRating({
   rating,
@@ -148,6 +149,7 @@ export default function BookDetailPage({
   const [added, setAdded] = useState(false);
   const [selectedVariation, setSelectedVariation] =
     useState<BookVariation | null>(null);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
   const [activeContentTab, setActiveContentTab] = useState<
     "about" | "suggested"
   >("about");
@@ -169,11 +171,25 @@ export default function BookDetailPage({
         setInWishlist(fetchedBook?.inWishlist ?? false);
         if (fetchedBook?.variations && fetchedBook.variations.length > 0) {
           setSelectedVariation(fetchedBook.variations[0]);
+        } else {
+          setSelectedVariation(null);
         }
       })
       .catch(() => setBook(null))
       .finally(() => setLoading(false));
   }, [unwrappedParams.id]);
+
+  const galleryImages = React.useMemo(
+    () => parseProductImages([
+      selectedVariation?.image || "",
+      ...getProductGalleryImages(book || {}),
+    ]),
+    [book, selectedVariation?.id, selectedVariation?.image],
+  );
+
+  useEffect(() => {
+    setActiveImage(galleryImages[0] || null);
+  }, [galleryImages]);
 
   useEffect(() => {
     setActiveContentTab("about");
@@ -361,6 +377,14 @@ export default function BookDetailPage({
     ? Math.round((1 - book.price / book.comparePrice) * 100)
     : 0;
   const reviews = book.reviews ?? [];
+  const displayedImage = activeImage || galleryImages[0] || null;
+  const displayedImageIndex = Math.max(0, galleryImages.indexOf(displayedImage || ""));
+
+  const moveGallery = (direction: -1 | 1) => {
+    if (galleryImages.length < 2) return;
+    const nextIndex = (displayedImageIndex + direction + galleryImages.length) % galleryImages.length;
+    setActiveImage(galleryImages[nextIndex]);
+  };
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -393,22 +417,71 @@ export default function BookDetailPage({
           animate={{ opacity: 1, y: 0 }}
           className="grid md:grid-cols-[300px_1fr] gap-10 mb-12"
         >
-          {/* Cover */}
-          <div className="relative">
-            {selectedVariation?.image || book.coverImage ? (
-              <img
-                src={getImageUrl(selectedVariation?.image || book.coverImage)}
-                alt={book.title}
-                className="w-full aspect-[3/4] object-cover rounded-md shadow-lg"
-              />
-            ) : (
-              <div className="w-full aspect-[3/4] bg-gray-200 rounded-md flex items-center justify-center text-8xl">
-                📖
-              </div>
-            )}
-            {discount > 0 && (
-              <div className="absolute top-3 left-3 bg-[#e47911] text-white text-xs font-bold px-2 py-1 rounded">
-                -{discount}% OFF
+          {/* Product image gallery */}
+          <div>
+            <div className="relative">
+              {displayedImage ? (
+                <img
+                  src={getImageUrl(displayedImage)}
+                  alt={`${book.title} - image ${displayedImageIndex + 1}`}
+                  className="w-full aspect-[3/4] object-cover rounded-md shadow-lg"
+                />
+              ) : (
+                <div className="w-full aspect-[3/4] bg-gray-200 rounded-md flex items-center justify-center text-8xl">
+                  📖
+                </div>
+              )}
+              {discount > 0 && (
+                <div className="absolute top-3 left-3 bg-[#e47911] text-white text-xs font-bold px-2 py-1 rounded">
+                  -{discount}% OFF
+                </div>
+              )}
+              {galleryImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => moveGallery(-1)}
+                    aria-label="Previous product image"
+                    className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl text-[#232f3e] shadow-md transition-colors hover:bg-white"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveGallery(1)}
+                    aria-label="Next product image"
+                    className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl text-[#232f3e] shadow-md transition-colors hover:bg-white"
+                  >
+                    ›
+                  </button>
+                  <span className="absolute bottom-3 right-3 rounded-full bg-[#232f3e]/80 px-2.5 py-1 text-[11px] font-medium text-white">
+                    {displayedImageIndex + 1} / {galleryImages.length}
+                  </span>
+                </>
+              )}
+            </div>
+            {galleryImages.length > 1 && (
+              <div className="mt-3 grid grid-cols-4 gap-2" aria-label="Product image thumbnails">
+                {galleryImages.map((image, index) => (
+                  <button
+                    key={image}
+                    type="button"
+                    aria-label={`View product image ${index + 1}`}
+                    aria-pressed={displayedImage === image}
+                    onClick={() => setActiveImage(image)}
+                    className={`aspect-square overflow-hidden rounded border-2 bg-white p-0.5 transition-colors ${
+                      displayedImage === image
+                        ? "border-[#e47911]"
+                        : "border-gray-200 hover:border-gray-400"
+                    }`}
+                  >
+                    <img
+                      src={getImageUrl(image)}
+                      alt=""
+                      className="h-full w-full rounded-sm object-cover"
+                    />
+                  </button>
+                ))}
               </div>
             )}
           </div>

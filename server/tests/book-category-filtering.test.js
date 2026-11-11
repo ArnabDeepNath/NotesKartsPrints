@@ -260,6 +260,30 @@ test("create and update preserve category assignments after successful schema de
   }
 });
 
+test("create and update normalize galleries and return image arrays", async () => {
+  const { controller, queries } = setup();
+  const body = {
+    title: "Illustrated book",
+    price: "10",
+    images: [" /uploads/front.jpg ", "https://example.com/back.jpg", "/uploads/front.jpg"],
+  };
+  const created = await request(controller, {}, "createBook", body);
+  const updated = await request(controller, {}, "updateBook", body);
+  const storedImages = JSON.stringify(["/uploads/front.jpg", "https://example.com/back.jpg"]);
+
+  assert.equal(created.statusCode, 201);
+  assert.equal(updated.statusCode, 200);
+  assert.deepEqual(created.body.book.images, ["/uploads/front.jpg", "https://example.com/back.jpg"]);
+  assert.deepEqual(updated.body.book.images, ["/uploads/front.jpg", "https://example.com/back.jpg"]);
+  assert.equal(queries[0].data.images, storedImages);
+  assert.equal(queries[1].data.images, storedImages);
+
+  const cleared = await request(controller, {}, "updateBook", { images: [] });
+  assert.equal(cleared.statusCode, 200);
+  assert.equal(queries[2].data.images, null);
+  assert.deepEqual(cleared.body.book.images, []);
+});
+
 test("HTTP query parameters reach the controller and return only the selected branch", async () => {
   const { controller } = setup();
   const app = express();

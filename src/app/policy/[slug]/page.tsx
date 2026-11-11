@@ -55,18 +55,25 @@ export default async function PolicyPage({
   return (
     <div className="min-h-screen bg-[#f7f8fa] flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-3xl font-bold text-[#232f3e] mb-6">
-          {page.label}
-        </h1>
-        <div
-          className="prose prose-sm max-w-none text-gray-700 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-[#232f3e] [&_h1]:mt-8 [&_h1]:mb-4
-                     [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-[#232f3e] [&_h2]:mt-6 [&_h2]:mb-3
-                     [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-[#232f3e] [&_h3]:mt-4 [&_h3]:mb-2
-                     [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
-                     [&_a]:text-[#146eb4] [&_a]:underline [&_strong]:text-[#232f3e]"
-          dangerouslySetInnerHTML={{ __html: page.content }}
-        />
+      <main className="flex-1">
+        <header className="border-b border-gray-200 bg-white">
+          <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8 sm:py-12">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#e47911]">
+              Legal & Policies
+            </p>
+            <h1 className="text-3xl font-bold leading-tight text-[#232f3e] sm:text-4xl">
+              {page.label}
+            </h1>
+          </div>
+        </header>
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12">
+          <article className="rounded-lg border border-gray-200 bg-white px-5 py-7 shadow-sm sm:px-10 sm:py-10">
+            <div
+              className="policy-content"
+              dangerouslySetInnerHTML={{ __html: page.content }}
+            />
+          </article>
+        </div>
       </main>
       <Footer />
     </div>

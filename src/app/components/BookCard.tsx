@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { getImageUrl } from "@/lib/api";
+import { parseProductImages } from "@/lib/product-images";
 
 export interface Book {
   id: string;
@@ -66,7 +67,7 @@ export default function BookCard({ book, index }: Props) {
   const coverImg = getImageUrl(
     book.featuredImage?.node?.sourceUrl ||
     (book as any).coverImage ||
-    (book as any).images?.[0]
+    parseProductImages((book as any).images)[0]
   );
   const category =
     book.categories?.nodes?.[0]?.name ??

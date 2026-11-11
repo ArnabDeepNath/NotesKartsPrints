@@ -8,6 +8,7 @@ import { useToast } from "@/app/components/ui/Toaster";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
+import ProductImagesInput from "@/app/admin/components/ProductImagesInput";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -83,6 +84,7 @@ export default function NewBookPage() {
   const [variations, setVariations] = useState<VariationDraft[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -99,6 +101,7 @@ export default function NewBookPage() {
     categoryId: "",
     subcategoryId: "",
     coverImage: "",
+    images: [] as string[],
     featured: false,
     section: "",
   });
@@ -251,6 +254,7 @@ export default function NewBookPage() {
           : undefined,
         pages: formData.pages ? Number(formData.pages) : undefined,
         stock: Number(formData.stock),
+        images: formData.images,
         variations: variations.length > 0 ? variations : undefined,
       });
 
@@ -500,6 +504,22 @@ export default function NewBookPage() {
               )}
             </div>
 
+            {/* Additional Product Images */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Additional Product Images
+              </label>
+              <p className="mb-3 text-xs text-gray-500">
+                Add multiple views of the product. The cover image remains the primary image used in listings.
+              </p>
+              <ProductImagesInput
+                value={formData.images}
+                disabled={isSubmitting || isUploadingCover}
+                onBusyChange={setIsUploadingImages}
+                onChange={(images) => setFormData((prev) => ({ ...prev, images }))}
+              />
+            </div>
+
             {/* Short Desc */}
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -663,10 +683,10 @@ export default function NewBookPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingCover || isUploadingImages}
               className="w-full py-4 bg-[#e47911] hover:bg-[#c45500] text-white rounded font-semibold transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? "Creating..." : "Save Book to Inventory"}
+              {isSubmitting ? "Creating..." : isUploadingCover || isUploadingImages ? "Waiting for image upload..." : "Save Book to Inventory"}
             </button>
           </form>
         </motion.div>

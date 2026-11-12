@@ -81,7 +81,12 @@ const sendOrderConfirmation = async (userEmail, orderDetails, printJobs) => {
 
   if (orderDetails.items && orderDetails.items.length > 0) {
     orderDetails.items.forEach((item) => {
-      html += `<li>${item.quantity}x ${item.book ? item.book.title : "Book"} - ₹${item.price}</li>`;
+      const attributes = item.variation?.attributes;
+      const variationLabel = attributes
+        ? [attributes.type, attributes.value].filter(Boolean).join(": ")
+        : "";
+      const title = `${item.book ? item.book.title : "Book"}${variationLabel ? ` (${variationLabel})` : ""}`;
+      html += `<li>${item.quantity}x ${title} - ₹${item.price}</li>`;
     });
   }
 

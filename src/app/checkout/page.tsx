@@ -391,7 +391,7 @@ export default function CheckoutPage() {
                         <div className="divide-y divide-gray-100">
                           {cart.map((item) => (
                             <div
-                              key={item.bookId}
+                              key={`${item.bookId}-${item.variationId || "default"}`}
                               className="flex items-center gap-4 p-5"
                             >
                               {item.coverImage ? (
@@ -784,7 +784,7 @@ export default function CheckoutPage() {
                 </h3>
                 <div className="space-y-3 mb-4">
                   {cart.slice(0, 3).map((item) => (
-                    <div key={item.bookId} className="flex items-center gap-3">
+                    <div key={`${item.bookId}-${item.variationId || "default"}`} className="flex items-center gap-3">
                       {item.coverImage && (
                         <img
                           src={getImageUrl(item.coverImage)}

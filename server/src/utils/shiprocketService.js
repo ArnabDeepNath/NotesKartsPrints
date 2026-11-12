@@ -203,6 +203,19 @@ const getShiprocketToken = async () => {
   return { token: cachedToken, settings };
 };
 
+const formatVariationAttributes = (attributes) => {
+  if (!attributes || typeof attributes !== "object") return "";
+
+  const legacyLabel = [attributes.type, attributes.value]
+    .filter((value) => value !== undefined && value !== null && value !== "")
+    .join(": ");
+  const additionalAttributes = Object.entries(attributes)
+    .filter(([key, value]) => !["type", "value"].includes(key) && value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => `${key}: ${typeof value === "object" ? JSON.stringify(value) : value}`);
+
+  return [legacyLabel, ...additionalAttributes].filter(Boolean).join(", ");
+};
+
 const buildShiprocketOrderPayload = (order, settings) => {
   const billingPhone = normalizeShiprocketPhone(
     order.shippingPhone || order.user?.phone,
@@ -241,12 +254,17 @@ const buildShiprocketOrderPayload = (order, settings) => {
     );
   }
 
-  const items = (order.items || []).map((item) => ({
-    name: truncate(item.book?.title || `Book ${item.bookId}`, 100),
-    sku: truncate(item.bookId, 50),
-    units: Math.max(1, Number(item.quantity) || 1),
-    selling_price: Math.max(0, Number(item.price) || 0),
-  }));
+  const items = (order.items || []).map((item) => {
+    const title = item.book?.title || `Book ${item.bookId}`;
+    const variationLabel = formatVariationAttributes(item.variation?.attributes);
+
+    return {
+      name: truncate(variationLabel ? `${title} (${variationLabel})` : title, 100),
+      sku: truncate(item.variation?.sku || item.variationId || item.bookId, 50),
+      units: Math.max(1, Number(item.quantity) || 1),
+      selling_price: Math.max(0, Number(item.price) || 0),
+    };
+  });
 
   if (order.printJobs?.length) {
     for (const job of order.printJobs) {

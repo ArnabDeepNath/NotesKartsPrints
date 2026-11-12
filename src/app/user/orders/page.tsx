@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, getImageUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 import Navbar from "@/app/components/Navbar";
+import OrderDetails from "@/app/components/OrderDetails";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -160,97 +161,8 @@ export default function OrdersPage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden border-t border-gray-100"
                       >
-                        <div className="p-5 space-y-4">
-                          <div className="space-y-3">
-                            {order.items?.map((item: any) => (
-                              <div
-                                key={item.id}
-                                className="flex items-center gap-3"
-                              >
-                                {item.variation?.image ||
-                                item.book?.coverImage ? (
-                                  <img
-                                    src={getImageUrl(
-                                      item.variation?.image ||
-                                      item.book.coverImage
-                                    )}
-                                    alt={item.book.title}
-                                    className="w-10 h-14 object-cover rounded"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-14 bg-gray-100 rounded shrink-0" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-[#232f3e] truncate">
-                                    {item.book?.title}
-                                  </p>
-                                  {item.variation && (
-                                    <p className="text-[10px] text-[#e47911]">
-                                      {item.variation.attributes?.type}:{" "}
-                                      {item.variation.attributes?.value}
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-gray-500 mt-0.5">
-                                    Qty {item.quantity}
-                                  </p>
-                                </div>
-                                <p className="text-sm font-semibold text-[#232f3e]">
-                                  Rs.{" "}
-                                  {Number(
-                                    item.price * item.quantity,
-                                  ).toLocaleString("en-IN")}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="border-t border-gray-100 pt-3 space-y-1.5">
-                            <div className="flex justify-between text-sm text-gray-500">
-                              <span>Subtotal</span>
-                              <span>
-                                Rs.{" "}
-                                {Number(order.subtotal).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-sm text-gray-500">
-                              <span>GST (18%)</span>
-                              <span>
-                                Rs. {Number(order.tax).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                            {order.onlineAmount != null && order.codAmount != null && (
-                              <>
-                                <div className="flex justify-between text-sm text-green-600">
-                                  <span>Paid Online</span>
-                                  <span>Rs. {Number(order.onlineAmount).toLocaleString("en-IN")}</span>
-                                </div>
-                                <div className="flex justify-between text-sm text-orange-600">
-                                  <span>Balance (COD)</span>
-                                  <span>Rs. {Number(order.codAmount).toLocaleString("en-IN")}</span>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex justify-between text-base font-bold text-[#232f3e] pt-1">
-                              <span>Total</span>
-                              <span>
-                                Rs.{" "}
-                                {Number(order.total).toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          </div>
-                          {order.shippingName && (
-                            <div className="border-t border-gray-100 pt-3">
-                              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                                Shipping To
-                              </p>
-                              <p className="text-sm text-[#232f3e]">
-                                {order.shippingName}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {order.shippingAddress}, {order.shippingCity},{" "}
-                                {order.shippingCountry}
-                              </p>
-                            </div>
-                          )}
+                        <div className="p-5">
+                          <OrderDetails order={order} />
                         </div>
                       </motion.div>
                     )}

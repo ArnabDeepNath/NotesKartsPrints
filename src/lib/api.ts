@@ -312,6 +312,23 @@ export interface AdminLoginLog {
     user?: Pick<User, 'id' | 'name' | 'email'>;
 }
 
+export interface VariationAttributes {
+    type?: string;
+    value?: string;
+    [key: string]: unknown;
+}
+
+export interface BookVariation {
+    id: string;
+    bookId?: string;
+    attributes?: VariationAttributes | null;
+    price: number;
+    comparePrice?: number | null;
+    stock: number;
+    sku?: string | null;
+    image?: string | null;
+}
+
 export interface Book {
     id: string;
     title: string;
@@ -340,6 +357,7 @@ export interface Book {
     tags?: string;
     inWishlist?: boolean;
     reviews?: Review[];
+    variations?: BookVariation[];
 }
 
 export interface Genre {
@@ -361,6 +379,8 @@ export interface Order {
     onlineAmount?: number;
     codAmount?: number;
     currency: string;
+    paymentMethod?: string;
+    paymentId?: string;
     createdAt: string;
     items: OrderItem[];
     printJobs?: PrintJob[];
@@ -388,13 +408,16 @@ export interface ShiprocketMeta {
 export interface OrderItem {
     id: string;
     bookId: string;
+    variationId?: string | null;
     quantity: number;
     price: number;
     book?: Book;
+    variation?: BookVariation | null;
 }
 
 export interface CartItem {
     bookId: string;
+    variationId?: string;
     quantity: number;
 }
 

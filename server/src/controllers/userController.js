@@ -65,6 +65,20 @@ const SAFE_ORDER_SELECT = {
   createdAt: true, updatedAt: true,
 };
 
+const getOrderRelationSupport = async () => {
+  const support = { variations: false, printJobs: false };
+  try {
+    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM order_items WHERE Field = 'variationId'`;
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+    support.variations = Boolean(columns?.length && tables?.length);
+  } catch {}
+  try {
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'print_jobs'`;
+    support.printJobs = Boolean(tables?.length);
+  } catch {}
+  return support;
+};
+
 // GET /api/users/orders
 const getUserOrders = async (req, res, next) => {
   try {
@@ -93,13 +107,15 @@ const getUserOrders = async (req, res, next) => {
                 variation: true,
               },
             },
+            printJobs: true,
           },
         }),
         prisma.order.count({ where: { userId: req.user.id } }),
       ]);
     } catch (queryErr) {
-      if (queryErr.code === "P2022") {
-        console.warn("[getUserOrders] Schema missing (P2022), falling back to safe select...");
+      if (queryErr.code === "P2022" || queryErr.code === "P2021") {
+        console.warn("[getUserOrders] Schema missing, falling back to safe select...");
+        const relationSupport = await getOrderRelationSupport();
         [orders, total] = await Promise.all([
           prisma.order.findMany({
             where: { userId: req.user.id },
@@ -111,9 +127,13 @@ const getUserOrders = async (req, res, next) => {
               items: {
                 select: {
                   id: true, orderId: true, bookId: true, quantity: true, price: true,
+                  ...(relationSupport.variations
+                    ? { variationId: true, variation: true }
+                    : {}),
                   book: { select: { id: true, title: true, coverImage: true, author: true } }
                 }
-              }
+              },
+              ...(relationSupport.printJobs ? { printJobs: true } : {}),
             },
           }),
           prisma.order.count({ where: { userId: req.user.id } }),

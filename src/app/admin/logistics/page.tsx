@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
+import { formatVariationAttributes } from "@/app/components/OrderDetails";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toaster";
 import {
@@ -433,15 +434,37 @@ export default function AdminLogisticsPage() {
                           Items
                         </p>
                         <div className="mt-2 space-y-2 text-sm text-gray-600">
-                          {order.items.map((item) => (
-                            <p key={item.id}>
-                              {item.book?.title || "Book"} · {item.quantity} qty
-                            </p>
-                          ))}
+                          {order.items.map((item) => {
+                            const variationLabel = formatVariationAttributes(
+                              item.variation?.attributes,
+                            );
+                            return (
+                              <div key={item.id}>
+                                <p>
+                                  {item.book?.title || "Book"} · {item.quantity} qty
+                                </p>
+                                {variationLabel && (
+                                  <p className="text-xs font-medium text-[#e47911]">
+                                    {variationLabel}
+                                  </p>
+                                )}
+                                {item.variation?.sku && (
+                                  <p className="text-xs text-gray-400">
+                                    SKU: {item.variation.sku}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
                           {order.printJobs?.map((job) => (
-                            <p key={job.id}>
-                              Print job: {job.fileName} · {job.copies} copies
-                            </p>
+                            <div key={job.id}>
+                              <p>
+                                Print job: {job.fileName} · {job.copies} copies
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {job.pages} pages · {job.colorMode} · {job.printType} · {job.paperSize} · {job.paperType} · {job.binding}
+                              </p>
+                            </div>
                           ))}
                         </div>
                       </div>

@@ -260,6 +260,63 @@ test("create and update preserve category assignments after successful schema de
   }
 });
 
+test("update edits variations in place and preserves their IDs and order links", async () => {
+  const { controller, queries } = setup();
+  const response = await request(controller, {}, "updateBook", {
+    title: "Variant book",
+    variations: [
+      {
+        id: "variation-red",
+        attributes: { type: "Color", value: "Red" },
+        price: "249.50",
+        comparePrice: "299",
+        stock: "7",
+        sku: "RED-001",
+        image: "/uploads/red.jpg",
+      },
+      {
+        attributes: { type: "Color", value: "Blue" },
+        price: "259",
+        comparePrice: "",
+        stock: "4",
+      },
+    ],
+  });
+
+  assert.equal(response.statusCode, 200);
+  const variationUpdate = queries[0].data.variations;
+  assert.equal(variationUpdate.deleteMany, undefined);
+  assert.equal(variationUpdate.update[0].where.id, "variation-red");
+  assert.deepEqual(variationUpdate.update[0].data, {
+    attributes: { type: "Color", value: "Red" },
+    price: 249.5,
+    comparePrice: 299,
+    stock: 7,
+    sku: "RED-001",
+    image: "/uploads/red.jpg",
+  });
+  assert.equal(variationUpdate.create[0].price, 259);
+  assert.equal(variationUpdate.create[0].comparePrice, null);
+  assert.equal(variationUpdate.create[0].stock, 4);
+});
+
+test("variation updates reject invalid prices and fractional stock", async () => {
+  const { controller, queries } = setup();
+  await assert.rejects(
+    request(controller, {}, "updateBook", {
+      variations: [{
+        id: "variation-red",
+        attributes: { type: "Color", value: "Red" },
+        price: "249",
+        stock: "1.5",
+      }],
+    }),
+    /whole number/,
+  );
+
+  assert.equal(queries.length, 0);
+});
+
 test("create and update normalize galleries and return image arrays", async () => {
   const { controller, queries } = setup();
   const body = {

@@ -5,6 +5,17 @@ const { sendOrderConfirmation } = require("../utils/emailService");
 const { getSiteSettings } = require("../utils/siteSettings");
 const { mergeOrderNotes } = require("../utils/orderNotes");
 
+const hasOrderVariationSupport = async () => {
+  try {
+    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM order_items WHERE Field = 'variationId'`;
+    if (!columns || columns.length === 0) return false;
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+    return Boolean(tables && tables.length > 0);
+  } catch {
+    return false;
+  }
+};
+
 // POST /api/orders  — create a pending order from cart
 const createOrder = async (req, res, next) => {
   try {
@@ -32,7 +43,7 @@ const createOrder = async (req, res, next) => {
       throw new AppError("Cash on delivery is currently unavailable", 400);
     }
 
-    const bookIds = items?.map((i) => i.bookId) || [];
+    const bookIds = [...new Set(items?.map((i) => i.bookId) || [])];
     let books = [];
     try {
       books = await prisma.book.findMany({
@@ -83,7 +94,7 @@ const createOrder = async (req, res, next) => {
       const book = books.find((b) => b.id === item.bookId);
       let variant = null;
       if (item.variationId) {
-        variant = book.variations.find((v) => v.id === item.variationId);
+        variant = book.variations?.find((v) => v.id === item.variationId);
         if (!variant)
           throw new AppError(`Variation not found for "${book.title}"`, 404);
       }
@@ -100,7 +111,7 @@ const createOrder = async (req, res, next) => {
       const book = books.find((b) => b.id === item.bookId);
       let variant = null;
       if (item.variationId) {
-        variant = book.variations.find((v) => v.id === item.variationId);
+        variant = book.variations?.find((v) => v.id === item.variationId);
       }
 
       const itemPrice = variant ? Number(variant.price) : Number(book.price);
@@ -227,7 +238,10 @@ const createOrder = async (req, res, next) => {
         },
         include: {
           items: {
-            include: { book: { select: { title: true, coverImage: true } } },
+            include: {
+              book: { select: { title: true, coverImage: true } },
+              variation: true,
+            },
           },
           printJobs: true,
         },
@@ -237,9 +251,10 @@ const createOrder = async (req, res, next) => {
         console.warn(
           "[createOrder] Schema missing inside order create, falling back...",
         );
-        const safeOrderItems = orderItems.map(
-          ({ variationId, ...rest }) => rest,
-        );
+        const preserveVariations = await hasOrderVariationSupport();
+        const safeOrderItems = preserveVariations
+          ? orderItems
+          : orderItems.map(({ variationId, ...rest }) => rest);
         let hasPrintJobsTable = false;
         try {
           const pRes = await prisma.$queryRaw`SHOW TABLES LIKE 'print_jobs'`;
@@ -274,6 +289,7 @@ const createOrder = async (req, res, next) => {
               id: true,
               orderId: true,
               bookId: true,
+              ...(preserveVariations ? { variationId: true, variation: true } : {}),
               quantity: true,
               price: true,
               book: { select: { title: true, coverImage: true } },
@@ -369,6 +385,7 @@ const getOrder = async (req, res, next) => {
       });
     } catch (err) {
       if (err.code === "P2022" || err.code === "P2021") {
+        const preserveVariations = await hasOrderVariationSupport();
         let hasPrintJobsTable = false;
         try {
           const pRes = await prisma.$queryRaw`SHOW TABLES LIKE 'print_jobs'`;
@@ -401,6 +418,7 @@ const getOrder = async (req, res, next) => {
               id: true,
               orderId: true,
               bookId: true,
+              ...(preserveVariations ? { variationId: true, variation: true } : {}),
               quantity: true,
               price: true,
               book: {

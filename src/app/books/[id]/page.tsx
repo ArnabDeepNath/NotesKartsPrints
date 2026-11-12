@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, Book, getImageUrl } from "@/lib/api";
+import { api, Book, BookVariation, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -43,23 +43,9 @@ interface CategoryReference {
   parentId?: string | null;
 }
 
-interface BookVariation {
-  id: string;
-  attributes?: {
-    type?: string;
-    value?: string;
-  };
-  price: number;
-  comparePrice?: number | null;
-  stock: number;
-  sku?: string | null;
-  image?: string | null;
-}
-
 type BookDetail = Book & {
   category?: CategoryReference | null;
   subcategory?: CategoryReference | null;
-  variations?: BookVariation[];
 };
 
 const SuggestedBooksGrid = ({

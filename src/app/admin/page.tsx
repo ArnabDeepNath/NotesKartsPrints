@@ -14,6 +14,7 @@ import type { Coupon } from "@/lib/api";
 import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 import ProductImagesInput from "@/app/admin/components/ProductImagesInput";
 import { parseProductImages } from "@/lib/product-images";
+import OrderDetails from "@/app/components/OrderDetails";
 
 interface Stats {
   totalBooks: number;
@@ -111,6 +112,7 @@ export default function AdminPanel() {
 
   const [users, setUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -286,7 +288,31 @@ export default function AdminPanel() {
   const handleBookFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Sanitize form data - only send editable scalar fields
+      const variations = Array.isArray(bookForm.variations)
+        ? bookForm.variations
+        : [];
+
+      for (const variation of variations) {
+        const price = Number(variation.price);
+        const stock = Number(variation.stock);
+        const hasComparePrice = String(variation.comparePrice ?? "").trim() !== "";
+        const comparePrice = Number(variation.comparePrice);
+
+        if (String(variation.price ?? "").trim() === "" || !Number.isFinite(price) || price < 0) {
+          toast("Each variation needs a valid non-negative price", "error");
+          return;
+        }
+        if (String(variation.stock ?? "").trim() === "" || !Number.isInteger(stock) || stock < 0) {
+          toast("Each variation needs a non-negative whole-number stock", "error");
+          return;
+        }
+        if (hasComparePrice && (!Number.isFinite(comparePrice) || comparePrice < 0)) {
+          toast("Variation compare prices must be non-negative numbers", "error");
+          return;
+        }
+      }
+
+      // Sanitize form data - only send editable fields
       const sanitizedData: Record<string, unknown> = {
         title: bookForm.title,
         author: bookForm.author,
@@ -308,6 +334,17 @@ export default function AdminPanel() {
         tags: bookForm.tags || null,
         format: bookForm.format || "PHYSICAL",
         language: bookForm.language || "English",
+        variations: variations.map((variation: any) => ({
+          id: variation.id,
+          attributes: variation.attributes,
+          price: Number(variation.price),
+          comparePrice: String(variation.comparePrice ?? "").trim()
+            ? Number(variation.comparePrice)
+            : null,
+          stock: Number(variation.stock),
+          sku: variation.sku || null,
+          image: variation.image || null,
+        })),
       };
 
       if (bookModal.book) {
@@ -322,6 +359,19 @@ export default function AdminPanel() {
     } catch (err: any) {
       toast(err.message, "error");
     }
+  };
+
+  const handleBookVariationChange = (
+    index: number,
+    field: "price" | "comparePrice" | "stock",
+    value: string,
+  ) => {
+    setBookForm((prev: any) => ({
+      ...prev,
+      variations: (prev.variations || []).map((variation: any, i: number) =>
+        i === index ? { ...variation, [field]: value } : variation,
+      ),
+    }));
   };
 
   const handleModalCoverImageUpload = async (file: File) => {
@@ -788,6 +838,17 @@ export default function AdminPanel() {
                                       tags: b.tags || "",
                                       format: b.format || "PHYSICAL",
                                       language: b.language || "English",
+                                      variations: Array.isArray(b.variations)
+                                        ? b.variations.map((variation: any) => ({
+                                            id: variation.id,
+                                            attributes: variation.attributes || { type: "Variant", value: "Option" },
+                                            price: variation.price != null ? String(variation.price) : "",
+                                            comparePrice: variation.comparePrice != null ? String(variation.comparePrice) : "",
+                                            stock: variation.stock != null ? String(variation.stock) : "0",
+                                            sku: variation.sku || "",
+                                            image: variation.image || null,
+                                          }))
+                                        : [],
                                     });
                                     setBookModal({ open: true, book: b });
                                   }}
@@ -969,6 +1030,9 @@ export default function AdminPanel() {
                           <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
                             Update
                           </th>
+                          <th className="text-left px-4 py-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                            Details
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -1020,6 +1084,15 @@ export default function AdminPanel() {
                                   </option>
                                 ))}
                               </select>
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedOrder(o)}
+                                className="text-xs font-semibold text-[#146eb4] hover:underline"
+                              >
+                                View Details
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -1509,6 +1582,46 @@ export default function AdminPanel() {
         )}
       </AnimatePresence>
 
+      {/* Order Details Modal */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4"
+            onClick={(event) =>
+              event.target === event.currentTarget && setSelectedOrder(null)
+            }
+          >
+            <motion.div
+              initial={{ scale: 0.97, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.97, y: 20 }}
+              className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-md border border-gray-200 bg-white p-6 shadow-xl md:p-8"
+            >
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-[#232f3e]">Order Details</h3>
+                  <p className="mt-1 font-mono text-xs text-gray-500">
+                    #{selectedOrder.id.slice(-8).toUpperCase()}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close order details"
+                  onClick={() => setSelectedOrder(null)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:text-[#232f3e]"
+                >
+                  ✕
+                </button>
+              </div>
+              <OrderDetails order={selectedOrder} showCustomer />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Book Modal */}
       <AnimatePresence>
         {bookModal.open && (
@@ -1684,6 +1797,77 @@ export default function AdminPanel() {
                     onBusyChange={setIsUploadingImages}
                     onChange={(images) => setBookForm((prev: typeof bookForm) => ({ ...prev, images }))}
                   />
+                </div>
+                <div className="col-span-2 border-t border-gray-200 pt-5">
+                  <div className="mb-4">
+                    <h4 className="text-sm font-bold text-[#232f3e]">Product Variations</h4>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Edit selling prices and available stock for each existing option.
+                    </p>
+                  </div>
+                  {(bookForm.variations || []).length === 0 ? (
+                    <p className="rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                      This book has no variations. Its base price and stock will be used.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {(bookForm.variations || []).map((variation: any, index: number) => (
+                        <div key={variation.id || index} className="rounded-md border border-gray-200 bg-gray-50 p-4">
+                          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-[#232f3e]">
+                              {variation.attributes?.type || "Variant"}: {variation.attributes?.value || "Option"}
+                            </p>
+                            {variation.sku && (
+                              <p className="text-[10px] text-gray-500">SKU: {variation.sku}</p>
+                            )}
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            <div>
+                              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                                Price (₹) *
+                              </label>
+                              <input
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                value={variation.price ?? ""}
+                                onChange={(event) => handleBookVariationChange(index, "price", event.target.value)}
+                                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#e47911] focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                                Compare Price (₹)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={variation.comparePrice ?? ""}
+                                onChange={(event) => handleBookVariationChange(index, "comparePrice", event.target.value)}
+                                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#e47911] focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                                Stock *
+                              </label>
+                              <input
+                                type="number"
+                                required
+                                min="0"
+                                step="1"
+                                value={variation.stock ?? ""}
+                                onChange={(event) => handleBookVariationChange(index, "stock", event.target.value)}
+                                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-[#e47911] focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">

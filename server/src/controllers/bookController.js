@@ -19,6 +19,38 @@ function serializeBook(book) {
   return b;
 }
 
+function normalizeVariationInput(variation) {
+  const price = Number(variation.price);
+  const stock = variation.stock === undefined || variation.stock === null || variation.stock === ""
+    ? 0
+    : Number(variation.stock);
+  const comparePrice = variation.comparePrice === undefined || variation.comparePrice === null || variation.comparePrice === ""
+    ? null
+    : Number(variation.comparePrice);
+
+  if (!variation.attributes || typeof variation.attributes !== "object" || Array.isArray(variation.attributes)) {
+    throw new AppError("Each variation must have valid attributes", 400);
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    throw new AppError("Variation price must be a non-negative number", 400);
+  }
+  if (comparePrice !== null && (!Number.isFinite(comparePrice) || comparePrice < 0)) {
+    throw new AppError("Variation compare price must be a non-negative number", 400);
+  }
+  if (!Number.isInteger(stock) || stock < 0) {
+    throw new AppError("Variation stock must be a non-negative whole number", 400);
+  }
+
+  return {
+    attributes: variation.attributes,
+    price,
+    comparePrice,
+    stock,
+    sku: variation.sku || null,
+    image: variation.image || null,
+  };
+}
+
 // Check if category columns exist in the books table
 let _hasCategoryColumns = null;
 async function hasCategoryColumns() {
@@ -373,16 +405,9 @@ const createBook = async (req, res, next) => {
         section: section || null,
         tags,
         ...(variationsExist && variations && Array.isArray(variations) && variations.length > 0 && {
-          variations: {
-            create: variations.map((v) => ({
-              attributes: v.attributes,
-              price: Number(v.price),
-              comparePrice: v.comparePrice ? Number(v.comparePrice) : null,
-              stock: Number(v.stock) || 0,
-              sku: v.sku || null,
-              image: v.image || null,
-            })),
-          },
+           variations: {
+             create: variations.map(normalizeVariationInput),
+           },
         }),
     };
     if (catColumnsExist) {
@@ -441,18 +466,24 @@ const updateBook = async (req, res, next) => {
     let updateData = { ...data };
 
     const variationsExist = await hasVariationsTable();
-    if (variationsExist && variations && Array.isArray(variations)) {
-      updateData.variations = {
-        deleteMany: {}, // The simplest way to update variations is to replace them
-        create: variations.map((v) => ({
-          attributes: v.attributes,
-          price: Number(v.price),
-          comparePrice: v.comparePrice ? Number(v.comparePrice) : null,
-          stock: Number(v.stock) || 0,
-          sku: v.sku || null,
-          image: v.image || null,
-        })),
-      };
+    if (variationsExist && Array.isArray(variations)) {
+      const existingVariations = variations
+        .filter((variation) => variation.id)
+        .map((variation) => ({
+          where: { id: variation.id },
+          data: normalizeVariationInput(variation),
+        }));
+      const newVariations = variations
+        .filter((variation) => !variation.id)
+        .map(normalizeVariationInput);
+
+      // Update in place so historical order items keep their variation relation.
+      if (existingVariations.length > 0 || newVariations.length > 0) {
+        updateData.variations = {
+          ...(existingVariations.length > 0 ? { update: existingVariations } : {}),
+          ...(newVariations.length > 0 ? { create: newVariations } : {}),
+        };
+      }
     }
 
     let selectFields = undefined;

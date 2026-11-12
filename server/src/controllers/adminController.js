@@ -100,6 +100,20 @@ const decorateOrderWithShiprocket = (order) => ({
   shiprocket: parseOrderNotes(order.notes).shiprocket || null,
 });
 
+const getOrderRelationSupport = async () => {
+  const support = { variations: false, printJobs: false };
+  try {
+    const columns = await prisma.$queryRaw`SHOW COLUMNS FROM order_items WHERE Field = 'variationId'`;
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'book_variations'`;
+    support.variations = Boolean(columns?.length && tables?.length);
+  } catch {}
+  try {
+    const tables = await prisma.$queryRaw`SHOW TABLES LIKE 'print_jobs'`;
+    support.printJobs = Boolean(tables?.length);
+  } catch {}
+  return support;
+};
+
 const ADMIN_ORDER_DETAIL_SELECT = {
   id: true,
   status: true,
@@ -126,22 +140,14 @@ const ADMIN_ORDER_DETAIL_SELECT = {
     select: {
       id: true,
       bookId: true,
+      variationId: true,
       quantity: true,
       price: true,
-      book: { select: { title: true, coverImage: true } },
+      book: { select: { title: true, coverImage: true, author: true } },
+      variation: true,
     },
   },
-  printJobs: {
-    select: {
-      id: true,
-      fileUrl: true,
-      fileName: true,
-      pages: true,
-      copies: true,
-      price: true,
-      status: true,
-    },
-  },
+  printJobs: true,
 };
 
 // GET /api/admin/stats
@@ -486,20 +492,25 @@ const getOrders = async (req, res, next) => {
           orderBy: { createdAt: "desc" },
           include: {
             user: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: { id: true, name: true, email: true, phone: true, avatar: true },
             },
             items: {
-              include: { book: { select: { title: true, coverImage: true } } },
+              include: {
+                book: { select: { title: true, coverImage: true, author: true } },
+                variation: true,
+              },
             },
+            printJobs: true,
           },
         }),
         prisma.order.count({ where }),
       ]);
     } catch (queryErr) {
-      if (queryErr.code === "P2022") {
+      if (queryErr.code === "P2022" || queryErr.code === "P2021") {
         console.warn(
           "[getOrdersAdmin] Schema missing, falling back to safe select...",
         );
+        const relationSupport = await getOrderRelationSupport();
         [orders, total] = await Promise.all([
           prisma.order.findMany({
             where,
@@ -516,11 +527,15 @@ const getOrders = async (req, res, next) => {
                   id: true,
                   orderId: true,
                   bookId: true,
+                  ...(relationSupport.variations
+                    ? { variationId: true, variation: true }
+                    : {}),
                   quantity: true,
                   price: true,
                   book: { select: { title: true, coverImage: true } },
                 },
               },
+              ...(relationSupport.printJobs ? { printJobs: true } : {}),
             },
           }),
           prisma.order.count({ where }),
@@ -620,19 +635,14 @@ const updateOrderStatus = async (req, res, next) => {
         items: {
           select: {
             bookId: true,
+            variationId: true,
             quantity: true,
             price: true,
-            book: { select: { title: true } },
+            book: { select: { title: true, coverImage: true } },
+            variation: true,
           },
         },
-        printJobs: {
-          select: {
-            id: true,
-            fileName: true,
-            copies: true,
-            price: true,
-          },
-        },
+        printJobs: true,
       },
     });
 

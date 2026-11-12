@@ -401,7 +401,7 @@ export default function BookDetailPage({
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid md:grid-cols-[300px_1fr] gap-10 mb-12"
+          className="mb-12 grid gap-6 md:grid-cols-[300px_1fr] md:gap-10"
         >
           {/* Product image gallery */}
           <div>
@@ -479,7 +479,7 @@ export default function BookDetailPage({
                 {book.genre.name}
               </span>
             )}
-            <h1 className="text-3xl md:text-4xl font-bold text-[#232f3e] leading-tight">
+            <h1 className="text-2xl font-bold leading-tight text-[#232f3e] sm:text-3xl md:text-4xl">
               {book.title}
             </h1>
             {book.subtitle && (
@@ -500,7 +500,7 @@ export default function BookDetailPage({
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3 mt-6">
+            <div className="mt-6 flex flex-wrap items-baseline gap-2 sm:gap-3">
               <span className="text-3xl font-bold text-[#232f3e]">
                 Rs.{" "}
                 {Number(
@@ -684,7 +684,7 @@ export default function BookDetailPage({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="bg-white border border-gray-200 rounded-md p-6"
+                className="bg-white border border-gray-200 rounded-md p-4 sm:p-6"
               >
                 {book.description ? (
                   <p className="text-gray-600 leading-relaxed whitespace-pre-line">

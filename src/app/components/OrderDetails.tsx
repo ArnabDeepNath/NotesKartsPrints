@@ -77,6 +77,12 @@ export default function OrderDetails({
   ]
     .filter(Boolean)
     .join(", ");
+  const trackingStep = ["DELIVERED", "SHIPPED", "PROCESSING", "PAID"].includes(
+    order.status,
+  )
+    ? { DELIVERED: 3, SHIPPED: 2, PROCESSING: 1, PAID: 1 }[order.status]
+    : 0;
+  const tracking = order.shiprocket;
 
   return (
     <div className="space-y-6">
@@ -102,6 +108,56 @@ export default function OrderDetails({
           </p>
         </div>
       </div>
+
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Delivery & Tracking
+            </h4>
+            <p className="mt-1 text-sm font-semibold text-[#232f3e]">
+              {tracking?.status || (order.status === "PENDING" ? "Order received" : order.status)}
+            </p>
+          </div>
+          {tracking?.trackingUrl && (
+            <a
+              href={tracking.trackingUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#232f3e] px-4 py-2 text-xs font-bold text-white hover:bg-[#111827]"
+            >
+              Track shipment ↗
+            </a>
+          )}
+        </div>
+
+        {!["CANCELLED", "REFUNDED"].includes(order.status) && (
+          <div className="mt-5 grid grid-cols-4 gap-1">
+            {["Placed", "Processing", "Shipped", "Delivered"].map((label, index) => (
+              <div key={label} className="relative text-center">
+                {index > 0 && (
+                  <span className={`absolute right-1/2 top-3 h-0.5 w-full ${index <= Number(trackingStep) ? "bg-green-500" : "bg-gray-200"}`} />
+                )}
+                <span className={`relative mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${index <= Number(trackingStep) ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
+                  {index < Number(trackingStep) ? "✓" : index + 1}
+                </span>
+                <p className="mt-2 text-[10px] font-medium text-gray-600 sm:text-xs">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 grid gap-2 border-t border-gray-100 pt-3 text-xs text-gray-600 sm:grid-cols-3">
+          <p><span className="font-semibold text-[#232f3e]">Courier:</span> {tracking?.courierName || "Assigned at dispatch"}</p>
+          <p className="break-all"><span className="font-semibold text-[#232f3e]">AWB:</span> {tracking?.awbCode || "Pending"}</p>
+          <p className="break-all"><span className="font-semibold text-[#232f3e]">Shipment ID:</span> {tracking?.shipmentId || "Pending"}</p>
+        </div>
+        {!tracking?.trackingUrl && (
+          <p className="mt-3 text-xs text-gray-500">
+            The courier tracking link will appear here after your order is dispatched.
+          </p>
+        )}
+      </section>
 
       {showCustomer && (
         <section>
@@ -137,7 +193,7 @@ export default function OrderDetails({
               return (
                 <div
                   key={item.id}
-                  className="flex items-start gap-4 rounded-lg border border-gray-200 p-4"
+                  className="flex flex-wrap items-start gap-3 rounded-lg border border-gray-200 p-3 sm:flex-nowrap sm:gap-4 sm:p-4"
                 >
                   {image ? (
                     <img
@@ -171,7 +227,7 @@ export default function OrderDetails({
                       Qty {item.quantity} × {money(item.price)}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold text-[#232f3e]">
+                  <p className="w-full text-right text-sm font-semibold text-[#232f3e] sm:w-auto sm:shrink-0">
                     {money(Number(item.price) * item.quantity)}
                   </p>
                 </div>

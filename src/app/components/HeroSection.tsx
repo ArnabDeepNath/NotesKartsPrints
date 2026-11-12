@@ -116,7 +116,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
       </div>
 
       {/* Hero Banner Slider */}
-      <div className="relative overflow-hidden" style={{ height: "340px" }}>
+      <div className="relative h-[460px] overflow-hidden sm:h-[400px] md:h-[340px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -130,7 +130,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                 "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)",
             }}
           >
-            <div className="max-w-7xl mx-auto px-8 md:px-12 w-full">
+            <div className="max-w-7xl mx-auto w-full px-5 pb-8 sm:px-8 md:px-12">
               <div
                 className={`grid gap-8 items-center ${
                   slide.image ? "md:grid-cols-[1.4fr_0.9fr]" : "md:grid-cols-1"
@@ -140,10 +140,10 @@ export default function HeroSection({ bookCount, metrics }: Props) {
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f5a623] mb-4">
                     {slide.badge || "FEATURED"}
                   </div>
-                  <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-3">
+                  <h1 className="mb-3 text-[1.75rem] font-black leading-[1.15] text-white sm:text-4xl md:text-5xl md:leading-tight">
                     {slide.title}
                   </h1>
-                  <p className="text-base md:text-lg text-white/80 mb-6">
+                  <p className="mb-5 text-sm leading-6 text-white/80 sm:text-base md:mb-6 md:text-lg">
                     {slide.subtitle}
                   </p>
                   <div className="flex flex-wrap gap-3">
@@ -194,7 +194,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
           onClick={() =>
             setCurrentSlide((p) => (p - 1 + slides.length) % slides.length)
           }
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors z-10"
+          className="absolute left-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white transition-colors hover:bg-black/50 z-10 sm:flex"
         >
           <svg
             width="16"
@@ -209,7 +209,7 @@ export default function HeroSection({ bookCount, metrics }: Props) {
         </button>
         <button
           onClick={() => setCurrentSlide((p) => (p + 1) % slides.length)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors z-10"
+          className="absolute right-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white transition-colors hover:bg-black/50 z-10 sm:flex"
         >
           <svg
             width="16"

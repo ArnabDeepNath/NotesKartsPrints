@@ -401,6 +401,7 @@ export interface ShiprocketMeta {
     awbCode?: string | null;
     trackingUrl?: string | null;
     status?: string | null;
+    courierName?: string | null;
     raw?: unknown;
     rawTrack?: unknown;
 }

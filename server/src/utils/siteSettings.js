@@ -64,6 +64,7 @@ const DEFAULT_SITE_SETTINGS = {
       linkedin: "",
       youtube: "",
       whatsapp: "",
+      telegram: "https://t.me/helpingdoctors1",
     },
   },
   header: {

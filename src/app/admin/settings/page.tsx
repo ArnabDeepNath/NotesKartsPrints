@@ -26,6 +26,7 @@ const SOCIAL_FIELDS = [
   { key: "linkedin", label: "LinkedIn URL" },
   { key: "youtube", label: "YouTube URL" },
   { key: "whatsapp", label: "WhatsApp URL" },
+  { key: "telegram", label: "Telegram channel URL" },
 ] as const;
 
 const CATEGORY_ICON_OPTIONS = [

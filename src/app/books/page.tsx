@@ -714,7 +714,7 @@ function BooksPageInner() {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
@@ -757,7 +757,7 @@ function BooksPageInner() {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5"
           >
             <AnimatePresence>
               {books.map((book, i) => (
@@ -781,7 +781,7 @@ function BooksPageInner() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-10">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
             <button
               onClick={() => applyFilters({ page: Math.max(1, page - 1) })}
               disabled={page === 1}
@@ -838,9 +838,9 @@ function BookCard({
     : 0;
 
   return (
-    <div className="group bg-white border border-gray-200 rounded-md overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div className="group flex h-full flex-col overflow-hidden rounded-md border border-gray-200 bg-white transition-shadow duration-200 hover:shadow-md">
       <Link href={`/books/${book.id}`}>
-        <div className="relative overflow-hidden bg-gray-100 h-48">
+        <div className="relative h-40 overflow-hidden bg-gray-100 sm:h-48">
           {book.coverImage ? (
             <img
               src={getImageUrl(book.coverImage)}
@@ -870,7 +870,7 @@ function BookCard({
         </div>
       </Link>
 
-      <div className="p-3">
+      <div className="flex flex-1 flex-col p-2.5 sm:p-3">
         {book.genre && (
           <span
             className="text-[10px] font-semibold uppercase tracking-wider mb-1 block"
@@ -913,7 +913,7 @@ function BookCard({
           FREE Delivery
         </p>
 
-        <div className="flex items-center justify-between">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-2">
           <div>
             <span className="text-base font-bold text-[#232f3e]">
               Rs. {Number(book.price).toFixed(0)}

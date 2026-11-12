@@ -102,7 +102,7 @@ export default function BookCard({ book, index }: Props) {
       onClick={() => router.push(`/books/${book.slug || book.id}`)}
     >
       {/* Cover Image */}
-      <div className="relative bg-gray-50" style={{ height: "200px" }}>
+      <div className="relative h-40 bg-gray-50 sm:h-48 md:h-[200px]">
         {coverImg && !imgError ? (
           <img
             src={coverImg}
@@ -133,14 +133,14 @@ export default function BookCard({ book, index }: Props) {
           </div>
         )}
         {/* Category pill */}
-        <div className="absolute top-2 right-2 bg-white/90 text-[#232f3e] text-[9px] font-bold px-2 py-0.5 rounded-full border border-gray-200">
+        <div className="absolute top-2 right-2 max-w-[62%] truncate bg-white/90 text-[#232f3e] text-[9px] font-bold px-2 py-0.5 rounded-full border border-gray-200">
           {category}
         </div>
       </div>
 
       {/* Product Info */}
-      <div className="p-3 flex flex-col flex-1">
-        <h3 className="text-[#0f1111] font-bold text-sm leading-snug line-clamp-2 mb-1 min-h-[2.5rem]">
+      <div className="p-2.5 flex flex-col flex-1 sm:p-3">
+        <h3 className="text-[#0f1111] font-bold text-xs leading-snug line-clamp-2 mb-1 min-h-[2rem] sm:text-sm sm:min-h-[2.5rem]">
           {book.title}
         </h3>
         <p className="text-xs text-[#565959] mb-1.5 truncate">{author}</p>
@@ -148,11 +148,11 @@ export default function BookCard({ book, index }: Props) {
         <StarRating rating={rating} />
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 mt-2">
-          <span className="text-[#0f1111] font-black text-base">
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[#0f1111] font-black text-sm sm:text-base">
             Rs. {price.toLocaleString()}
           </span>
-          <span className="text-gray-400 text-xs line-through">
+          <span className="text-gray-400 text-[10px] line-through sm:text-xs">
             Rs. {originalPrice.toLocaleString()}
           </span>
         </div>

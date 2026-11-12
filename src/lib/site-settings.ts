@@ -165,6 +165,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       linkedin: "",
       youtube: "",
       whatsapp: "",
+      telegram: "https://t.me/helpingdoctors1",
     },
   },
   header: {

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, type Order } from "@/lib/api";
 import Navbar from "@/app/components/Navbar";
 import OrderDetails from "@/app/components/OrderDetails";
 
@@ -22,9 +22,9 @@ const STATUS_COLORS: Record<string, string> = {
 export default function OrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<Order | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -43,7 +43,13 @@ export default function OrdersPage() {
         page: String(page),
         limit: "10",
       });
-      setOrders(data.orders || []);
+      const nextOrders = data.orders || [];
+      setOrders(nextOrders);
+      setSelected((current) =>
+        current
+          ? nextOrders.find((order: Order) => order.id === current.id) || null
+          : null,
+      );
       setTotalPages(data.pagination?.totalPages || 1);
     } finally {
       setLoading(false);
@@ -61,11 +67,22 @@ export default function OrdersPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="mb-6 pt-4">
-            <h1 className="text-3xl font-bold text-[#232f3e]">My Orders</h1>
-            <p className="text-gray-500 mt-1">
-              Track and manage your purchases.
-            </p>
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3 pt-4">
+            <div>
+              <h1 className="text-2xl font-bold text-[#232f3e] sm:text-3xl">My Orders</h1>
+              <p className="mt-1 text-sm text-gray-500 sm:text-base">
+                Track and manage your purchases.
+              </p>
+            </div>
+            {orders.length > 0 && (
+              <button
+                onClick={fetchOrders}
+                disabled={loading}
+                className="min-h-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-[#232f3e] disabled:opacity-50"
+              >
+                {loading ? "Refreshing..." : "Refresh tracking"}
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -95,7 +112,7 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {orders.map((order: any, i: number) => (
+              {orders.map((order: Order, i: number) => (
                 <motion.div
                   key={order.id}
                   initial={{ opacity: 0, y: 12 }}
@@ -107,7 +124,7 @@ export default function OrdersPage() {
                     onClick={() =>
                       setSelected(selected?.id === order.id ? null : order)
                     }
-                    className="w-full flex items-center gap-4 p-5 text-left hover:bg-gray-50 transition-colors"
+                    className="w-full flex flex-wrap items-center gap-3 p-4 text-left hover:bg-gray-50 transition-colors sm:flex-nowrap sm:gap-4 sm:p-5"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -129,6 +146,11 @@ export default function OrdersPage() {
                         {" · "}
                         {order.items?.length || 0} item(s)
                       </p>
+                      {order.shiprocket?.status && (
+                        <p className="mt-2 text-xs font-semibold text-[#146eb4]">
+                          Shipment: {order.shiprocket.status}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-[#232f3e]">
@@ -161,7 +183,7 @@ export default function OrdersPage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden border-t border-gray-100"
                       >
-                        <div className="p-5">
+                        <div className="p-3 sm:p-5">
                           <OrderDetails order={order} />
                         </div>
                       </motion.div>

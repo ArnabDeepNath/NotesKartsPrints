@@ -8,6 +8,8 @@ export default function Footer() {
   const { settings } = useSiteSettings();
   const footer = settings.footer;
   const policyPages = settings.policyPages || [];
+  const telegramUrl =
+    footer.socialLinks?.telegram || "https://t.me/helpingdoctors1";
   const socialEntries = Object.entries(footer.socialLinks || {}).filter(
     ([, href]) => Boolean(href),
   );
@@ -25,8 +27,8 @@ export default function Footer() {
       <div className="bg-[#37475a] py-6 px-4 text-center border-b border-[#485769]">
         <h3 className="text-lg font-bold mb-1">Track My Order</h3>
         <p className="text-sm text-gray-300 mb-3">
-          To track your order status, please visit the delivery website and
-          enter your tracking number or phone below.
+          Open My Orders to see your delivery progress, AWB number, and live
+          courier tracking link.
         </p>
         <Link href="/user/orders">
           <button className="bg-[#e47911] hover:bg-[#c45500] text-white font-bold px-8 py-2.5 rounded-md transition-colors text-sm">
@@ -36,8 +38,8 @@ export default function Footer() {
       </div>
 
       {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
@@ -138,7 +140,18 @@ export default function Footer() {
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">
               Stay Connected
             </h4>
-            <div className="flex gap-3 mb-4">
+            <a
+              href={telegramUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mb-4 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#229ed9] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1b8bc0]"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M21.9 4.6 18.7 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 12.5l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.5 3c.9-.3 1.7.2 1.4 1.6Z" />
+              </svg>
+              Join our Telegram channel
+            </a>
+            <div className="flex flex-wrap gap-3 mb-4">
               {(socialEntries.length
                 ? socialEntries
                 : [
@@ -184,6 +197,9 @@ export default function Footer() {
                         <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                       </>
                     )}
+                    {social === "telegram" && (
+                      <path d="M21.9 4.6 18.7 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 12.5l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.5 3c.9-.3 1.7.2 1.4 1.6Z" fill="white" stroke="none" />
+                    )}
                     {social === "linkedin" && (
                       <>
                         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
@@ -212,7 +228,7 @@ export default function Footer() {
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-gray-400 space-y-1">
+            <div className="mt-4 text-xs text-gray-400 space-y-1 break-words">
               <p>📞 {footer.alternatePhone}</p>
               <p>🕐 {footer.supportHours}</p>
               <p>📧 {footer.supportEmail}</p>
@@ -227,7 +243,7 @@ export default function Footer() {
           <p>
             © {year} {footer.brandName}. {footer.copyrightText}
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             {footer.policies.slice(0, 3).map((policy) => (
               <Link
                 key={policy.label}

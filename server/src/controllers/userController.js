@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const prisma = require("../config/prisma");
 const { AppError } = require("../middleware/errorHandler");
+const { parseOrderNotes } = require("../utils/orderNotes");
 
 // GET /api/users/profile
 const getProfile = async (req, res, next) => {
@@ -63,6 +64,26 @@ const SAFE_ORDER_SELECT = {
   notes: true, shippingName: true, shippingEmail: true, shippingPhone: true,
   shippingAddress: true, shippingCity: true, shippingCountry: true, shippingZip: true,
   createdAt: true, updatedAt: true,
+};
+
+const decorateOrderWithCustomerTracking = (order) => {
+  const meta = parseOrderNotes(order.notes).shiprocket;
+  if (!meta) return { ...order, shiprocket: null };
+
+  return {
+    ...order,
+    shiprocket: {
+      shipmentId: meta.shipmentId || null,
+      awbCode: meta.awbCode || null,
+      trackingUrl:
+        meta.trackingUrl ||
+        (meta.awbCode
+          ? `https://shiprocket.co/tracking/${encodeURIComponent(meta.awbCode)}`
+          : null),
+      status: meta.status || null,
+      courierName: meta.courierName || meta.raw?.courier_name || null,
+    },
+  };
 };
 
 const getOrderRelationSupport = async () => {
@@ -144,7 +165,7 @@ const getUserOrders = async (req, res, next) => {
     }
 
     res.json({
-      orders,
+      orders: orders.map(decorateOrderWithCustomerTracking),
       pagination: {
         total,
         page: Number(page),

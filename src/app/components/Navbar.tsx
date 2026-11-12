@@ -136,7 +136,7 @@ export default function Navbar() {
 
       {/* Main Navbar */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 py-2.5 flex items-center gap-2 sm:px-4 sm:py-3 sm:gap-4">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export default function Navbar() {
                 </svg>
               </div>
               <div>
-                <span className="text-[#232f3e] font-black text-xl tracking-tight leading-none block">
+                <span className="text-[#232f3e] font-black text-lg sm:text-xl tracking-tight leading-none block">
                   {header.brandName}
                 </span>
                 <span className="text-[#e47911] font-semibold text-[10px] uppercase tracking-widest leading-none">
@@ -203,7 +203,7 @@ export default function Navbar() {
           </form>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3 md:gap-4 flex-shrink-0">
             {/* Cart */}
             <div className="relative">
               <button
@@ -251,7 +251,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden z-50"
+                    className="absolute -right-12 top-full mt-2 w-[min(20rem,calc(100vw-1rem))] bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden z-50 sm:right-0"
                   >
                     <div className="p-3 border-b border-gray-100 bg-gray-50">
                       <p className="text-sm font-bold text-[#232f3e]">
@@ -600,9 +600,22 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t border-gray-200 shadow-lg overflow-hidden"
+            className="max-h-[70vh] overflow-y-auto md:hidden bg-white border-t border-gray-200 shadow-lg"
           >
             <div className="px-4 py-3 flex flex-col gap-0">
+              <Link
+                href="/user/orders"
+                onClick={() => setMobileOpen(false)}
+                className="mb-2 flex min-h-11 items-center justify-center rounded-md bg-[#232f3e] px-4 py-2.5 text-sm font-bold text-white"
+              >
+                Track My Order
+              </Link>
+              {user && (
+                <div className="grid grid-cols-2 gap-2 border-b border-gray-100 pb-3">
+                  <Link href="/user/dashboard" onClick={() => setMobileOpen(false)} className="rounded-md bg-gray-50 px-3 py-2.5 text-center text-xs font-semibold text-gray-700">Dashboard</Link>
+                  <Link href="/user/profile" onClick={() => setMobileOpen(false)} className="rounded-md bg-gray-50 px-3 py-2.5 text-center text-xs font-semibold text-gray-700">Profile</Link>
+                </div>
+              )}
               {navMenuItems.map((item) => (
                 <div key={item.id} className="border-b border-gray-100 py-2">
                   <Link href={item.href} onClick={() => setMobileOpen(false)}>

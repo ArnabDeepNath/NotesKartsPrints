@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Footer from "@/app/components/Footer";
 import Navbar from "@/app/components/Navbar";
+import { DEFAULT_SITE_SETTINGS } from "@/lib/site-settings";
+import { formatPolicyContent } from "@/lib/policy-content";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -52,6 +54,11 @@ export default async function PolicyPage({
     notFound();
   }
 
+  const defaultPage = DEFAULT_SITE_SETTINGS.policyPages.find(
+    (defaultPolicy) => defaultPolicy.slug === slug,
+  );
+  const content = formatPolicyContent(page.content, defaultPage?.content);
+
   return (
     <div className="min-h-screen bg-[#f7f8fa] flex flex-col">
       <Navbar />
@@ -70,7 +77,7 @@ export default async function PolicyPage({
           <article className="rounded-lg border border-gray-200 bg-white px-5 py-7 shadow-sm sm:px-10 sm:py-10">
             <div
               className="policy-content"
-              dangerouslySetInnerHTML={{ __html: page.content }}
+              dangerouslySetInnerHTML={{ __html: content }}
             />
           </article>
         </div>

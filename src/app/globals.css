@@ -78,6 +78,21 @@ body {
   font-size: 1rem;
   line-height: 1.8;
   overflow-wrap: anywhere;
+  text-align: left !important;
+}
+
+/* Pasted editor content can carry inline alignment and spacing styles. */
+.policy-content * {
+  text-align: left !important;
+}
+
+.policy-content p:empty,
+.policy-content div:empty {
+  display: none;
+}
+
+.policy-content br + br {
+  display: none;
 }
 
 .policy-content > :first-child {
@@ -122,7 +137,21 @@ body {
 
 .policy-content p,
 .policy-content div {
-  margin-bottom: 1.1rem;
+  margin: 0 0 1.1rem !important;
+}
+
+.policy-content .policy-section {
+  margin: 0 0 1.35rem;
+}
+
+.policy-content .policy-section p {
+  margin-bottom: 0 !important;
+}
+
+.policy-content .policy-section strong {
+  display: inline-block;
+  min-width: 2rem;
+  color: #e47911;
 }
 
 .policy-content ul,

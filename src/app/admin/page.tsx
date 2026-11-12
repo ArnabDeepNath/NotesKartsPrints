@@ -118,10 +118,15 @@ export default function AdminPanel() {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  const [bookModal, setBookModal] = useState<{ open: boolean; book?: any }>({
+  const [bookModal, setBookModal] = useState<{
+    open: boolean;
+    book?: any;
+    focusVariants?: boolean;
+  }>({
     open: false,
   });
   const [bookForm, setBookForm] = useState<any>({});
+  const [bookEditorLoadingId, setBookEditorLoadingId] = useState<string | null>(null);
 
   const [couponModal, setCouponModal] = useState<{ open: boolean; coupon?: Coupon }>({
     open: false,
@@ -285,6 +290,54 @@ export default function AdminPanel() {
     }
   };
 
+  const openBookEditor = async (listedBook: any, focusVariants = false) => {
+    setBookEditorLoadingId(listedBook.id);
+    try {
+      // The catalog list can use a reduced fallback response. Always load the
+      // complete book so existing variations are available in the editor.
+      const { book: fullBook } = await api.books.get(listedBook.id);
+      const b: any = fullBook;
+      setBookForm({
+        title: b.title || "",
+        author: b.author || "",
+        description: b.description || "",
+        shortDesc: b.shortDesc || "",
+        price: b.price != null ? String(b.price) : "",
+        comparePrice: b.comparePrice != null ? String(b.comparePrice) : "",
+        stock: b.stock != null ? String(b.stock) : "0",
+        pages: b.pages != null ? String(b.pages) : "",
+        isbn: b.isbn || "",
+        publisher: b.publisher || "",
+        section: b.section || "",
+        coverImage: b.coverImage || "",
+        images: parseProductImages(b.images),
+        featured: b.featured || false,
+        genreId: b.genreId || "",
+        categoryId: b.categoryId || "",
+        subcategoryId: b.subcategoryId || "",
+        tags: b.tags || "",
+        format: b.format || "PHYSICAL",
+        language: b.language || "English",
+        variations: Array.isArray(b.variations)
+          ? b.variations.map((variation: any) => ({
+              id: variation.id,
+              attributes: variation.attributes || { type: "Variant", value: "Option" },
+              price: variation.price != null ? String(variation.price) : "",
+              comparePrice: variation.comparePrice != null ? String(variation.comparePrice) : "",
+              stock: variation.stock != null ? String(variation.stock) : "0",
+              sku: variation.sku || "",
+              image: variation.image || null,
+            }))
+          : [],
+      });
+      setBookModal({ open: true, book: b, focusVariants });
+    } catch (err: any) {
+      toast(err.message || "Failed to load book details", "error");
+    } finally {
+      setBookEditorLoadingId(null);
+    }
+  };
+
   const handleBookFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -312,8 +365,23 @@ export default function AdminPanel() {
         }
       }
 
-      // Sanitize form data - only send editable fields
-      const sanitizedData: Record<string, unknown> = {
+      const variationData = variations.map((variation: any) => ({
+        id: variation.id,
+        attributes: variation.attributes,
+        price: Number(variation.price),
+        comparePrice: String(variation.comparePrice ?? "").trim()
+          ? Number(variation.comparePrice)
+          : null,
+        stock: Number(variation.stock),
+        sku: variation.sku || null,
+        image: variation.image || null,
+      }));
+
+      // Variant mode deliberately updates only variants, leaving all other
+      // book fields untouched. Full edit mode retains the existing behavior.
+      const sanitizedData: Record<string, unknown> = bookModal.focusVariants
+        ? { variations: variationData }
+        : {
         title: bookForm.title,
         author: bookForm.author,
         description: bookForm.description,
@@ -334,22 +402,12 @@ export default function AdminPanel() {
         tags: bookForm.tags || null,
         format: bookForm.format || "PHYSICAL",
         language: bookForm.language || "English",
-        variations: variations.map((variation: any) => ({
-          id: variation.id,
-          attributes: variation.attributes,
-          price: Number(variation.price),
-          comparePrice: String(variation.comparePrice ?? "").trim()
-            ? Number(variation.comparePrice)
-            : null,
-          stock: Number(variation.stock),
-          sku: variation.sku || null,
-          image: variation.image || null,
-        })),
+        variations: variationData,
       };
 
       if (bookModal.book) {
         await api.books.update(bookModal.book.id, sanitizedData);
-        toast("Book updated", "success");
+        toast(bookModal.focusVariants ? "Variants updated" : "Book updated", "success");
       } else {
         await api.books.create(sanitizedData);
         toast("Book created", "success");
@@ -813,50 +871,27 @@ export default function AdminPanel() {
                               ★ {Number(b.rating).toFixed(1)}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <button
-                                  onClick={() => {
-                                    // Sanitize book data for form - only editable fields as strings
-                                    setBookForm({
-                                      title: b.title || "",
-                                      author: b.author || "",
-                                      description: b.description || "",
-                                      shortDesc: b.shortDesc || "",
-                                      price: b.price != null ? String(b.price) : "",
-                                      comparePrice: b.comparePrice != null ? String(b.comparePrice) : "",
-                                      stock: b.stock != null ? String(b.stock) : "0",
-                                      pages: b.pages != null ? String(b.pages) : "",
-                                      isbn: b.isbn || "",
-                                      publisher: b.publisher || "",
-                                      section: b.section || "",
-                                      coverImage: b.coverImage || "",
-                                      images: parseProductImages(b.images),
-                                      featured: b.featured || false,
-                                      genreId: b.genreId || "",
-                                      categoryId: b.categoryId || "",
-                                      subcategoryId: b.subcategoryId || "",
-                                      tags: b.tags || "",
-                                      format: b.format || "PHYSICAL",
-                                      language: b.language || "English",
-                                      variations: Array.isArray(b.variations)
-                                        ? b.variations.map((variation: any) => ({
-                                            id: variation.id,
-                                            attributes: variation.attributes || { type: "Variant", value: "Option" },
-                                            price: variation.price != null ? String(variation.price) : "",
-                                            comparePrice: variation.comparePrice != null ? String(variation.comparePrice) : "",
-                                            stock: variation.stock != null ? String(variation.stock) : "0",
-                                            sku: variation.sku || "",
-                                            image: variation.image || null,
-                                          }))
-                                        : [],
-                                    });
-                                    setBookModal({ open: true, book: b });
-                                  }}
-                                  className="text-xs text-[#146eb4] hover:underline"
+                                  type="button"
+                                  disabled={bookEditorLoadingId === b.id}
+                                  onClick={() => openBookEditor(b)}
+                                  className="text-xs text-[#146eb4] hover:underline disabled:opacity-50"
                                 >
                                   Edit
                                 </button>
                                 <button
+                                  type="button"
+                                  disabled={bookEditorLoadingId === b.id}
+                                  onClick={() => openBookEditor(b, true)}
+                                  className="whitespace-nowrap rounded border border-[#e47911] px-2 py-1 text-xs font-semibold text-[#c45500] hover:bg-[#e47911]/10 disabled:opacity-50"
+                                >
+                                  {bookEditorLoadingId === b.id
+                                    ? "Loading..."
+                                    : `Variants${Array.isArray(b.variations) && b.variations.length ? ` (${b.variations.length})` : ""}`}
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => handleDeleteBook(b.id)}
                                   className="text-xs text-red-500 hover:underline"
                                 >
@@ -1642,9 +1677,18 @@ export default function AdminPanel() {
               className="bg-white border border-gray-200 rounded-md p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-[#232f3e]">
-                  {bookModal.book ? "Edit Book" : "Add New Book"}
-                </h3>
+                <div>
+                  <h3 className="text-lg font-bold text-[#232f3e]">
+                    {bookModal.focusVariants
+                      ? "Edit Variant Prices & Stock"
+                      : bookModal.book
+                        ? "Edit Book"
+                        : "Add New Book"}
+                  </h3>
+                  {bookModal.focusVariants && (
+                    <p className="mt-1 text-xs text-gray-500">{bookModal.book?.title}</p>
+                  )}
+                </div>
                 <button
                   onClick={() => setBookModal({ open: false })}
                   className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-[#232f3e]"
@@ -1656,6 +1700,8 @@ export default function AdminPanel() {
                 onSubmit={handleBookFormSubmit}
                 className="grid grid-cols-2 gap-4"
               >
+                {!bookModal.focusVariants && (
+                  <>
                 {[
                   { key: "title", label: "Title", required: true, span: 2 },
                   { key: "author", label: "Author", required: true },
@@ -1798,7 +1844,9 @@ export default function AdminPanel() {
                     onChange={(images) => setBookForm((prev: typeof bookForm) => ({ ...prev, images }))}
                   />
                 </div>
-                <div className="col-span-2 border-t border-gray-200 pt-5">
+                  </>
+                )}
+                <div className={`col-span-2 ${bookModal.focusVariants ? "" : "border-t border-gray-200 pt-5"}`}>
                   <div className="mb-4">
                     <h4 className="text-sm font-bold text-[#232f3e]">Product Variations</h4>
                     <p className="mt-1 text-xs text-gray-500">
@@ -1869,6 +1917,8 @@ export default function AdminPanel() {
                     </div>
                   )}
                 </div>
+                {!bookModal.focusVariants && (
+                  <>
                 <div className="col-span-2">
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                     Description
@@ -1901,6 +1951,8 @@ export default function AdminPanel() {
                     <span className="text-sm text-gray-600">Featured Book</span>
                   </label>
                 </div>
+                  </>
+                )}
                 <div className="col-span-2 flex gap-3 justify-end mt-2">
                   <button
                     type="button"
@@ -1911,10 +1963,16 @@ export default function AdminPanel() {
                   </button>
                   <button
                     type="submit"
-                    disabled={isUploadingCover || isUploadingImages}
+                    disabled={isUploadingCover || isUploadingImages || (bookModal.focusVariants && !(bookForm.variations || []).length)}
                     className="px-6 py-2.5 rounded bg-[#e47911] hover:bg-[#c45500] text-white text-sm font-semibold transition-colors disabled:opacity-50"
                   >
-                    {isUploadingCover || isUploadingImages ? "Uploading images..." : bookModal.book ? "Update Book" : "Create Book"}
+                    {isUploadingCover || isUploadingImages
+                      ? "Uploading images..."
+                      : bookModal.focusVariants
+                        ? "Save Variant Prices & Stock"
+                        : bookModal.book
+                          ? "Update Book"
+                          : "Create Book"}
                   </button>
                 </div>
               </form>

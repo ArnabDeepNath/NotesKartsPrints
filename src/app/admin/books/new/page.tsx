@@ -9,6 +9,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 import ProductImagesInput from "@/app/admin/components/ProductImagesInput";
+import RichTextEditor from "@/app/components/RichTextEditor";
+import { hasRichTextContent } from "@/lib/rich-text";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -238,7 +240,7 @@ export default function NewBookPage() {
       !formData.title ||
       !formData.author ||
       !formData.price ||
-      !formData.description
+      !hasRichTextContent(formData.description)
     ) {
       toast("Please fill in all required fields", "error");
       return;
@@ -538,13 +540,14 @@ export default function NewBookPage() {
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Full Description *
               </label>
-              <textarea
-                name="description"
+              <RichTextEditor
                 value={formData.description}
-                onChange={handleChange}
-                rows={5}
-                className="w-full bg-white border border-gray-300 rounded px-4 py-3 text-gray-800 focus:outline-none focus:border-[#e47911]"
-                required
+                onChange={(description) =>
+                  setFormData((prev) => ({ ...prev, description }))
+                }
+                placeholder="Describe the book, its contents, and who it is for..."
+                label="Full book description"
+                minHeight={280}
               />
             </div>
 

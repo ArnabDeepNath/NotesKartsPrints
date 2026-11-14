@@ -103,10 +103,9 @@ export default function FeaturedBook({ book, allBooks = [] }: Props) {
               </h3>
               <p className="text-white/60 text-sm mb-4">by {author}</p>
               {book.excerpt && (
-                <p
-                  className="text-white/70 text-sm leading-relaxed mb-5 line-clamp-2 excerpt-clean"
-                  dangerouslySetInnerHTML={{ __html: book.excerpt }}
-                />
+                <p className="text-white/70 text-sm leading-relaxed mb-5 line-clamp-2 excerpt-clean">
+                  {book.excerpt}
+                </p>
               )}
               <div className="flex items-center gap-4 mb-5">
                 <span className="text-2xl font-black text-[#f5a623]">

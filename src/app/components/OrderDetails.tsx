@@ -41,14 +41,19 @@ export const formatVariationAttributes = (
   return [legacyLabel, ...additionalAttributes].filter(Boolean).join(" · ");
 };
 
-const getShippingCharge = (notes?: string): number | null => {
-  if (!notes) return null;
+const getShippingDetails = (notes?: string) => {
+  if (!notes) return { charge: null, method: "STANDARD", expressPercent: null };
   try {
     const parsed = JSON.parse(notes);
     const value = Number(parsed?.pricing?.shippingCharge);
-    return Number.isFinite(value) ? value : null;
+    const percent = Number(parsed?.pricing?.expressShippingPercent);
+    return {
+      charge: Number.isFinite(value) ? value : null,
+      method: parsed?.pricing?.shippingMethod === "EXPRESS" ? "EXPRESS" : "STANDARD",
+      expressPercent: Number.isFinite(percent) ? percent : null,
+    };
   } catch {
-    return null;
+    return { charge: null, method: "STANDARD", expressPercent: null };
   }
 };
 
@@ -69,7 +74,12 @@ export default function OrderDetails({
   order,
   showCustomer = false,
 }: OrderDetailsProps) {
-  const shippingCharge = getShippingCharge(order.notes);
+  const shipping = getShippingDetails(order.notes);
+  const shippingCharge = shipping.charge;
+  const shippingMethodLabel =
+    shipping.method === "EXPRESS"
+      ? `Express Shipping${shipping.expressPercent !== null ? ` (${shipping.expressPercent}%)` : ""}`
+      : "Standard Shipping";
   const shippingLocation = [
     order.shippingCity,
     order.shippingCountry,
@@ -283,6 +293,10 @@ export default function OrderDetails({
             <p>{order.shippingPhone || order.user?.phone || "No phone"}</p>
             <p className="pt-2">{order.shippingAddress || "No street address"}</p>
             <p>{shippingLocation || "No city, country, or postal code"}</p>
+            <p className="pt-2">
+              <span className="font-medium text-[#232f3e]">Method:</span>{" "}
+              {shippingMethodLabel}
+            </p>
           </div>
         </section>
 
@@ -327,7 +341,7 @@ export default function OrderDetails({
           </div>
           {shippingCharge !== null && (
             <div className="flex justify-between text-gray-600">
-              <span>Shipping</span>
+              <span>{shippingMethodLabel}</span>
               <span>{shippingCharge === 0 ? "Free" : money(shippingCharge)}</span>
             </div>
           )}

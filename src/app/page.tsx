@@ -6,6 +6,7 @@ import BookGrid from "./components/BookGrid";
 import LandingSections from "./components/LandingSections";
 import Footer from "./components/Footer";
 import { Book } from "./components/BookCard";
+import { richTextToPlainText } from "@/lib/rich-text";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -69,7 +70,7 @@ function toComponentBook(b: ApiBook): Book {
     price: b.price as any,
     originalPrice: b.comparePrice as any,
     date: b.createdAt || new Date().toISOString(),
-    excerpt: b.description || b.shortDesc || "",
+    excerpt: richTextToPlainText(b.description || b.shortDesc || ""),
     slug: b.id,
     featuredImage: b.coverImage
       ? { node: { sourceUrl: b.coverImage, altText: b.title } }

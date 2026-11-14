@@ -8,6 +8,7 @@ import { api, Book, BookVariation, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import RichTextContent from "@/app/components/RichTextContent";
 import { getProductGalleryImages, parseProductImages } from "@/lib/product-images";
 
 function StarRating({
@@ -687,9 +688,10 @@ export default function BookDetailPage({
                 className="bg-white border border-gray-200 rounded-md p-4 sm:p-6"
               >
                 {book.description ? (
-                  <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                    {book.description}
-                  </p>
+                  <RichTextContent
+                    content={book.description}
+                    className="rich-text-content text-gray-600"
+                  />
                 ) : (
                   <p className="text-sm text-gray-500">
                     Description is not available for this book yet.

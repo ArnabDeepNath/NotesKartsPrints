@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { api, getImageUrl } from "@/lib/api";
+import { api, getImageUrl, type ShippingMethod } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import Navbar from "@/app/components/Navbar";
 
@@ -97,6 +97,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"ONLINE" | "COD">(
     "ONLINE",
   );
+  const [shippingMethod, setShippingMethod] =
+    useState<ShippingMethod>("STANDARD");
 
   const [shipping, setShipping] = useState({
     name: "",
@@ -143,10 +145,20 @@ export default function CheckoutPage() {
   const subtotal = cartTotal;
   const gst =
     Math.round(subtotal * (settings.pricing.taxRate / 100) * 100) / 100;
+  const expressShippingPercent = Math.max(
+    0,
+    Number(settings.pricing.expressShippingPercent) || 0,
+  );
+  const expressShippingCost =
+    Math.round(
+      (subtotal * (expressShippingPercent / 100) + Number.EPSILON) * 100,
+    ) / 100;
   const shippingCost =
-    subtotal >= settings.pricing.freeShippingThreshold
-      ? 0
-      : settings.pricing.shippingCost;
+    shippingMethod === "EXPRESS"
+      ? expressShippingCost
+      : subtotal >= settings.pricing.freeShippingThreshold
+        ? 0
+        : settings.pricing.shippingCost;
   
   // Apply coupon discount
   const discount = appliedCoupon?.discount || 0;
@@ -179,8 +191,8 @@ export default function CheckoutPage() {
         toast(res.message, "success");
         setCouponCode("");
       }
-    } catch (err: any) {
-      toast(err.message || "Invalid coupon code", "error");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Invalid coupon code"), "error");
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -211,6 +223,7 @@ export default function CheckoutPage() {
           printJobs: printCart.map((job) => job.id),
           paymentMethod: "COD",
           shippingAddress: buildShippingAddressPayload(shipping),
+          shippingMethod,
           couponCode: appliedCoupon?.code,
         });
 
@@ -238,6 +251,7 @@ export default function CheckoutPage() {
         printJobs: printCart.map((job) => job.id),
         paymentMethod: paymentMethod, // "ONLINE" or "COD"
         shippingAddress: buildShippingAddressPayload(shipping),
+        shippingMethod,
         couponCode: appliedCoupon?.code,
       });
 
@@ -585,6 +599,59 @@ export default function CheckoutPage() {
                           </div>
                         ))}
                       </div>
+                      <div className="mt-6 border-t border-gray-100 pt-5">
+                        <h3 className="font-semibold text-[#232f3e] mb-1">
+                          Shipping Method
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-4">
+                          Express shipping is calculated on the order subtotal and
+                          is always chargeable.
+                        </p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            aria-pressed={shippingMethod === "STANDARD"}
+                            onClick={() => setShippingMethod("STANDARD")}
+                            className={`rounded border p-4 text-left transition-colors ${
+                              shippingMethod === "STANDARD"
+                                ? "border-[#e47911] bg-[#fff7ef]"
+                                : "border-gray-200 bg-gray-50 hover:border-gray-400"
+                            }`}
+                          >
+                            <span className="block text-sm font-semibold text-[#232f3e]">
+                              Standard Shipping
+                            </span>
+                            <span className="mt-1 block text-xs text-gray-500">
+                              Free above Rs. {settings.pricing.freeShippingThreshold.toLocaleString("en-IN")}
+                            </span>
+                            <span className="mt-2 block text-sm font-bold text-[#e47911]">
+                              {subtotal >= settings.pricing.freeShippingThreshold
+                                ? "Free"
+                                : `Rs. ${settings.pricing.shippingCost.toLocaleString("en-IN")}`}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            aria-pressed={shippingMethod === "EXPRESS"}
+                            onClick={() => setShippingMethod("EXPRESS")}
+                            className={`rounded border p-4 text-left transition-colors ${
+                              shippingMethod === "EXPRESS"
+                                ? "border-[#e47911] bg-[#fff7ef]"
+                                : "border-gray-200 bg-gray-50 hover:border-gray-400"
+                            }`}
+                          >
+                            <span className="block text-sm font-semibold text-[#232f3e]">
+                              Express Shipping
+                            </span>
+                            <span className="mt-1 block text-xs text-gray-500">
+                              {expressShippingPercent}% of the order subtotal
+                            </span>
+                            <span className="mt-2 block text-sm font-bold text-[#e47911]">
+                              Rs. {expressShippingCost.toLocaleString("en-IN")}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-3 mt-4">
                       <button
@@ -745,6 +812,9 @@ export default function CheckoutPage() {
                       <p className="text-xs text-gray-500">
                         {shipping.address}, {shipping.city}, {shipping.country}
                       </p>
+                      <p className="mt-1 text-xs font-medium text-[#e47911]">
+                        {shippingMethod === "EXPRESS" ? "Express" : "Standard"} Shipping
+                      </p>
                     </div>
 
                     <div className="flex gap-3">
@@ -889,7 +959,7 @@ export default function CheckoutPage() {
                     <span>Rs. {gst.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>Shipping</span>
+                    <span>{shippingMethod === "EXPRESS" ? "Express Shipping" : "Standard Shipping"}</span>
                     <span>
                       {shippingCost === 0
                         ? "Free"

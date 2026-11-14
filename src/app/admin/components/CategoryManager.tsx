@@ -6,6 +6,8 @@ import Link from "next/link";
 import { api, getImageUrl } from "@/lib/api";
 import { useToast } from "@/app/components/ui/Toaster";
 import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
+import RichTextEditor from "@/app/components/RichTextEditor";
+import { richTextToPlainText } from "@/lib/rich-text";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -337,7 +339,7 @@ export default function CategoryManager({
                       </h3>
                       {category.description ? (
                         <p className="text-sm text-gray-500 mt-1">
-                          {category.description}
+                          {richTextToPlainText(category.description)}
                         </p>
                       ) : null}
                     </div>
@@ -390,7 +392,7 @@ export default function CategoryManager({
                         </p>
                         {subcategory.description ? (
                           <p className="text-xs text-gray-500 mt-1">
-                            {subcategory.description}
+                            {richTextToPlainText(subcategory.description)}
                           </p>
                         ) : null}
                       </div>
@@ -427,7 +429,7 @@ export default function CategoryManager({
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white border border-gray-200 rounded-md w-full max-w-lg overflow-hidden shadow-xl"
+              className="bg-white border border-gray-200 rounded-md w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-xl"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h2 className="text-xl font-bold text-[#232f3e]">
@@ -513,20 +515,21 @@ export default function CategoryManager({
                   </div>
                 ) : null}
 
-                <label className="block text-sm font-medium text-[#232f3e]">
+                <div className="block text-sm font-medium text-[#232f3e]">
                   <span className="block mb-2">Description</span>
-                  <textarea
-                    rows={3}
+                  <RichTextEditor
                     value={formData.description}
-                    onChange={(event) =>
+                    onChange={(description) =>
                       setFormData((current) => ({
                         ...current,
-                        description: event.target.value,
+                        description,
                       }))
                     }
-                    className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800"
+                    placeholder="Describe this category..."
+                    label="Category description"
+                    minHeight={180}
                   />
-                </label>
+                </div>
 
                 <div className="block text-sm font-medium text-[#232f3e]">
                   <span className="block mb-2">Image (Optional)</span>

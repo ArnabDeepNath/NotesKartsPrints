@@ -15,6 +15,8 @@ import ImageUploadInput from "@/app/admin/components/ImageUploadInput";
 import ProductImagesInput from "@/app/admin/components/ProductImagesInput";
 import { parseProductImages } from "@/lib/product-images";
 import OrderDetails from "@/app/components/OrderDetails";
+import RichTextEditor from "@/app/components/RichTextEditor";
+import { richTextToPlainText } from "@/lib/rich-text";
 
 interface Stats {
   totalBooks: number;
@@ -1199,7 +1201,7 @@ export default function AdminPanel() {
                               </p>
                               {c.description && (
                                 <p className="text-[10px] text-gray-400">
-                                  {c.description}
+                                  {richTextToPlainText(c.description)}
                                 </p>
                               )}
                             </td>
@@ -1923,16 +1925,17 @@ export default function AdminPanel() {
                   <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">
                     Description
                   </label>
-                  <textarea
+                  <RichTextEditor
                     value={bookForm.description || ""}
-                    onChange={(e) =>
+                    onChange={(description) =>
                       setBookForm((prev: any) => ({
                         ...prev,
-                        description: e.target.value,
+                        description,
                       }))
                     }
-                    rows={4}
-                    className="w-full bg-white border border-gray-300 rounded px-4 py-2.5 text-gray-800 text-sm focus:outline-none focus:border-[#e47911] resize-none"
+                    placeholder="Describe the book, its contents, and who it is for..."
+                    label="Book description"
+                    minHeight={260}
                   />
                 </div>
                 <div className="col-span-2 flex items-center gap-3 mt-2">

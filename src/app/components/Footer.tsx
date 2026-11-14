@@ -8,8 +8,7 @@ export default function Footer() {
   const { settings } = useSiteSettings();
   const footer = settings.footer;
   const policyPages = settings.policyPages || [];
-  const telegramUrl =
-    footer.socialLinks?.telegram || "https://t.me/helpingdoctors1";
+  const telegramUrl = footer.socialLinks?.telegram?.trim();
   const socialEntries = Object.entries(footer.socialLinks || {}).filter(
     ([, href]) => Boolean(href),
   );
@@ -140,17 +139,19 @@ export default function Footer() {
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">
               Stay Connected
             </h4>
-            <a
-              href={telegramUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mb-4 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#229ed9] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1b8bc0]"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M21.9 4.6 18.7 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 12.5l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.5 3c.9-.3 1.7.2 1.4 1.6Z" />
-              </svg>
-              Join our Telegram channel
-            </a>
+            {telegramUrl && (
+              <a
+                href={telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-4 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#229ed9] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1b8bc0]"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M21.9 4.6 18.7 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 12.5l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.5 3c.9-.3 1.7.2 1.4 1.6Z" />
+                </svg>
+                Join our Telegram channel
+              </a>
+            )}
             <div className="flex flex-wrap gap-3 mb-4">
               {(socialEntries.length
                 ? socialEntries
@@ -165,6 +166,8 @@ export default function Footer() {
                   key={social}
                   href={href || "#"}
                   aria-label={social}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 bg-[#37475a] rounded-full flex items-center justify-center hover:bg-[#e47911] transition-colors"
                 >
                   <svg

@@ -3,6 +3,7 @@ import Footer from "@/app/components/Footer";
 import Navbar from "@/app/components/Navbar";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/site-settings";
 import { formatPolicyContent } from "@/lib/policy-content";
+import RichTextContent from "@/app/components/RichTextContent";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -75,10 +76,7 @@ export default async function PolicyPage({
         </header>
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12">
           <article className="rounded-lg border border-gray-200 bg-white px-5 py-7 shadow-sm sm:px-10 sm:py-10">
-            <div
-              className="policy-content"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
+            <RichTextContent content={content} className="rich-text-content" />
           </article>
         </div>
       </main>

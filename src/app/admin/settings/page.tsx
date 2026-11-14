@@ -528,7 +528,7 @@ export default function AdminSettingsPage() {
                 }
               />
               <LabeledInput
-                label="Free Shipping Threshold"
+                label="Free Standard Shipping Threshold"
                 type="number"
                 value={settings.pricing.freeShippingThreshold}
                 onChange={(value) =>
@@ -538,6 +538,23 @@ export default function AdminSettingsPage() {
                   })
                 }
               />
+              <LabeledInput
+                label="Express Shipping (% of order subtotal)"
+                type="number"
+                min={0}
+                step={0.01}
+                value={settings.pricing.expressShippingPercent}
+                onChange={(value) =>
+                  updateSection("pricing", {
+                    ...settings.pricing,
+                    expressShippingPercent: Number(value),
+                  })
+                }
+              />
+              <p className="text-xs text-gray-500 md:col-span-2 -mt-2">
+                Express shipping is calculated before GST and coupon discounts and
+                remains chargeable when standard shipping is free.
+              </p>
               <LabeledInput
                 label="COD Advance Percent"
                 type="number"
@@ -1280,17 +1297,23 @@ function LabeledInput({
   value,
   onChange,
   type = "text",
+  min,
+  step,
 }: {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
   type?: string;
+  min?: number;
+  step?: number;
 }) {
   return (
     <label className="block text-sm font-medium text-[#232f3e]">
       <span className="block mb-2">{label}</span>
       <input
         type={type}
+        min={min}
+        step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded border border-gray-300 px-4 py-3 text-sm text-gray-800"

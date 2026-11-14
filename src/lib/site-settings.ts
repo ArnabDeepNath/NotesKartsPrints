@@ -46,6 +46,7 @@ export interface SiteSettings {
     taxRate: number;
     shippingCost: number;
     freeShippingThreshold: number;
+    expressShippingPercent: number;
     codEnabled: boolean;
     codAdvancePercent: number;
     onlinePaymentThreshold: number;
@@ -108,6 +109,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     taxRate: 18,
     shippingCost: 49,
     freeShippingThreshold: 499,
+    expressShippingPercent: 10,
     codEnabled: true,
     codAdvancePercent: 40,
     onlinePaymentThreshold: 500,

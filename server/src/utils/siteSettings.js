@@ -7,6 +7,7 @@ const DEFAULT_SITE_SETTINGS = {
     taxRate: 18,
     shippingCost: 49,
     freeShippingThreshold: 499,
+    expressShippingPercent: 10,
     codEnabled: true,
     codAdvancePercent: 40,
     onlinePaymentThreshold: 500,
@@ -341,6 +342,10 @@ const normalizeSiteSettings = (input = {}) => {
   merged.pricing.freeShippingThreshold = sanitizeNumeric(
     merged.pricing.freeShippingThreshold,
     DEFAULT_SITE_SETTINGS.pricing.freeShippingThreshold,
+  );
+  merged.pricing.expressShippingPercent = sanitizeNumeric(
+    merged.pricing.expressShippingPercent,
+    DEFAULT_SITE_SETTINGS.pricing.expressShippingPercent,
   );
   merged.pricing.codAdvancePercent = sanitizeNumeric(
     merged.pricing.codAdvancePercent,

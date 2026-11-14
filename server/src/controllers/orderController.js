@@ -4,6 +4,7 @@ const { AppError } = require("../middleware/errorHandler");
 const { sendOrderConfirmation } = require("../utils/emailService");
 const { getSiteSettings } = require("../utils/siteSettings");
 const { mergeOrderNotes } = require("../utils/orderNotes");
+const { calculateShipping } = require("../utils/shipping");
 
 const hasOrderVariationSupport = async () => {
   try {
@@ -19,7 +20,14 @@ const hasOrderVariationSupport = async () => {
 // POST /api/orders  — create a pending order from cart
 const createOrder = async (req, res, next) => {
   try {
-    const { items, printJobs, shippingAddress, paymentMethod, couponCode } = req.body;
+    const {
+      items,
+      printJobs,
+      shippingAddress,
+      shippingMethod,
+      paymentMethod,
+      couponCode,
+    } = req.body;
     // items: [{ bookId, quantity }]
     // printJobs: [ "uuid-1", "uuid-2" ]
 
@@ -151,10 +159,13 @@ const createOrder = async (req, res, next) => {
       subtotal += Number(pj.price);
     }
 
-    const shippingCharge =
-      subtotal >= Number(settings.pricing.freeShippingThreshold || 0)
-        ? 0
-        : Number(settings.pricing.shippingCost || 0);
+    let shipping;
+    try {
+      shipping = calculateShipping(subtotal, settings.pricing, shippingMethod);
+    } catch (shippingError) {
+      throw new AppError(shippingError.message, 400);
+    }
+    const shippingCharge = shipping.charge;
     const taxRate = Number(settings.pricing.taxRate || 0) / 100;
     const tax = +(subtotal * taxRate).toFixed(2);
     const totalBeforeDiscount = +(subtotal + tax + shippingCharge).toFixed(2);
@@ -198,10 +209,13 @@ const createOrder = async (req, res, next) => {
     const notes = mergeOrderNotes(null, {
       pricing: {
         shippingCharge,
+        shippingMethod: shipping.method,
+        expressShippingPercent:
+          shipping.method === "EXPRESS"
+            ? shipping.expressShippingPercent
+            : undefined,
         taxRate: Number(settings.pricing.taxRate || 0),
-        freeShippingThreshold: Number(
-          settings.pricing.freeShippingThreshold || 0,
-        ),
+        freeShippingThreshold: shipping.freeShippingThreshold,
       },
       logistics: {
         provider: settings.logistics.provider,

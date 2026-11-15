@@ -1,11 +1,21 @@
 import { notFound } from "next/navigation";
 import Footer from "@/app/components/Footer";
 import Navbar from "@/app/components/Navbar";
-import { DEFAULT_SITE_SETTINGS } from "@/lib/site-settings";
+import { DEFAULT_SITE_SETTINGS, type PolicyPage } from "@/lib/site-settings";
 import { formatPolicyContent } from "@/lib/policy-content";
 import RichTextContent from "@/app/components/RichTextContent";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+const canonicalPolicySlug = (slug: string) =>
+  ["terms-and-conditions", "terms-condition", "terms"].includes(slug)
+    ? "terms-conditions"
+    : slug;
+
+function findPolicyPage(pages: PolicyPage[], slug: string) {
+  const canonicalSlug = canonicalPolicySlug(slug);
+  return pages.find((page) => page.slug === canonicalSlug);
+}
 
 async function fetchPublicSettings() {
   try {
@@ -21,8 +31,8 @@ async function fetchPublicSettings() {
 
 export async function generateStaticParams() {
   const data = await fetchPublicSettings();
-  const pages = data?.settings?.policyPages || [];
-  return pages.map((p: { slug: string }) => ({ slug: p.slug }));
+  const pages = data?.settings?.policyPages || DEFAULT_SITE_SETTINGS.policyPages;
+  return pages.map((page: PolicyPage) => ({ slug: page.slug }));
 }
 
 export async function generateMetadata({
@@ -32,9 +42,8 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const data = await fetchPublicSettings();
-  const page = data?.settings?.policyPages?.find(
-    (p: { slug: string }) => p.slug === slug,
-  );
+  const pages = data?.settings?.policyPages || DEFAULT_SITE_SETTINGS.policyPages;
+  const page = findPolicyPage(pages, slug);
   return {
     title: page?.label || "Policy Page",
   };
@@ -47,16 +56,15 @@ export default async function PolicyPage({
 }) {
   const { slug } = await params;
   const data = await fetchPublicSettings();
-  const page = data?.settings?.policyPages?.find(
-    (p: { slug: string }) => p.slug === slug,
-  );
+  const pages = data?.settings?.policyPages || DEFAULT_SITE_SETTINGS.policyPages;
+  const page = findPolicyPage(pages, slug);
 
   if (!page) {
     notFound();
   }
 
   const defaultPage = DEFAULT_SITE_SETTINGS.policyPages.find(
-    (defaultPolicy) => defaultPolicy.slug === slug,
+    (defaultPolicy) => defaultPolicy.slug === page.slug,
   );
   const content = formatPolicyContent(page.content, defaultPage?.content);
 

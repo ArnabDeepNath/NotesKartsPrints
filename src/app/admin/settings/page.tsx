@@ -203,6 +203,7 @@ export default function AdminSettingsPage() {
   const [uploadingSlideIndex, setUploadingSlideIndex] = useState<number | null>(
     null,
   );
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const linkOptionGroups = buildLinkOptionGroups(categories, settings.policyPages);
 
   useEffect(() => {
@@ -379,6 +380,22 @@ export default function AdminSettingsPage() {
       throw err;
     } finally {
       setUploadingSlideIndex(null);
+    }
+  };
+
+  const uploadLogo = async (file: File) => {
+    try {
+      setIsUploadingLogo(true);
+      const uploadData = new FormData();
+      uploadData.append("image", file);
+      const res = await api.upload.image(uploadData);
+      updateSection("header", { ...settings.header, logo: res.url });
+      toast("Logo uploaded. Save settings to publish it.", "success");
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, "Logo upload failed"), "error");
+      throw err;
+    } finally {
+      setIsUploadingLogo(false);
     }
   };
 
@@ -657,6 +674,48 @@ export default function AdminSettingsPage() {
               <h2 className="md:col-span-2 text-lg font-semibold text-[#232f3e]">
                 Header and Footer
               </h2>
+              <div className="md:col-span-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+                  <LabeledInput
+                    label="Logo URL"
+                    value={settings.header.logo}
+                    onChange={(value) =>
+                      updateSection("header", {
+                        ...settings.header,
+                        logo: value,
+                      })
+                    }
+                  />
+                  <ImageUploadInput
+                    existingImage={getImageUrl(settings.header.logo)}
+                    disabled={isUploadingLogo}
+                    onReady={uploadLogo}
+                    label={isUploadingLogo ? "Uploading..." : "Upload & Adjust Logo"}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Upload a PNG, JPEG, or WebP logo for the header and footer.
+                  Clear the URL to restore the default book icon, then save settings.
+                </p>
+                {settings.header.logo && (
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <img
+                      src={getImageUrl(settings.header.logo)}
+                      alt="Logo preview"
+                      className="h-14 max-w-48 rounded border border-gray-200 bg-white object-contain p-2"
+                    />
+                    <GhostButton
+                      label="Remove Logo"
+                      onClick={() =>
+                        updateSection("header", {
+                          ...settings.header,
+                          logo: "",
+                        })
+                      }
+                    />
+                  </div>
+                )}
+              </div>
               <LabeledInput
                 label="Header Brand Name"
                 value={settings.header.brandName}
@@ -958,7 +1017,7 @@ export default function AdminSettingsPage() {
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
                     Paste each platform link. Only filled links appear on the
-                    site.
+                    site. The Telegram link also adds a button to the header and mobile menu.
                   </p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">

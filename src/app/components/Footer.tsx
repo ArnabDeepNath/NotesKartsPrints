@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import SiteLogo from "@/app/components/SiteLogo";
+import TelegramIcon from "@/app/components/TelegramIcon";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -41,32 +43,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #e47911 0%, #f5a623 100%)",
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                </svg>
-              </div>
-              <span className="font-black text-xl text-white">
-                {footer.brandName}
-              </span>
-            </div>
+            <Link href="/" className="mb-4 inline-flex" aria-label="Home">
+              <SiteLogo footer />
+            </Link>
             <p className="text-sm text-gray-300 leading-relaxed mb-3">
               {footer.supportText}{" "}
               <strong className="text-white">{footer.supportPhone}</strong>
@@ -146,9 +125,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="mb-4 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#229ed9] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#1b8bc0]"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M21.9 4.6 18.7 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.1 12.5l-4.9-1.5c-1.1-.3-1.1-1.1.2-1.6L20.5 3c.9-.3 1.7.2 1.4 1.6Z" />
-                </svg>
+                <TelegramIcon size={18} />
                 Join our Telegram channel
               </a>
             )}

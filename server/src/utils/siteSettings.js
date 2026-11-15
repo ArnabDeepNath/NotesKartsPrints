@@ -1,6 +1,8 @@
 const prisma = require("../config/prisma");
 
 const SITE_SETTINGS_KEY = "site_config";
+const LEGACY_TERMS_CONTENT =
+  "<p><strong>Terms & Conditions</strong></p><p>Welcome to our website. By accessing and using this website, you accept these terms.</p>";
 
 const DEFAULT_SITE_SETTINGS = {
   pricing: {
@@ -71,6 +73,7 @@ const DEFAULT_SITE_SETTINGS = {
   header: {
     brandName: "NoteKart",
     brandAccent: "Prints",
+    logo: "",
     infoBarLinks: [
       { label: "HOW IT WORKS?", href: "/#how-it-works" },
       { label: "FAQs", href: "/#faqs" },
@@ -189,7 +192,7 @@ const DEFAULT_SITE_SETTINGS = {
       id: "terms-conditions",
       label: "Terms & Conditions",
       slug: "terms-conditions",
-      content: "<p><strong>Terms & Conditions</strong></p><p>Welcome to our website. By accessing and using this website, you accept these terms.</p>",
+      content: "<h2>1. Acceptance of Terms</h2><p>By accessing or using NoteKart Prints, you agree to these Terms & Conditions and all applicable laws. If you do not agree, please do not use our website or services.</p><h2>2. Products and Print-on-Demand Services</h2><p>We provide books, notes, and custom document-printing services. Product descriptions, paper options, binding choices, and delivery estimates are provided on the relevant pages. Custom printing begins after an order is confirmed.</p><h2>3. Customer Content and Responsibilities</h2><p>You are responsible for the accuracy, quality, and legality of files and information you submit. You must own the content or have permission to print it. Content that is unlawful, infringing, or otherwise objectionable may be rejected.</p><h2>4. Orders, Pricing, and Payment</h2><p>Prices, taxes, shipping charges, and any required advance payment are shown before checkout. An order is accepted only after confirmation and the required payment. We may cancel an order for incorrect pricing, unavailable stock, payment failure, or suspected misuse, and will communicate any applicable resolution.</p><h2>5. Shipping and Delivery</h2><p>Delivery timelines are estimates and may vary due to courier delays, location, weather, or other circumstances beyond our control. Please provide a complete and accurate delivery address and contact number. Tracking details are shared when an order is dispatched.</p><h2>6. Cancellations, Changes, and Refunds</h2><p>Because products are printed on demand, confirmed orders generally cannot be changed, cancelled, or refunded once printing has started. Any exceptions are governed by the applicable Cancellation and Refund policies displayed on this website.</p><h2>7. Intellectual Property</h2><p>The website design, branding, text, graphics, and other original materials belong to NoteKart Prints or their respective owners. You may not copy, resell, or redistribute them without written permission.</p><h2>8. Limitation of Liability</h2><p>To the extent permitted by law, NoteKart Prints is not liable for indirect or consequential losses arising from website use, delayed delivery, or customer-supplied content. Nothing in these terms excludes rights or liabilities that cannot legally be excluded.</p><h2>9. Changes to These Terms</h2><p>We may update these terms from time to time. The version published on this page applies from its publication date. Continued use of the website after an update constitutes acceptance of the revised terms.</p><h2>10. Contact Us</h2><p>For questions about these terms or an order, contact our support team at <a href=\"mailto:print@notekart.in\">print@notekart.in</a>.</p>",
     },
     {
       id: "privacy-policy",
@@ -319,6 +322,8 @@ const applyEnvOverrides = (settings) => ({
 const normalizeSiteSettings = (input = {}) => {
   const merged = deepMerge(DEFAULT_SITE_SETTINGS, input);
 
+  merged.header.logo = String(merged.header.logo || "").trim();
+
   merged.header.navigationMenu = Array.isArray(merged.header.navigationMenu)
     ? merged.header.navigationMenu.map((item, index) =>
         normalizeMenuItem(item, `nav-${index + 1}`),
@@ -400,7 +405,11 @@ const normalizeSiteSettings = (input = {}) => {
         id: String(page.id || ""),
         label: String(page.label || "").trim(),
         slug: String(page.slug || "").trim(),
-        content: String(page.content || ""),
+        content:
+          page.slug === "terms-conditions" &&
+          page.content === LEGACY_TERMS_CONTENT
+            ? DEFAULT_SITE_SETTINGS.policyPages[0].content
+            : String(page.content || ""),
       }))
     : DEFAULT_SITE_SETTINGS.policyPages;
 

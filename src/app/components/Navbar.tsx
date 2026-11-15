@@ -12,6 +12,8 @@ import {
   resolveMenuItem,
   type ManagedCategory,
 } from "@/lib/category-menu";
+import SiteLogo from "@/app/components/SiteLogo";
+import TelegramIcon from "@/app/components/TelegramIcon";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -33,6 +35,7 @@ export default function Navbar() {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const header = settings.header;
+  const telegramUrl = settings.footer.socialLinks?.telegram?.trim();
   const categoryMap = buildCategoryMap(categories);
   const navMenuItems = settings.header.navigationMenu
     .map((item) => resolveMenuItem(item, categoryMap))
@@ -119,6 +122,18 @@ export default function Navbar() {
             </a>
           </div>
           <div className="flex items-center gap-6">
+            {telegramUrl && (
+              <a
+                href={telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#229ed9] px-3 py-1 font-bold text-white transition-colors hover:bg-[#1b8bc0]"
+                aria-label="Join our Telegram channel"
+              >
+                <TelegramIcon size={13} />
+                Telegram
+              </a>
+            )}
             <Link
               href="/user/orders"
               className="hover:text-[#f5a623] transition-colors font-semibold"
@@ -138,38 +153,8 @@ export default function Navbar() {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-3 py-2.5 flex items-center gap-2 sm:px-4 sm:py-3 sm:gap-4">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #e47911 0%, #f5a623 100%)",
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-[#232f3e] font-black text-lg sm:text-xl tracking-tight leading-none block">
-                  {header.brandName}
-                </span>
-                <span className="text-[#e47911] font-semibold text-[10px] uppercase tracking-widest leading-none">
-                  {header.brandAccent}
-                </span>
-              </div>
-            </div>
+          <Link href="/" className="min-w-0 flex-shrink-0" aria-label="Home">
+            <SiteLogo />
           </Link>
 
           {/* Search Bar */}
@@ -603,6 +588,18 @@ export default function Navbar() {
             className="max-h-[70vh] overflow-y-auto md:hidden bg-white border-t border-gray-200 shadow-lg"
           >
             <div className="px-4 py-3 flex flex-col gap-0">
+              {telegramUrl && (
+                <a
+                  href={telegramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileOpen(false)}
+                  className="mb-2 flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#229ed9] px-4 py-2.5 text-sm font-bold text-white"
+                >
+                  <TelegramIcon size={18} />
+                  Join our Telegram channel
+                </a>
+              )}
               <Link
                 href="/user/orders"
                 onClick={() => setMobileOpen(false)}

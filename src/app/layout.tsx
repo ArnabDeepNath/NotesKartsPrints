@@ -16,7 +16,25 @@ export const metadata: Metadata = {
   title: "NoteKart Prints — On-Demand Note Printing",
   description:
     "Upload notes, configure print specs, and manage on-demand printing with NoteKart Prints.",
-  icons: { icon: "/favicon.ico" },
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      {
+        url: "/icons/icon-192.png",
+        type: "image/png",
+        sizes: "192x192",
+      },
+      {
+        url: "/icons/icon-512.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
